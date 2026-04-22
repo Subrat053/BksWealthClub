@@ -1,0 +1,18 @@
+{
+  "name": "bkswealthclub-platform",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "server",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:user": "npm --workspace apps/user-web run dev",
+    "dev:admin": "npm --workspace apps/admin-web run dev",
+    "dev:server": "npm --workspace server run dev",
+    "build:user": "npm --workspace apps/user-web run build",
+    "build:admin": "npm --workspace apps/admin-web run build",
+    "build:server": "npm --workspace server run build"
+  }
+}

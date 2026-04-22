@@ -1,0 +1,29 @@
+import {
+  CircleDollarSign,
+  Contact,
+  CreditCard,
+  FileText,
+  LayoutDashboard,
+  LifeBuoy,
+  Settings,
+  Shield,
+  Users,
+  Workflow,
+  
+} from "lucide-react";
+
+export const adminNav = [
+  { label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Users", path: "/admin/users", icon: Users },
+  { label: "Referral Tree", path: "/admin/team/referrals", icon: Workflow },
+  { label: "Autopool", path: "/admin/team/autopool", icon: Workflow },
+  { label: "Deposits", path: "/admin/deposits", icon: CreditCard },
+  { label: "Withdrawals", path: "/admin/withdrawals", icon: CircleDollarSign },
+  { label: "Income Logs", path: "/admin/income/logs", icon: FileText },
+  { label: "Income Rules", path: "/admin/income/rules", icon: FileText },
+  { label: "Support", path: "/admin/support", icon: LifeBuoy },
+  { label: "CMS", path: "/admin/cms/site", icon: Contact },
+  { label: "Settings", path: "/admin/settings/general", icon: Settings },
+  { label: "Security", path: "/admin/settings/security", icon: Shield },
+  { label: "Logout", path: "/login", icon: Shield },
+];
