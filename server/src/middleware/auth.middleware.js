@@ -1,19 +1,25 @@
-﻿import { ApiError } from "../core/ApiError.js";
-import { verifyAccessToken } from "../common/helpers/token.helper.js";
+﻿import { verifyAccessToken } from "../common/helpers/token.helper.js";
 
-export function authMiddleware(req, _res, next) {
-  const authHeader = req.headers.authorization || "";
-  const tokenFromHeader = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : null;
-  const token = tokenFromHeader || req.cookies?.accessToken;
-
-  if (!token) {
-    return next(new ApiError(401, "Authentication required"));
-  }
-
+export const protect = (req, res, next) => {
   try {
-    req.user = verifyAccessToken(token);
-    return next();
-  } catch {
-    return next(new ApiError(401, "Invalid or expired token"));
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized.",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = verifyAccessToken(token);
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token.",
+    });
   }
-}
+};

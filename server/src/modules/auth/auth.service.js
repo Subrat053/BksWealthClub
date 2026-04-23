@@ -1,120 +1,254 @@
-﻿import bcrypt from "bcrypt";
-import { ApiError } from "../../core/ApiError.js";
-import { generateUsername } from "../../utils/generateUsername.js";
-import { buildReferralLink } from "../../utils/referral.js";
-import { signAccessToken, signRefreshToken } from "../../common/helpers/token.helper.js";
-import { USER_ROLES } from "../../common/enums/index.js";
-import { authRepository } from "./auth.repository.js";
-import { referralService } from "../referral/referral.service.js";
-import { userRepository } from "../user/user.repository.js";
+﻿import { User } from "../user/user.model.js";
+import { UserProfile } from "../user/user-profile.model.js";
+import { EmailVerification, PasswordReset } from "./auth.model.js";
+import {
+  hashPassword,
+  comparePassword,
+} from "../../common/helpers/password.helper.js";
+import {
+  generateAccessToken,
+  generateRandomToken,
+} from "../../common/helpers/token.helper.js";
+import { generateMemberId } from "../../utils/generateMemberId.js";
+import { generateReferralCode } from "../../utils/generateReferralCode.js";
 
-export const authService = {
-  validateSponsor: async (sponsorId) => {
-    const sponsor = await referralService.findSponsorById(sponsorId);
-    if (!sponsor) {
-      throw new ApiError(404, "Sponsor not found");
-    }
+const buildReferralLink = (referralCode) => {
+  return `${process.env.CLIENT_URL}/register?ref=${referralCode}`;
+};
 
-    return {
-      sponsorId: sponsor.username,
-      sponsorName: sponsor.name,
-      sponsorStatus: sponsor.accountStatus,
-      isActive: sponsor.accountStatus === "active",
-    };
-  },
+const findUserByLoginIdentifier = async (identifier) => {
+  const normalized = identifier.trim().toLowerCase();
 
-  registerMember: async (payload) => {
-    const sponsor = await referralService.findSponsorById(payload.sponsorId);
-    if (!sponsor) {
-      throw new ApiError(404, "Invalid sponsor ID");
-    }
+  return User.findOne({
+    $or: [
+      { email: normalized },
+      { memberId: identifier.trim() },
+      { bepAddress: identifier.trim() },
+    ],
+  });
+};
 
-    const username = generateUsername();
-    const referralCode = generateUsername("REF");
-    const passwordHash = await bcrypt.hash(payload.password, 10);
+export const registerUser = async (payload) => {
+  const {
+    fullName,
+    email,
+    phone,
+    password,
+    sponsorId,
+    registrationSource,
+    bepAddress,
+  } = payload;
 
-    const user = await authRepository.createMember({
-      name: payload.name,
-      username,
-      email: payload.email,
-      country: payload.country,
-      mobile: payload.mobile,
-      passwordHash,
-      sponsorId: sponsor.username,
-      sponsorUserRef: sponsor._id,
-      referralCode,
-      referralLinkCode: referralCode,
-      role: USER_ROLES.USER,
-      accountStatus: "inactive",
-      activationStatus: "pending",
-    });
+  const existingEmail = await User.findOne({ email: email.toLowerCase() });
+  if (existingEmail) {
+    throw new Error("Email already registered.");
+  }
 
-    await referralService.createReferralRelation({
-      sponsorUserRef: sponsor._id,
-      referredUserRef: user._id,
-      level: 1,
-      relationPath: [sponsor._id],
-    });
+  const sponsorUser = await User.findOne({ memberId: sponsorId.trim() });
+  if (!sponsorUser) {
+    throw new Error("Sponsor ID not found.");
+  }
 
-    await userRepository.createWalletRecord({ userRef: user._id });
+  const memberId = await generateMemberId();
+  const referralCode = await generateReferralCode(fullName);
+  const passwordHash = await hashPassword(password);
 
-    return {
-      id: user._id,
-      username: user.username,
-      referralLink: buildReferralLink("https://bkswealthclub.com", user.referralLinkCode),
-      accountStatus: user.accountStatus,
-      activationStatus: user.activationStatus,
-    };
-  },
+  const user = await User.create({
+    memberId,
+    sponsorId: sponsorUser.memberId,
+    sponsorUserId: sponsorUser._id,
+    referredByUserId: sponsorUser._id,
+    fullName: fullName.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone?.trim() || null,
+    passwordHash,
+    bepAddress: bepAddress?.trim() || null,
+    referralCode,
+    referralLink: buildReferralLink(referralCode),
+    registrationSource,
+    status: "pending",
+    isEmailVerified: false,
+    isActivated: false,
+  });
 
-  loginMember: async ({ identifier, password }) => {
-    const user = await authRepository.findUserByIdentifier(identifier);
-    if (!user) throw new ApiError(401, "Invalid credentials");
+  await UserProfile.create({
+    userId: user._id,
+  });
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
+  const verifyToken = generateRandomToken();
 
-    const accessToken = signAccessToken({ sub: user._id, role: user.role, username: user.username });
-    const refreshToken = signRefreshToken({ sub: user._id, role: user.role });
+  await EmailVerification.create({
+    userId: user._id,
+    email: user.email,
+    token: verifyToken,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+  });
 
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        name: user.name,
-        role: user.role,
-        accountStatus: user.accountStatus,
+  return {
+    user,
+    verifyToken,
+  };
+};
+
+export const loginUser = async ({ identifier, password }) => {
+  const user = await findUserByLoginIdentifier(identifier);
+
+  if (!user) {
+    throw new Error("Invalid credentials.");
+  }
+
+  if (
+    user.isSuspended ||
+    user.status === "suspended" ||
+    user.status === "blocked"
+  ) {
+    throw new Error("Account is suspended or blocked.");
+  }
+
+  const isPasswordValid = await comparePassword(password, user.passwordHash);
+  if (!isPasswordValid) {
+    throw new Error("Invalid credentials.");
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  const token = generateAccessToken({
+    userId: user._id,
+    memberId: user.memberId,
+    role: "member",
+  });
+
+  return { user, token };
+};
+
+export const verifyUserEmail = async (token) => {
+  const verification = await EmailVerification.findOne({
+    token,
+    isUsed: false,
+  });
+
+  if (!verification) {
+    throw new Error("Invalid verification token.");
+  }
+
+  if (verification.expiresAt < new Date()) {
+    throw new Error("Verification token expired.");
+  }
+
+  await User.findByIdAndUpdate(verification.userId, {
+    isEmailVerified: true,
+  });
+
+  verification.isUsed = true;
+  await verification.save();
+
+  return true;
+};
+
+export const resendVerificationEmail = async (email) => {
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  if (!user) throw new Error("User not found.");
+
+  if (user.isEmailVerified) {
+    throw new Error("Email already verified.");
+  }
+
+  const verifyToken = generateRandomToken();
+
+  await EmailVerification.create({
+    userId: user._id,
+    email: user.email,
+    token: verifyToken,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+  });
+
+  return { verifyToken };
+};
+
+export const forgotPassword = async (email) => {
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  if (!user) throw new Error("User not found.");
+
+  const token = generateRandomToken();
+
+  await PasswordReset.create({
+    userId: user._id,
+    token,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 30),
+  });
+
+  return { token };
+};
+
+export const resetPassword = async ({ token, newPassword }) => {
+  const reset = await PasswordReset.findOne({ token, isUsed: false });
+  if (!reset) throw new Error("Invalid reset token.");
+
+  if (reset.expiresAt < new Date()) {
+    throw new Error("Reset token expired.");
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+
+  await User.findByIdAndUpdate(reset.userId, { passwordHash });
+
+  reset.isUsed = true;
+  await reset.save();
+
+  return true;
+};
+
+export const getMyProfile = async (userId) => {
+  const user = await User.findById(userId).select("-passwordHash");
+  const profile = await UserProfile.findOne({ userId });
+
+  return { user, profile };
+};
+
+export const updateMyProfile = async (userId, payload) => {
+  const { fullName, phone } = payload;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      fullName,
+      phone,
+    },
+    { new: true },
+  ).select("-passwordHash");
+
+  const profile = await UserProfile.findOneAndUpdate(
+    { userId },
+    {
+      fatherName: payload.fatherName || null,
+      dob: payload.dob || null,
+      gender: payload.gender || null,
+      addressLine1: payload.addressLine1 || null,
+      addressLine2: payload.addressLine2 || null,
+      city: payload.city || null,
+      state: payload.state || null,
+      postalCode: payload.postalCode || null,
+      country: payload.country || null,
+    },
+    { new: true, upsert: true },
+  );
+
+  return { user, profile };
+};
+
+export const updateCryptoDetails = async (userId, payload) => {
+  const profile = await UserProfile.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        "crypto.bep20WalletAddress": payload.bep20WalletAddress || null,
+        "crypto.trc20WalletAddress": payload.trc20WalletAddress || null,
+        "crypto.preferredNetwork": payload.preferredNetwork || null,
       },
-    };
-  },
+    },
+    { new: true, upsert: true },
+  );
 
-  loginAdmin: async ({ identifier, password }) => {
-    const admin = await authRepository.findAdminByIdentifier(identifier);
-    if (!admin) throw new ApiError(401, "Invalid credentials");
-
-    const isPasswordValid = await bcrypt.compare(password, admin.passwordHash);
-    if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
-
-    const accessToken = signAccessToken({ sub: admin._id, role: admin.role, username: admin.username });
-    const refreshToken = signRefreshToken({ sub: admin._id, role: admin.role });
-
-    return {
-      accessToken,
-      refreshToken,
-      admin: {
-        id: admin._id,
-        username: admin.username,
-        role: admin.role,
-      },
-    };
-  },
-
-  refreshTokens: async (_refreshToken) => {
-    return {
-      accessToken: signAccessToken({ sub: "placeholder", role: USER_ROLES.USER }),
-      refreshToken: signRefreshToken({ sub: "placeholder", role: USER_ROLES.USER }),
-    };
-  },
+  return profile;
 };

@@ -1,15 +1,72 @@
 ﻿import mongoose from "mongoose";
 
-const authSessionSchema = new mongoose.Schema(
+const emailVerificationSchema = new mongoose.Schema(
   {
-    userRef: { type: mongoose.Schema.Types.ObjectId, refPath: "userType" },
-    userType: { type: String, enum: ["User", "Admin"], default: "User" },
-    refreshTokenHash: { type: String, required: true },
-    userAgent: { type: String, default: "" },
-    ipAddress: { type: String, default: "" },
-    expiresAt: { type: Date, required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+    token: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },
+    isUsed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true },
 );
 
-export const AuthSessionModel = mongoose.models.AuthSession || mongoose.model("AuthSession", authSessionSchema);
+const passwordResetSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    token: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },
+    isUsed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+  },
+  { timestamps: true },
+);
+
+export const EmailVerification = mongoose.model(
+  "EmailVerification",
+  emailVerificationSchema,
+);
+export const PasswordReset = mongoose.model(
+  "PasswordReset",
+  passwordResetSchema,
+);

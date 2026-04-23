@@ -1,28 +1,27 @@
-﻿import { z } from "zod";
+﻿export const validateRegisterInput = (body) => {
+  const errors = [];
 
-export const registerSchema = z.object({
-  sponsorId: z.string().trim().min(3),
-  name: z.string().trim().min(2),
-  email: z.string().email(),
-  country: z.string().trim().min(2),
-  mobile: z.string().trim().min(5),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6),
-}).superRefine((data, ctx) => {
-  if (data.password !== data.confirmPassword) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Passwords do not match", path: ["confirmPassword"] });
+  if (!body.fullName?.trim()) errors.push("Full name is required.");
+  if (!body.email?.trim()) errors.push("Email is required.");
+  if (!body.password?.trim()) errors.push("Password is required.");
+  if (!body.sponsorId?.trim()) errors.push("Sponsor ID is required.");
+  if (!body.registrationSource?.trim())
+    errors.push("Registration source is required.");
+
+  if (body.sponsorId && !/^BWC\d{6,}$/.test(body.sponsorId)) {
+    errors.push("Sponsor ID format is invalid.");
   }
-});
 
-export const loginSchema = z.object({
-  identifier: z.string().trim().min(3),
-  password: z.string().min(6),
-});
+  if (body.password && body.password.length < 6) {
+    errors.push("Password must be at least 6 characters.");
+  }
 
-export const refreshSchema = z.object({
-  refreshToken: z.string().min(10),
-});
+  return errors;
+};
 
-export const sponsorValidateSchema = z.object({
-  sponsorId: z.string().trim().min(3),
-});
+export const validateLoginInput = (body) => {
+  const errors = [];
+  if (!body.identifier?.trim()) errors.push("Identifier is required.");
+  if (!body.password?.trim()) errors.push("Password is required.");
+  return errors;
+};

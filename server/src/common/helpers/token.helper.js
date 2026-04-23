@@ -1,18 +1,16 @@
 ﻿import jwt from "jsonwebtoken";
-import { env } from "../../config/env.js";
+import crypto from "crypto";
 
-export function signAccessToken(payload) {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
-}
+export const generateAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
+};
 
-export function signRefreshToken(payload) {
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
-}
+export const verifyAccessToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
 
-export function verifyAccessToken(token) {
-  return jwt.verify(token, env.JWT_ACCESS_SECRET);
-}
-
-export function verifyRefreshToken(token) {
-  return jwt.verify(token, env.JWT_REFRESH_SECRET);
-}
+export const generateRandomToken = () => {
+  return crypto.randomBytes(32).toString("hex");
+};
