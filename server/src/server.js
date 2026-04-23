@@ -5,9 +5,11 @@ import { logger } from "./common/logger/logger.js";
 import { registerAutopoolJob } from "./jobs/autopool.job.js";
 import { registerIncomeJob } from "./jobs/income.job.js";
 import { registerNotificationJob } from "./jobs/notification.job.js";
+import { seedSuperAdmin } from "./modules/admin/seedSuperAdmin.js";
 
 async function bootstrap() {
   await connectDatabase();
+  await seedSuperAdmin();
 
   registerAutopoolJob();
   registerIncomeJob();

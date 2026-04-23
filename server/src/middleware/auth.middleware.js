@@ -23,3 +23,5 @@ export const protect = (req, res, next) => {
     });
   }
 };
+
+export const authMiddleware = protect;

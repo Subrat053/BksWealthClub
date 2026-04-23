@@ -19,8 +19,7 @@ const userSchema = new mongoose.Schema(
     sponsorUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      unique: true,
+      default: null,
       index: true,
     },
     referredByUserId: {

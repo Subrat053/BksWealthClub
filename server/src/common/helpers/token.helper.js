@@ -1,14 +1,15 @@
 ﻿import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { env } from "../../config/env.js";
 
 export const generateAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: env.JWT_ACCESS_EXPIRES_IN,
   });
 };
 
 export const verifyAccessToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, env.JWT_ACCESS_SECRET);
 };
 
 export const generateRandomToken = () => {

@@ -1,8 +1,39 @@
 import { apiClient } from "./apiClient";
 
 export const authService = {
-  login: (payload) => apiClient(() => ({ ok: true, user: { username: payload.username } })),
-  register: (payload) => apiClient(() => ({ ok: true, userId: "u_001", payload })),
+  register: (payload) =>
+    apiClient("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        fullName: payload.name,
+        email: payload.email,
+        phone: payload.mobile,
+        password: payload.password,
+        sponsorId: payload.sponsor,
+        registrationSource: "website",
+      }),
+    }),
+
+  login: (payload) =>
+    apiClient("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        identifier: payload.username,
+        password: payload.password,
+      }),
+    }),
+
   validateSponsor: (sponsorId) =>
-    apiClient(() => ({ ok: true, sponsorId, status: sponsorId === "GRW328370" ? "inactive" : "active" })),
+    apiClient("/api/v1/referrals/validate-sponsor", {
+      method: "POST",
+      body: JSON.stringify({ sponsorId }),
+    }),
+
+  verifyEmail: (token) =>
+    apiClient("/api/v1/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+
+  getProfile: () => apiClient("/api/v1/auth/me"),
 };
