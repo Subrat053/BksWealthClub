@@ -1,4 +1,4 @@
-import PageHeader from "../../components/common/PageHeader";
+// import PageHeader from "../../components/common/PageHeader";
 import FilterBar from "../../components/common/FilterBar";
 import AdminTable from "../../components/common/AdminTable";
 
@@ -6,6 +6,10 @@ import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import DataTable from "../../components/DataTable";
 import StatusBadge from "../../components/StatusBadge";
 import { users } from "../../config/data";
+
+import { useState } from "react";
+import { useUsers } from "../../hooks/useUsers";
+import { updateUserStatus, deleteUser } from "../../api/user.api";
 
 const columns = [
   { key: "username", label: "Username" },
@@ -29,6 +33,30 @@ const columns2 = [
 ];
 
 export default function UserListPage() {
+
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "",
+  });
+
+  const { users, loading, refetch } = useUsers(filters);
+
+  // Handle Block/Unblock
+  const handleStatusToggle = async (row) => {
+    const newStatus = row.status === "blocked" ? "active" : "blocked";
+
+    await updateUserStatus(row._id, newStatus);
+    refetch();
+  };
+
+  // Handle Delete
+  const handleDelete = async (row) => {
+    if (!confirm("Are you sure?")) return;
+
+    await deleteUser(row._id);
+    refetch();
+  };
+
   return (
     <div className="space-y-5">
       {/* <PageHeader title="Users List" subtitle="Search, filter, and manage member accounts" /> */}
@@ -50,14 +78,17 @@ export default function UserListPage() {
           <option>Blocked</option>
           <option>Pending</option>
         </select>
-        <select className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none">
+        <button 
+        className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]"
+        onClick={refetch}>Apply Filters</button>
+        {/* <select className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none">
           <option>All Roles</option>
           <option>Customer</option>
           <option>Subscriber</option>
         </select>
         <button className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]">
           Apply Filters
-        </button>
+        </button> */}
       </div>
 
       <DataTable
@@ -71,20 +102,29 @@ export default function UserListPage() {
             <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
               Edit
             </button>
-            <button className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20">
+            {/* <button className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20">
               {row.status === "blocked" ? "Unblock" : "Block"}
+            </button> */}
+
+            <button 
+            className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20"
+            onClick={() => handleStatusToggle(row)}>
+              {row.status === "blocked" ? "Unblock" : "Block"}
+            </button>
+             <button onClick={() => handleDelete(row)}>
+              Delete
             </button>
           </div>
         )}
       />
-      <FilterBar>
+      {/* <FilterBar>
         <input className="h-11 rounded-lg bg-[#2d3440] px-4 text-sm outline-none" placeholder="Search username" />
         <select className="h-11 rounded-lg bg-[#2d3440] px-4 text-sm outline-none">
           <option>All Status</option>
         </select>
         <button className="h-11 rounded-lg bg-gradient-to-r from-[#3f63db] to-[#33c0d7] text-sm font-semibold">Apply Filters</button>
       </FilterBar>
-      <AdminTable columns={columns} rows={[]} emptyText="No users found" />
+      <AdminTable columns={columns} rows={[]} emptyText="No users found" /> */}
     </div>
   );
 }

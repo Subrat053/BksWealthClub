@@ -1,15 +1,26 @@
-﻿import { Router } from "express";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
-import { adminMiddleware } from "../../middleware/admin.middleware.js";
-import {
-  getAdminSummaryController,
-  getUsersController,
-  updateUserStatusController,
+﻿import {
+  getAllUsers,
+  createUserByAdmin,
+  deleteUser,
+  getUserDetails,
+  updateUserStatus,
+  resetUserPassword,
 } from "./admin.controller.js";
+
+import { Router } from "express";
 
 export const adminRouter = Router();
 
-adminRouter.use(authMiddleware, adminMiddleware);
-adminRouter.get("/summary", getAdminSummaryController);
-adminRouter.get("/users", getUsersController);
-adminRouter.patch("/users/:id/status", updateUserStatusController);
+adminRouter.get("/users", getAllUsers);
+// Create
+adminRouter.post("/users", createUserByAdmin);
+
+// Read
+adminRouter.get("/users/:userId", getUserDetails);
+
+// Update
+adminRouter.patch("/users/:userId/status", updateUserStatus);
+adminRouter.patch("/users/:userId/reset-password", resetUserPassword);
+
+// Delete
+adminRouter.delete("/users/:userId", deleteUser);

@@ -8,6 +8,14 @@ import { corsMiddleware } from "./config/cors.js";
 import { apiRouter } from "./routes/index.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { ApiResponse } from "./core/ApiResponse.js";
+// ===========================================
+// ADMIN ROUTES
+// ===========================================
+import adminRoutes from "./modules/admin/admin.routes.js";
+// -------------------------------------------
+
+
+
 
 export function createApp() {
   const app = express();
@@ -33,7 +41,9 @@ export function createApp() {
       }),
     );
   });
-
+// -------------------
+  app.use("/admin", adminRoutes);
+// -------------------
   app.use(env.API_PREFIX, apiRouter);
 
   app.use((_req, res) => {

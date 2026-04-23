@@ -1,0 +1,21 @@
+import axiosInstance from "../utils/axiosInstance";
+
+// GET USERS
+export const fetchUsers = (params) => {
+  return axiosInstance.get("/admin/users", { params });
+};
+
+// DELETE USER
+export const deleteUser = (userId) => {
+  return axiosInstance.delete(`/admin/users/${userId}`);
+};
+
+// UPDATE STATUS
+export const updateUserStatus = (userId, status) => {
+  return axiosInstance.patch(`/admin/users/${userId}/status`, { status });
+};
+
+// GET SINGLE USER
+export const getUserDetails = (userId) => {
+  return axiosInstance.get(`/admin/users/${userId}`);
+};

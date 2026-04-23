@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     sponsorId: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
       index: true,
     },
@@ -19,6 +20,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      unique: true,
       index: true,
     },
     referredByUserId: {
@@ -108,3 +110,4 @@ const userSchema = new mongoose.Schema(
 );
 
 export const User = mongoose.model("User", userSchema);
+export const UserModel = User;
