@@ -1,5 +1,6 @@
 ﻿import { User } from "../user/user.model.js";
 import { UserProfile } from "../user/user-profile.model.js";
+import { AdminModel } from "../admin/admin.model.js";
 import { EmailVerification, PasswordReset } from "./auth.model.js";
 import {
   hashPassword,
@@ -44,8 +45,20 @@ export const registerUser = async (payload) => {
     throw new Error("Email already registered.");
   }
 
-  const sponsorUser = await User.findOne({ memberId: sponsorId.trim() });
-  if (!sponsorUser) {
+  const normalizedSponsorId = sponsorId?.trim().toUpperCase();
+  if (!normalizedSponsorId) {
+    throw new Error("Sponsor ID is required.");
+  }
+
+  const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
+  const sponsorAdmin = sponsorUser
+    ? null
+    : await AdminModel.findOne({
+        sponsorId: normalizedSponsorId,
+        isActive: true,
+      });
+
+  if (!sponsorUser && !sponsorAdmin) {
     throw new Error("Sponsor ID not found.");
   }
 
@@ -55,9 +68,9 @@ export const registerUser = async (payload) => {
 
   const user = await User.create({
     memberId,
-    sponsorId: sponsorUser.memberId,
-    sponsorUserId: sponsorUser._id,
-    referredByUserId: sponsorUser._id,
+    sponsorId: normalizedSponsorId,
+    sponsorUserId: sponsorUser?._id || null,
+    referredByUserId: sponsorUser?._id || null,
     fullName: fullName.trim(),
     email: email.toLowerCase().trim(),
     phone: phone?.trim() || null,

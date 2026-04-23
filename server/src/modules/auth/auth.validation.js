@@ -1,4 +1,6 @@
-﻿export const validateRegisterInput = (body) => {
+﻿import { z } from "zod";
+
+export const validateRegisterInput = (body) => {
   const errors = [];
 
   if (!body.fullName?.trim()) errors.push("Full name is required.");
@@ -25,3 +27,11 @@ export const validateLoginInput = (body) => {
   if (!body.password?.trim()) errors.push("Password is required.");
   return errors;
 };
+
+export const sponsorValidateSchema = z.object({
+  sponsorId: z
+    .string()
+    .trim()
+    .min(1, "Sponsor ID is required")
+    .regex(/^BWC\d{6,}$/, "Sponsor ID format is invalid"),
+});

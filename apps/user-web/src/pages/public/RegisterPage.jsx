@@ -1,12 +1,18 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
 import FormField from "../../components/common/FormField";
 import Button from "../../components/common/Button";
 
 export default function RegisterPage() {
+  const sponsorPattern = /^BWC\d{6,}$/;
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     sponsor: "",
     name: "",
@@ -17,47 +23,148 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [sponsorValidation, setSponsorValidation] = useState(null);
+  const [sponsorLoading, setSponsorLoading] = useState(false);
 
-  const sponsorStatus = useMemo(
-    () => (form.sponsor === "GRW328370" ? "Sponsor not Active" : "Sponsor Active"),
-    [form.sponsor],
-  );
+  const sponsorStatus = useMemo(() => {
+    if (!form.sponsor) return null;
+    if (!sponsorPattern.test(form.sponsor)) {
+      return "Enter sponsor ID like BWC123456";
+    }
+    if (sponsorLoading) return "Checking...";
+    if (sponsorValidation?.error) return sponsorValidation.error;
+    if (!sponsorValidation?.data) return null;
+    return sponsorValidation.data.active
+      ? "Sponsor Active"
+      : "Sponsor not Active";
+  }, [form.sponsor, sponsorValidation, sponsorLoading]);
 
-  const onSubmit = (event) => {
+  useEffect(() => {
+    const sponsorId = form.sponsor.trim().toUpperCase();
+
+    if (!sponsorId || !sponsorPattern.test(sponsorId)) {
+      setSponsorLoading(false);
+      setSponsorValidation(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setSponsorLoading(true);
+      try {
+        const result = await authService.validateSponsor(sponsorId);
+        setSponsorValidation(result);
+      } catch (err) {
+        setSponsorValidation({
+          error: "Sponsor not found. You can continue without sponsor.",
+        });
+      } finally {
+        setSponsorLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [form.sponsor]);
+
+  const onSponsorChange = (e) => {
+    const sponsor = e.target.value.toUpperCase();
+    setForm((prev) => ({ ...prev, sponsor }));
+  };
+
+  const onSubmit = async (event) => {
     event.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+    if (
+      !form.name ||
+      !form.email ||
+      !form.password ||
+      !form.confirmPassword ||
+      !form.sponsor
+    ) {
       setError("Please fill all required fields.");
+      return;
+    }
+    if (!sponsorPattern.test(form.sponsor.trim().toUpperCase())) {
+      setError("Sponsor ID must be like BWC123456.");
       return;
     }
     if (form.password !== form.confirmPassword) {
       setError("Password and confirm password must match.");
       return;
     }
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setError("");
+    setLoading(true);
+
+    try {
+      await authService.register({
+        ...form,
+        sponsor: form.sponsor.trim(),
+      });
+
+      // Auto-login the user after successful registration
+      const loginResponse = await authService.login({
+        username: form.email,
+        password: form.password,
+      });
+
+      // Save token
+      localStorage.setItem("authToken", loginResponse.data.token);
+
+      // Update auth context
+      login({
+        id: loginResponse.data.user._id,
+        memberId: loginResponse.data.user.memberId,
+        email: loginResponse.data.user.email,
+        displayName: loginResponse.data.user.fullName,
+        role: "member",
+      });
+
+      // Redirect to dashboard
+      navigate("/member/dashboard");
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="mx-auto max-w-3xl my-6">
-      <Card title="Register" className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]">
+      <Card
+        title="Register"
+        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+      >
         <form className="space-y-4" onSubmit={onSubmit}>
-          <FormField label="Sponsor">
+          <FormField label="Sponsor ID">
             <input
               value={form.sponsor}
-              onChange={(e) => setForm((prev) => ({ ...prev, sponsor: e.target.value }))}
+              onChange={onSponsorChange}
               className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              placeholder="Enter sponsor ID"
             />
-            {/* <p
-              className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                sponsorStatus.includes("not") ? "bg-red-500/20 text-red-300" : "bg-green-500/20 text-green-300"
-              }`}
-            >
-              {sponsorStatus}
-            </p> */}
+            {sponsorStatus && (
+              <p
+                className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                  sponsorStatus === "Sponsor not Active" ||
+                  sponsorStatus === "Enter sponsor ID like BWC123456" ||
+                  sponsorValidation?.error
+                    ? "bg-red-500/20 text-red-300"
+                    : "bg-green-500/20 text-green-300"
+                }`}
+              >
+                {sponsorStatus}
+              </p>
+            )}
           </FormField>
           <FormField label="Name">
             <input
               value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, name: e.target.value }))
+              }
               className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
             />
           </FormField>
@@ -65,7 +172,9 @@ export default function RegisterPage() {
             <input
               type="email"
               value={form.email}
-              onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, email: e.target.value }))
+              }
               className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
             />
           </FormField>
@@ -73,7 +182,9 @@ export default function RegisterPage() {
             <FormField label="Country">
               <select
                 value={form.country}
-                onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, country: e.target.value }))
+                }
                 className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
               >
                 <option>India</option>
@@ -84,7 +195,9 @@ export default function RegisterPage() {
             <FormField label="Mobile">
               <input
                 value={form.mobile}
-                onChange={(e) => setForm((prev) => ({ ...prev, mobile: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, mobile: e.target.value }))
+                }
                 className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
               />
             </FormField>
@@ -95,7 +208,10 @@ export default function RegisterPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 value={form.password}
-                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, password: e.target.value }))
+                }
+                autoComplete="new-password"
                 className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
               />
               <button
@@ -113,7 +229,13 @@ export default function RegisterPage() {
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={form.confirmPassword}
-                onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    confirmPassword: e.target.value,
+                  }))
+                }
+                autoComplete="new-password"
                 className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
               />
               <button
@@ -127,11 +249,14 @@ export default function RegisterPage() {
           </FormField>
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          <Button type="submit" className="w-full">
-            Register
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
           </Button>
           <p className="text-sm text-slate-300">
-            Already have an account? <Link to="/login" className="text-white underline">Login</Link>
+            Already have an account?{" "}
+            <Link to="/login" className="text-white underline">
+              Login
+            </Link>
           </p>
         </form>
       </Card>

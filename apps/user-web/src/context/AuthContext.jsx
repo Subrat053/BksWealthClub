@@ -1,35 +1,48 @@
-import { createContext, useMemo, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 
 export const AuthContext = createContext(null);
 
-const defaultUser = {
-  id: "u_001",
-  memberId: "GRW328370",
-  username: "GRW328370",
-  displayName: "Demo Member",
-  status: "Inactive",
-  avatarUrl: "",
-  role: "member",
-};
-
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [user, setUser] = useState(defaultUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("user");
+
+    if (token && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (err) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+      }
+    }
+    setLoading(false);
+  }, []);
 
   const value = useMemo(
     () => ({
       isAuthenticated,
       user,
-      login: (nextUser = defaultUser) => {
+      loading,
+      login: (nextUser) => {
         setUser(nextUser);
         setIsAuthenticated(true);
+        localStorage.setItem("user", JSON.stringify(nextUser));
       },
       logout: () => {
         setUser(null);
         setIsAuthenticated(false);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
       },
     }),
-    [isAuthenticated, user],
+    [isAuthenticated, user, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
