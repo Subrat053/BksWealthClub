@@ -1,7 +1,10 @@
 import axios from "axios";
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:5008/api/v1";
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // e.g. http://localhost:5000/api
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 

@@ -9,8 +9,15 @@ export const useUsers = (filters) => {
     try {
       setLoading(true);
       const res = await fetchUsers(filters);
+      const payload = res?.data;
+      const usersList = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.users)
+          ? payload.users
+          : [];
+
       setUsers(
-        res.data.users.map((u) => ({
+        usersList.map((u) => ({
           _id: u._id,
           id: u.memberId,
           name: u.fullName,
@@ -18,11 +25,12 @@ export const useUsers = (filters) => {
           phone: u.phone,
           role: u.role || "user",
           status: u.status,
-          joinedAt: new Date(u.createdAt).toLocaleDateString(),
+          joinedAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-",
         })),
       );
     } catch (err) {
       console.error(err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
