@@ -13,7 +13,7 @@ export const adminRouter = Router();
 
 adminRouter.get("/users", getAllUsers);
 // Create
-adminRouter.post("/users", createUserByAdmin);
+adminRouter.post("/create-user", createUserByAdmin);
 
 // Read
 adminRouter.get("/users/:userId", getUserDetails);

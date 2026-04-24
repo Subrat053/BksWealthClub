@@ -19,3 +19,8 @@ export const updateUserStatus = (userId, status) => {
 export const getUserDetails = (userId) => {
   return axiosInstance.get(`/admin/users/${userId}`);
 };
+
+export const createUserByAdmin = async (payload) => {
+  const res = await axiosInstance.post("/admin/create-user", payload);
+  return res.data;
+};

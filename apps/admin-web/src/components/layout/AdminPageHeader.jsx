@@ -3,6 +3,7 @@ export default function AdminPageHeader({
   subtitle,
   primaryActionText,
   secondaryActionText,
+  onPrimaryClick,
 }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] backdrop-blur-md md:p-7">
@@ -20,7 +21,10 @@ export default function AdminPageHeader({
           )}
 
           {primaryActionText && (
-            <button className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]">
+            <button
+            onClick={onPrimaryClick} 
+            className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]"
+            >
               {primaryActionText}
             </button>
           )}
