@@ -1,12 +1,15 @@
 ﻿import { getAllUsers as getAllUsersService } from "./admin.service.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { User } from "../user/user.model.js";
 import { AdminModel } from "./admin.model.js";
+import { AdminUserInvite } from "./admin-invite.model.js";
 import { comparePassword } from "../../common/helpers/password.helper.js";
 import { generateAccessToken } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
 import { sendWelcomeEmail } from "../../common/service/email.service.js";
+import { sendOtpEmail } from "../../common/service/email.service.js";
 
 
 // 👁️ Get All Users
@@ -93,6 +96,219 @@ export const adminLogin = async (req, res) => {
           isActive: admin.isActive,
           lastLoginAt: admin.lastLoginAt,
         },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+const hashInviteCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
+
+const generateInviteCode = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const resolveSponsor = async (sponsorId) => {
+  const normalizedSponsorId = sponsorId?.trim().toUpperCase();
+
+  if (!normalizedSponsorId) {
+    return { ok: false, message: "Sponsor ID is required." };
+  }
+
+  const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
+  const sponsorAdmin = sponsorUser
+    ? null
+    : await AdminModel.findOne({ sponsorId: normalizedSponsorId, isActive: true });
+
+  if (!sponsorUser && !sponsorAdmin) {
+    return { ok: false, message: "Sponsor not found." };
+  }
+
+  return { ok: true, normalizedSponsorId, sponsorUser };
+};
+
+export const requestUserInviteCode = async (req, res) => {
+  try {
+    const { email, fullName, phone, sponsorId } = req.body;
+
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedFullName = fullName?.trim();
+
+    if (!normalizedEmail || !normalizedFullName || !sponsorId?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, full name, and sponsor ID are required.",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered.",
+      });
+    }
+
+    const sponsor = await resolveSponsor(sponsorId);
+    if (!sponsor.ok) {
+      return res.status(404).json({ success: false, message: sponsor.message });
+    }
+
+    const code = generateInviteCode();
+    const codeHash = hashInviteCode(code);
+
+    await AdminUserInvite.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        email: normalizedEmail,
+        fullName: normalizedFullName,
+        phone: phone?.trim() || null,
+        sponsorId: sponsor.normalizedSponsorId,
+        codeHash,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+        isCodeVerified: false,
+        verifiedAt: null,
+      },
+      { upsert: true, new: true },
+    );
+
+    await sendOtpEmail(normalizedEmail, code);
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification code sent to email.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+export const verifyUserInviteCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !code?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and code are required.",
+      });
+    }
+
+    const invite = await AdminUserInvite.findOne({ email: normalizedEmail });
+    if (!invite) {
+      return res.status(404).json({
+        success: false,
+        message: "Invite request not found.",
+      });
+    }
+
+    if (invite.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification code expired.",
+      });
+    }
+
+    if (invite.codeHash !== hashInviteCode(code.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification code.",
+      });
+    }
+
+    invite.isCodeVerified = true;
+    invite.verifiedAt = new Date();
+    await invite.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification code confirmed.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+export const completeUserInvite = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !password?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required.",
+      });
+    }
+
+    const invite = await AdminUserInvite.findOne({ email: normalizedEmail });
+    if (!invite) {
+      return res.status(404).json({
+        success: false,
+        message: "Invite request not found.",
+      });
+    }
+
+    if (!invite.isCodeVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify the code first.",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered.",
+      });
+    }
+
+    const sponsor = await resolveSponsor(invite.sponsorId);
+    if (!sponsor.ok) {
+      return res.status(404).json({ success: false, message: sponsor.message });
+    }
+
+    const memberId = await generateMemberId();
+    const referralCode = await generateReferralCode(invite.fullName);
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      memberId,
+      sponsorId: sponsor.normalizedSponsorId,
+      sponsorUserId: sponsor.sponsorUser?._id || null,
+      referredByUserId: sponsor.sponsorUser?._id || null,
+      fullName: invite.fullName,
+      email: normalizedEmail,
+      phone: invite.phone || null,
+      passwordHash,
+      referralCode,
+      referralLink: `${process.env.BASE_URL}/register/${referralCode}`,
+      registrationSource: "admin",
+      status: "active",
+      isActivated: true,
+      isEmailVerified: true,
+    });
+
+    await AdminUserInvite.deleteOne({ _id: invite._id });
+    await sendWelcomeEmail(user.email, user.fullName, user.referralCode, password);
+
+    return res.status(201).json({
+      success: true,
+      message: "User created successfully and welcome email sent.",
+      data: {
+        userId: user._id,
+        memberId: user.memberId,
+        email: user.email,
       },
     });
   } catch (error) {

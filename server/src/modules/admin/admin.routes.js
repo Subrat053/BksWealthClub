@@ -2,6 +2,9 @@
   adminLogin,
   getAllUsers,
   createUserByAdmin,
+  requestUserInviteCode,
+  verifyUserInviteCode,
+  completeUserInvite,
   deleteUser,
   getUserDetails,
   updateUserStatus,
@@ -13,6 +16,9 @@ import { Router } from "express";
 export const adminRouter = Router();
 
 adminRouter.post("/login", adminLogin);
+adminRouter.post("/users/invite/request-code", requestUserInviteCode);
+adminRouter.post("/users/invite/verify-code", verifyUserInviteCode);
+adminRouter.post("/users/invite/complete", completeUserInvite);
 
 adminRouter.get("/users", getAllUsers);
 // Create

@@ -6,6 +6,7 @@ import {
   hashPassword,
   comparePassword,
 } from "../../common/helpers/password.helper.js";
+import { sendVerificationEmail } from "../../common/service/email.service.js";
 import {
   generateAccessToken,
   generateRandomToken,
@@ -96,6 +97,8 @@ export const registerUser = async (payload) => {
     token: verifyToken,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
+
+  await sendVerificationEmail(user.email, user.fullName, verifyToken);
 
   return {
     user,

@@ -4,6 +4,7 @@ import AdminLayout from "../components/layout/AdminLayout";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 import AdminDashboardPage from "../pages/dashboard/AdminDashboardPage";
 import UserListPage from "../pages/users/UserListPage";
+import AddUserPage from "../pages/users/AddUserPage";
 import UserDetailsPage from "../pages/users/UserDetailsPage";
 import TeamTreePage from "../pages/team/TeamTreePage";
 import AutopoolManagerPage from "../pages/team/AutopoolManagerPage";
@@ -33,6 +34,7 @@ export const adminRouter = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <AdminDashboardPage /> },
           { path: "users", element: <UserListPage /> },
+          { path: "users/add", element: <AddUserPage /> },
           { path: "users/:id", element: <UserDetailsPage /> },
           { path: "team/referrals", element: <TeamTreePage /> },
           { path: "team/autopool", element: <AutopoolManagerPage /> },

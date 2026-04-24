@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsers } from "../../hooks/useUsers";
 import { updateUserStatus } from "../../api/user.api";
-import CreateUserModal from "./CreateUserModal";
 
 export default function UserListPage() {
   const navigate = useNavigate();
@@ -16,7 +15,6 @@ export default function UserListPage() {
   });
 
   const { users, loading, refetch } = useUsers(filters);
-  const [showModal, setShowModal] = useState(false);
 
   const columns2 = useMemo(
     () => [
@@ -60,7 +58,7 @@ export default function UserListPage() {
         subtitle="Manage users, status, roles, and account access."
         primaryActionText="Add User"
         // secondaryActionText="Import Users"
-        onPrimaryClick={() => setShowModal(true)}
+        onPrimaryClick={() => navigate("/admin/users/add")}
       />
       <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
         <input
@@ -120,11 +118,6 @@ export default function UserListPage() {
             </button>
           </div>
         )}
-      />
-      <CreateUserModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={refetch}
       />
       {/* <FilterBar>
         <input className="h-11 rounded-lg bg-[#2d3440] px-4 text-sm outline-none" placeholder="Search username" />
