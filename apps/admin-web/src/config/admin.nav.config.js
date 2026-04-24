@@ -10,7 +10,6 @@ import {
   UserPlus,
   Users,
   Workflow,
-  
 } from "lucide-react";
 
 export const adminNav = [

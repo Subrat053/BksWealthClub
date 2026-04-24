@@ -26,12 +26,18 @@ export const createUserByAdmin = async (payload) => {
 };
 
 export const requestUserInviteCode = async (payload) => {
-  const res = await axiosInstance.post("/admin/users/invite/request-code", payload);
+  const res = await axiosInstance.post(
+    "/admin/users/invite/request-code",
+    payload,
+  );
   return res.data;
 };
 
 export const verifyUserInviteCode = async (payload) => {
-  const res = await axiosInstance.post("/admin/users/invite/verify-code", payload);
+  const res = await axiosInstance.post(
+    "/admin/users/invite/verify-code",
+    payload,
+  );
   return res.data;
 };
 

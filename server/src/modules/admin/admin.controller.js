@@ -11,7 +11,6 @@ import { generateReferralCode } from "../../utils/generateReferralCode.js";
 import { sendWelcomeEmail } from "../../common/service/email.service.js";
 import { sendOtpEmail } from "../../common/service/email.service.js";
 
-
 // 👁️ Get All Users
 export const getAllUsers = async (req, res) => {
   try {
@@ -106,9 +105,11 @@ export const adminLogin = async (req, res) => {
   }
 };
 
-const hashInviteCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
+const hashInviteCode = (code) =>
+  crypto.createHash("sha256").update(code).digest("hex");
 
-const generateInviteCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const generateInviteCode = () =>
+  String(Math.floor(100000 + Math.random() * 900000));
 
 const resolveSponsor = async (sponsorId) => {
   const normalizedSponsorId = sponsorId?.trim().toUpperCase();
@@ -120,7 +121,10 @@ const resolveSponsor = async (sponsorId) => {
   const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
   const sponsorAdmin = sponsorUser
     ? null
-    : await AdminModel.findOne({ sponsorId: normalizedSponsorId, isActive: true });
+    : await AdminModel.findOne({
+        sponsorId: normalizedSponsorId,
+        isActive: true,
+      });
 
   if (!sponsorUser && !sponsorAdmin) {
     return { ok: false, message: "Sponsor not found." };
@@ -300,7 +304,12 @@ export const completeUserInvite = async (req, res) => {
     });
 
     await AdminUserInvite.deleteOne({ _id: invite._id });
-    await sendWelcomeEmail(user.email, user.fullName, user.referralCode, password);
+    await sendWelcomeEmail(
+      user.email,
+      user.fullName,
+      user.referralCode,
+      password,
+    );
 
     return res.status(201).json({
       success: true,
@@ -318,7 +327,6 @@ export const completeUserInvite = async (req, res) => {
     });
   }
 };
-
 
 // 👉 Create User (Admin)
 export const createUserByAdmin = async (req, res) => {
@@ -340,7 +348,10 @@ export const createUserByAdmin = async (req, res) => {
     const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
     const sponsorAdmin = sponsorUser
       ? null
-      : await AdminModel.findOne({ sponsorId: normalizedSponsorId, isActive: true });
+      : await AdminModel.findOne({
+          sponsorId: normalizedSponsorId,
+          isActive: true,
+        });
 
     if (!sponsorUser && !sponsorAdmin) {
       return res.status(404).json({ message: "Sponsor not found." });
@@ -367,7 +378,12 @@ export const createUserByAdmin = async (req, res) => {
       isActivated: true,
       isEmailVerified: true,
     });
-    await sendWelcomeEmail(newUser.email, newUser.fullName, newUser.referralCode, password);
+    await sendWelcomeEmail(
+      newUser.email,
+      newUser.fullName,
+      newUser.referralCode,
+      password,
+    );
     return res.status(201).json({
       message: "User created successfully, Welcome mail sent.",
       data: newUser,
