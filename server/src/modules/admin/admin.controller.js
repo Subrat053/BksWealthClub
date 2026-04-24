@@ -1,6 +1,9 @@
 ﻿import { getAllUsers as getAllUsersService } from "./admin.service.js";
 import bcrypt from "bcrypt";
 import { User } from "../user/user.model.js";
+import { AdminModel } from "./admin.model.js";
+import { comparePassword } from "../../common/helpers/password.helper.js";
+import { generateAccessToken } from "../../common/helpers/token.helper.js";
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -15,16 +18,87 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+export const adminLogin = async (req, res) => {
+  try {
+    const identifier = req.body?.identifier?.trim();
+    const password = req.body?.password;
+
+    if (!identifier || !password?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Identifier and password are required.",
+      });
+    }
+
+    const normalizedIdentifier = identifier.toLowerCase();
+
+    const admin = await AdminModel.findOne({
+      $or: [
+        { email: normalizedIdentifier },
+        { username: identifier },
+        { sponsorId: identifier.toUpperCase() },
+      ],
+    });
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid admin credentials.",
+      });
+    }
+
+    if (!admin.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin account is inactive.",
+      });
+    }
+
+    const isPasswordValid = await comparePassword(password, admin.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid admin credentials.",
+      });
+    }
+
+    admin.lastLoginAt = new Date();
+    await admin.save();
+
+    const token = generateAccessToken({
+      adminId: admin._id,
+      role: admin.role,
+      email: admin.email,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin login successful.",
+      data: {
+        token,
+        admin: {
+          id: admin._id,
+          username: admin.username,
+          email: admin.email,
+          role: admin.role,
+          sponsorId: admin.sponsorId,
+          isActive: admin.isActive,
+          lastLoginAt: admin.lastLoginAt,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
 // 👉 Create User (Admin)
 export const createUserByAdmin = async (req, res) => {
   try {
-    const {
-      memberId,
-      sponsorId,
-      fullName,
-      email,
-      password,
-    } = req.body;
+    const { memberId, sponsorId, fullName, email, password } = req.body;
 
     // Check existing
     const existingUser = await User.findOne({
@@ -123,7 +197,7 @@ export const updateUserStatus = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { status },
-      { new: true }
+      { new: true },
     );
 
     return res.json({
