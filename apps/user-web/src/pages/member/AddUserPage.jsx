@@ -56,7 +56,13 @@ export default function AddUserPage() {
       });
 
       setSuccess("User added successfully. Verification email has been sent.");
-      setForm({ name: "", email: "", mobile: "", password: "", confirmPassword: "" });
+      setForm({
+        name: "",
+        email: "",
+        mobile: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch (err) {
       setError(err.message || "Failed to add user.");
     } finally {
@@ -66,13 +72,20 @@ export default function AddUserPage() {
 
   return (
     <div className="mx-auto my-6 max-w-3xl">
-      <Card title="Add User" className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]">
+      <Card
+        title="Add User"
+        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+      >
         <p className="mb-4 text-sm text-slate-300">
-          This user will be created under your sponsor ID <span className="font-semibold text-white">{sponsorId || "-"}</span> and will receive a verification link by email.
+          This user will be created under your sponsor ID{" "}
+          <span className="font-semibold text-white">{sponsorId || "-"}</span>{" "}
+          and will receive a verification link by email.
         </p>
 
         {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
-        {success ? <p className="mb-4 text-sm text-emerald-300">{success}</p> : null}
+        {success ? (
+          <p className="mb-4 text-sm text-emerald-300">{success}</p>
+        ) : null}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <FormField label="Full Name">
@@ -134,7 +147,11 @@ export default function AddUserPage() {
             <Button type="submit" className="flex-1" disabled={loading}>
               {loading ? "Adding..." : "Add User"}
             </Button>
-            <Button type="button" variant="muted" onClick={() => navigate("/member/dashboard")}>
+            <Button
+              type="button"
+              variant="muted"
+              onClick={() => navigate("/member/dashboard")}
+            >
               Cancel
             </Button>
           </div>

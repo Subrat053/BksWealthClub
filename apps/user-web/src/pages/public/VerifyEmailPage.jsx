@@ -20,7 +20,9 @@ export default function VerifyEmailPage() {
       try {
         await authService.verifyEmail(token);
         setStatus("success");
-        setMessage("Your email has been verified successfully. You can now log in.");
+        setMessage(
+          "Your email has been verified successfully. You can now log in.",
+        );
       } catch (error) {
         setStatus("error");
         setMessage(error.message || "Verification failed.");
@@ -32,8 +34,13 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="mx-auto my-10 max-w-xl px-4">
-      <Card title="Verify Email" className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]">
-        <p className={`text-sm ${status === "success" ? "text-emerald-300" : status === "error" ? "text-red-300" : "text-slate-300"}`}>
+      <Card
+        title="Verify Email"
+        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+      >
+        <p
+          className={`text-sm ${status === "success" ? "text-emerald-300" : status === "error" ? "text-red-300" : "text-slate-300"}`}
+        >
           {message}
         </p>
         <div className="mt-6 flex gap-3">

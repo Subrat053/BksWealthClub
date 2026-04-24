@@ -69,7 +69,10 @@ export const router = createBrowserRouter([
           { path: "team/generation", element: <GenerationTeamPage /> },
           { path: "team/autopool", element: <AutopoolTreePage /> },
           { path: "income/sponsor", element: <SponsorIncomePage /> },
-          { path: "income/representative", element: <RepresentativeIncomePage /> },
+          {
+            path: "income/representative",
+            element: <RepresentativeIncomePage />,
+          },
           { path: "withdrawal/make", element: <MakeWithdrawalPage /> },
           { path: "withdrawal/history", element: <WithdrawalHistoryPage /> },
           { path: "support", element: <SupportPage /> },

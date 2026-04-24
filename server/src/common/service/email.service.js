@@ -1,8 +1,11 @@
 // import { transporter } from "../../config/email.config.js";
 
-import { transporter} from "../../config/email.js";
+import { transporter } from "../../config/email.js";
 
-const FROM = (process.env.MAIL_FROM || process.env.MAIL_USER || "").replace(/^"|"$/g, "");
+const FROM = (process.env.MAIL_FROM || process.env.MAIL_USER || "").replace(
+  /^"|"$/g,
+  "",
+);
 const CLIENT_BASE_URL =
   process.env.CLIENT_URL || process.env.BASE_URL || "http://localhost:5173";
 
@@ -70,7 +73,12 @@ export const sendCredentialsEmail = async (email, fullName, password) => {
 };
 
 // ─── Welcome Mail ──────────────────────────────────────────
-export const sendWelcomeEmail = async (email, fullName, referralCode, password="") => {
+export const sendWelcomeEmail = async (
+  email,
+  fullName,
+  referralCode,
+  password = "",
+) => {
   await transporter.sendMail({
     from: FROM,
     to: email,
