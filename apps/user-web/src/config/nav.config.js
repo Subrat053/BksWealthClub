@@ -13,6 +13,7 @@ import {
 export const memberNav = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/member/dashboard" },
   { label: "My Account", icon: User, path: "/member/account" },
+  { label: "Add User", icon: Users, path: "/member/add-user" },
   {
     label: "Team",
     icon: Users,

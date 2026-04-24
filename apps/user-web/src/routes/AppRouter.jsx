@@ -11,8 +11,10 @@ import FaqPage from "../pages/public/FaqPage";
 import ContactPage from "../pages/public/ContactPage";
 import LoginPage from "../pages/public/LoginPage";
 import RegisterPage from "../pages/public/RegisterPage";
+import VerifyEmailPage from "../pages/public/VerifyEmailPage";
 import DashboardPage from "../pages/member/DashboardPage";
 import ProfilePage from "../pages/member/ProfilePage";
+import AddUserPage from "../pages/member/AddUserPage";
 import DepositPage from "../pages/member/DepositPage";
 import ActivationPage from "../pages/member/ActivationPage";
 import DirectTeamPage from "../pages/member/DirectTeamPage";
@@ -44,6 +46,7 @@ export const router = createBrowserRouter([
           { path: "contact", element: <ContactPage /> },
           { path: "login", element: <LoginPage /> },
           { path: "register", element: <RegisterPage /> },
+          { path: "verify-email", element: <VerifyEmailPage /> },
         ],
       },
       { path: "/logout", element: <LogoutPage /> },
@@ -59,6 +62,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <DashboardPage /> },
           { path: "account", element: <ProfilePage /> },
+          { path: "add-user", element: <AddUserPage /> },
           { path: "deposit", element: <DepositPage /> },
           { path: "activation", element: <ActivationPage /> },
           { path: "team/direct", element: <DirectTeamPage /> },

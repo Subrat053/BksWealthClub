@@ -32,6 +32,49 @@ export const register = async (req, res) => {
   }
 };
 
+export const memberRegister = async (req, res) => {
+  try {
+    if (req.user?.role !== "member") {
+      return res.status(403).json({
+        success: false,
+        message: "Member access required.",
+      });
+    }
+
+    const errors = validateRegisterInput({
+      ...req.body,
+      sponsorId: req.user.memberId,
+    });
+
+    if (errors.length) {
+      return res
+        .status(400)
+        .json({ success: false, message: errors[0], errors });
+    }
+
+    const result = await authService.registerUser({
+      ...req.body,
+      sponsorId: req.user.memberId,
+      registrationSource: "member_panel",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User added successfully. Verification email sent.",
+      data: {
+        memberId: result.user.memberId,
+        email: result.user.email,
+        referralCode: result.user.referralCode,
+      },
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const login = async (req, res) => {
   try {
     const errors = validateLoginInput(req.body);

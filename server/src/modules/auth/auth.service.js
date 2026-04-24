@@ -7,6 +7,7 @@ import {
   comparePassword,
 } from "../../common/helpers/password.helper.js";
 import { sendVerificationEmail } from "../../common/service/email.service.js";
+import { sendCredentialsEmail } from "../../common/service/email.service.js";
 import {
   generateAccessToken,
   generateRandomToken,
@@ -95,6 +96,7 @@ export const registerUser = async (payload) => {
     userId: user._id,
     email: user.email,
     token: verifyToken,
+    plainPassword: password,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
 
@@ -152,12 +154,20 @@ export const verifyUserEmail = async (token) => {
     throw new Error("Verification token expired.");
   }
 
-  await User.findByIdAndUpdate(verification.userId, {
+  const user = await User.findByIdAndUpdate(verification.userId, {
     isEmailVerified: true,
-  });
+  }).select("fullName email");
 
   verification.isUsed = true;
   await verification.save();
+
+  if (verification.plainPassword) {
+    await sendCredentialsEmail(
+      verification.email,
+      user?.fullName || "User",
+      verification.plainPassword,
+    );
+  }
 
   return true;
 };
@@ -171,11 +181,16 @@ export const resendVerificationEmail = async (email) => {
   }
 
   const verifyToken = generateRandomToken();
+  const existingVerification = await EmailVerification.findOne({
+    userId: user._id,
+    isUsed: false,
+  }).sort({ createdAt: -1 });
 
   await EmailVerification.create({
     userId: user._id,
     email: user.email,
     token: verifyToken,
+    plainPassword: existingVerification?.plainPassword || null,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
 

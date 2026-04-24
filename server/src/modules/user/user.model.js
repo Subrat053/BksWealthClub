@@ -46,6 +46,21 @@ const userSchema = new mongoose.Schema(
       default: null,
       trim: true,
     },
+    country: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    countryCode: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    dialCode: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     passwordHash: {
       type: String,
       required: true,

@@ -5,6 +5,7 @@ import { protect } from "../../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.post("/register", authController.register);
+router.post("/member-register", protect, authController.memberRegister);
 router.post("/login", authController.login);
 router.post("/verify-email", authController.verifyEmail);
 router.post("/resend-verification", authController.resendVerification);

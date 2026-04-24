@@ -14,6 +14,19 @@ export const authService = {
       }),
     }),
 
+  memberRegister: (payload) =>
+    apiClient("/api/v1/auth/member-register", {
+      method: "POST",
+      body: JSON.stringify({
+        fullName: payload.name,
+        email: payload.email,
+        phone: payload.mobile,
+        password: payload.password,
+        sponsorId: payload.sponsorId,
+        registrationSource: "member_panel",
+      }),
+    }),
+
   login: (payload) =>
     apiClient("/api/v1/auth/login", {
       method: "POST",

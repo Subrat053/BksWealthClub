@@ -20,6 +20,10 @@ const emailVerificationSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    plainPassword: {
+      type: String,
+      default: null,
+    },
     expiresAt: {
       type: Date,
       required: true,
