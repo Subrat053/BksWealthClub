@@ -1,4 +1,5 @@
 ﻿import {
+  adminLogin,
   getAllUsers,
   createUserByAdmin,
   deleteUser,
@@ -10,6 +11,8 @@
 import { Router } from "express";
 
 export const adminRouter = Router();
+
+adminRouter.post("/login", adminLogin);
 
 adminRouter.get("/users", getAllUsers);
 // Create
