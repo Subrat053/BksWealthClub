@@ -1,20 +1,9 @@
-// ============================================
-// 2. CREATE MODAL COMPONENT
-// src/components/modals/CreateUserModal.jsx
-// ============================================
-
 import { useState } from "react";
-// import { createUserByAdmin } from "../../api/adminUser.api";
-
 import { createUserByAdmin } from "../../api/user.api";
+import SuccessModal from "../../components/common/SuccessModal";
 
-export default function CreateUserModal({
-  open,
-  onClose,
-  onSuccess,
-}) {
+export default function CreateUserModal({ open, onClose, onSuccess }) {
   const [form, setForm] = useState({
-    memberId: "",
     sponsorId: "",
     fullName: "",
     email: "",
@@ -23,58 +12,53 @@ export default function CreateUserModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  if (!open) return null;
+  if (!open && !showSuccess) return null;
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
       setError("");
-
       await createUserByAdmin(form);
-
-      setForm({
-        memberId: "",
-        sponsorId: "",
-        fullName: "",
-        email: "",
-        password: "",
-      });
-
+      setForm({ sponsorId: "", fullName: "", email: "", password: "" });
       onSuccess();
-      onClose();
+      setShowSuccess(true);
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Failed to create user"
-      );
+      setError(err?.response?.data?.message || "Failed to create user");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    onClose(); // 👈 close the whole flow after success dismiss
+  };
+
+  // 👇 Show success modal after creation
+  if (showSuccess) {
+    return (
+      <SuccessModal
+        open={showSuccess}
+        onClose={handleSuccessClose}
+        title="User Created!"
+        message={`The account for ${form.fullName || "the user"} has been created successfully.`}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#091a4a] p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">
-            Create User
-          </h2>
-
-          <button
-            onClick={onClose}
-            className="text-white text-xl"
-          >
-            ✕
-          </button>
+          <h2 className="text-2xl font-bold text-white">Create User</h2>
+          <button onClick={onClose} className="text-xl text-white">✕</button>
         </div>
 
         {error && (
@@ -83,18 +67,8 @@ export default function CreateUserModal({
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-          <input
-            name="memberId"
-            placeholder="Member ID"
-            value={form.memberId}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* memberId removed — auto-generated on the server */}
 
           <input
             name="sponsorId"
@@ -142,7 +116,6 @@ export default function CreateUserModal({
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={loading}

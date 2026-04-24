@@ -4,6 +4,10 @@ import { User } from "../user/user.model.js";
 import { AdminModel } from "./admin.model.js";
 import { comparePassword } from "../../common/helpers/password.helper.js";
 import { generateAccessToken } from "../../common/helpers/token.helper.js";
+import { generateMemberId } from "../../utils/generateMemberId.js";
+import { generateReferralCode } from "../../utils/generateReferralCode.js";
+
+// 👁️ Get All Users
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -96,38 +100,95 @@ export const adminLogin = async (req, res) => {
 };
 
 // 👉 Create User (Admin)
+// export const createUserByAdmin = async (req, res) => {
+//   try {
+//     const { memberId, sponsorId, fullName, email, password } = req.body;
+
+//     // Check existing
+//     const existingUser = await User.findOne({
+//       $or: [{ email }, { memberId }],
+//     });
+
+//     if (existingUser) {
+//       return res.status(400).json({ message: "User already exists" });
+//     }
+
+//     // Find sponsor user
+//     const sponsorUser = await User.findOne({ memberId: sponsorId });
+
+//     if (!sponsorUser) {
+//       return res.status(404).json({ message: "Sponsor not found" });
+//     }
+
+//     // Hash password
+//     const passwordHash = await bcrypt.hash(password, 10);
+
+//     const referralCode = `BKW${Date.now()}`;
+
+//     const newUser = await User.create({
+//       memberId,
+//       sponsorId,
+//       sponsorUserId: sponsorUser._id,
+//       referredByUserId: sponsorUser._id,
+//       fullName,
+//       email,
+//       passwordHash,
+//       referralCode,
+//       referralLink: `${process.env.BASE_URL}/register/${referralCode}`,
+//       registrationSource: "admin",
+//       status: "active",
+//       isActivated: true,
+//       isEmailVerified: true,
+//     });
+
+//     return res.status(201).json({
+//       message: "User created successfully",
+//       data: newUser,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+// 👉 Create User (Admin)
 export const createUserByAdmin = async (req, res) => {
   try {
-    const { memberId, sponsorId, fullName, email, password } = req.body;
+    const { sponsorId, fullName, email, password } = req.body;
 
-    // Check existing
-    const existingUser = await User.findOne({
-      $or: [{ email }, { memberId }],
-    });
-
+    // Check existing email
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "Email already registered." });
     }
 
-    // Find sponsor user
-    const sponsorUser = await User.findOne({ memberId: sponsorId });
-
-    if (!sponsorUser) {
-      return res.status(404).json({ message: "Sponsor not found" });
+    // Find sponsor (user or admin)
+    const normalizedSponsorId = sponsorId?.trim().toUpperCase();
+    if (!normalizedSponsorId) {
+      return res.status(400).json({ message: "Sponsor ID is required." });
     }
 
-    // Hash password
+    const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
+    const sponsorAdmin = sponsorUser
+      ? null
+      : await AdminModel.findOne({ sponsorId: normalizedSponsorId, isActive: true });
+
+    if (!sponsorUser && !sponsorAdmin) {
+      return res.status(404).json({ message: "Sponsor not found." });
+    }
+
+    // Auto-generate memberId and referralCode (same as registerUser)
+    const memberId = await generateMemberId();
+    const referralCode = await generateReferralCode(fullName);
     const passwordHash = await bcrypt.hash(password, 10);
-
-    const referralCode = `BKW${Date.now()}`;
 
     const newUser = await User.create({
       memberId,
-      sponsorId,
-      sponsorUserId: sponsorUser._id,
-      referredByUserId: sponsorUser._id,
-      fullName,
-      email,
+      sponsorId: normalizedSponsorId,
+      sponsorUserId: sponsorUser?._id || null,
+      referredByUserId: sponsorUser?._id || null,
+      fullName: fullName.trim(),
+      email: email.toLowerCase().trim(),
       passwordHash,
       referralCode,
       referralLink: `${process.env.BASE_URL}/register/${referralCode}`,
@@ -143,7 +204,7 @@ export const createUserByAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message || "Server error" });
   }
 };
 
