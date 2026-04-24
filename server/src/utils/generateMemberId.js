@@ -6,7 +6,7 @@ export const generateMemberId = async () => {
 
   while (exists) {
     const randomNumber = Math.floor(100000 + Math.random() * 900000);
-    memberId = `BWC${randomNumber}`;
+    memberId = `BKS${randomNumber}`;
     exists = await User.exists({ memberId });
   }
 

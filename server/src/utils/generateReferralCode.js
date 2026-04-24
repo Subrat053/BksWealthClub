@@ -1,6 +1,6 @@
 import { User } from "../modules/user/user.model.js";
 
-export const generateReferralCode = async (fullName = "BWC") => {
+export const generateReferralCode = async (fullName = "BKS") => {
   let referralCode = "";
   let exists = true;
 
@@ -8,7 +8,7 @@ export const generateReferralCode = async (fullName = "BWC") => {
     fullName
       ?.replace(/[^a-zA-Z]/g, "")
       .toUpperCase()
-      .slice(0, 4) || "BWC";
+      .slice(0, 4) || "BKS";
 
   while (exists) {
     const randomNumber = Math.floor(100000 + Math.random() * 900000);
