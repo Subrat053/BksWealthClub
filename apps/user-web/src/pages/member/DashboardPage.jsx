@@ -16,7 +16,12 @@ function StatCard({ title, value }) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const referralLink = useMemo(() => "https://bkswealthclub.com/register?ref=GRW328370", []);
+  // const referralLink = useMemo(() => "https://bkswealthclub.com/register?ref=GRW328370", []);
+  const referralLink = useMemo(() => {
+    const baseUrl = "https://bks.caybookme.online/register";
+    const refParam = user?.memberId ? `?ref=${user.memberId}` : "";
+    return `${baseUrl}${refParam}`;
+  }, [user?.memberId]);
   const { copied, copy } = useClipboard();
   const memberId = user?.memberId || user?.username || "MEMBER";
   const memberStatus = user?.status || "Inactive";

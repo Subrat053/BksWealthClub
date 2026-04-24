@@ -14,6 +14,9 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
 
   const sidebarContent = (
     <>
+      
+
+      
       <div className="px-6 py-6">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">Member Panel</p>
         <p className="mt-2 text-2xl font-bold">BksWealthClub</p>
@@ -85,12 +88,13 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
           );
         })}
       </nav>
+      
     </>
   );
 
   return (
     <>
-      <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:shrink-0 lg:flex-col bg-[#020d2e] text-white shadow-2xl">
+      <aside className="hidden lg:fixed lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:shrink-0 lg:flex-col bg-[#020d2e] text-white shadow-2xl">
         {sidebarContent}
       </aside>
 
