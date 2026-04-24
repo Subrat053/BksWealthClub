@@ -3,129 +3,140 @@ import { createUserByAdmin } from "../../api/user.api";
 import SuccessModal from "../../components/common/SuccessModal";
 
 export default function CreateUserModal({ open, onClose, onSuccess }) {
-  const [form, setForm] = useState({
-    sponsorId: "",
-    fullName: "",
-    email: "",
-    password: "",
-  });
+    const [form, setForm] = useState({
+        sponsorId: "",
+        fullName: "",
+        phone: "",
+        email: "",
+        password: "",
+    });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [showSuccess, setShowSuccess] = useState(false);
 
-  if (!open && !showSuccess) return null;
+    if (!open && !showSuccess) return null;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setError("");
-      await createUserByAdmin(form);
-      setForm({ sponsorId: "", fullName: "", email: "", password: "" });
-      onSuccess();
-      setShowSuccess(true);
-    } catch (err) {
-      setError(err?.response?.data?.message || "Failed to create user");
-    } finally {
-      setLoading(false);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setLoading(true);
+            setError("");
+            await createUserByAdmin(form);
+            setForm({ sponsorId: "", fullName: "", phone: "", email: "", password: "" });
+            onSuccess();
+            setShowSuccess(true);
+        } catch (err) {
+            setError(err?.response?.data?.message || "Failed to create user");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSuccessClose = () => {
+        setShowSuccess(false);
+        onClose(); // 👈 close the whole flow after success dismiss
+    };
+
+    // 👇 Show success modal after creation
+    if (showSuccess) {
+        return (
+            <SuccessModal
+                open={showSuccess}
+                onClose={handleSuccessClose}
+                title="User Created!"
+                message={`The account for ${form.fullName || "the user"} has been created successfully.`}
+            />
+        );
     }
-  };
 
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    onClose(); // 👈 close the whole flow after success dismiss
-  };
-
-  // 👇 Show success modal after creation
-  if (showSuccess) {
     return (
-      <SuccessModal
-        open={showSuccess}
-        onClose={handleSuccessClose}
-        title="User Created!"
-        message={`The account for ${form.fullName || "the user"} has been created successfully.`}
-      />
-    );
-  }
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#091a4a] p-6 shadow-2xl">
+                <div className="mb-5 flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-white">Create User</h2>
+                    <button onClick={onClose} className="text-xl text-white">✕</button>
+                </div>
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#091a4a] p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Create User</h2>
-          <button onClick={onClose} className="text-xl text-white">✕</button>
+                {error && (
+                    <div className="mb-4 rounded-xl bg-red-500/20 p-3 text-sm text-red-200">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* memberId removed — auto-generated on the server */}
+
+                    <input
+                        name="sponsorId"
+                        placeholder="Sponsor ID"
+                        value={form.sponsorId}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+                    />
+
+                    <input
+                        name="fullName"
+                        placeholder="Full Name"
+                        value={form.fullName}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+                    />
+
+                    <input
+                        name="phone"
+                        type="tel"
+                        placeholder="Phone Number"
+                        value={form.phone}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+                    />
+                    <input
+                        name="email"
+                        type="email"
+                        placeholder="Email"
+                        value={form.email}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+                    />
+
+
+                    <input
+                        name="password"
+                        type="password"
+                        placeholder="Password"
+                        value={form.password}
+                        onChange={handleChange}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+                    />
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full rounded-xl bg-[#1e327d] px-4 py-3 font-semibold text-white hover:bg-[#2944a8]"
+                        >
+                            {loading ? "Creating..." : "Create User"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        {error && (
-          <div className="mb-4 rounded-xl bg-red-500/20 p-3 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* memberId removed — auto-generated on the server */}
-
-          <input
-            name="sponsorId"
-            placeholder="Sponsor ID"
-            value={form.sponsorId}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
-          />
-
-          <input
-            name="fullName"
-            placeholder="Full Name"
-            value={form.fullName}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
-          />
-
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
-          />
-
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
-          />
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-[#1e327d] px-4 py-3 font-semibold text-white hover:bg-[#2944a8]"
-            >
-              {loading ? "Creating..." : "Create User"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 }
