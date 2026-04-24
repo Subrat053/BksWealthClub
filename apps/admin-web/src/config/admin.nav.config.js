@@ -15,7 +15,7 @@ import {
 export const adminNav = [
   { label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Users", path: "/admin/users", icon: Users },
-  { label: "Add User", path: "/admin/users/add", icon: UserPlus },
+  // { label: "Add User", path: "/admin/users/add", icon: UserPlus },
   { label: "Referral Tree", path: "/admin/team/referrals", icon: Workflow },
   { label: "Autopool", path: "/admin/team/autopool", icon: Workflow },
   { label: "Deposits", path: "/admin/deposits", icon: CreditCard },
