@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
 import FormField from "../../components/common/FormField";
 import Button from "../../components/common/Button";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const captchaRef = useRef(null);
+
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
+  const [captchaToken, setCaptchaToken] = useState("");
   const [error, setError] = useState("");
 
   const onSubmit = async (event) => {
@@ -20,12 +24,19 @@ export default function LoginPage() {
       setError("Username and password are required.");
       return;
     }
+    if (!captchaToken) {
+      setError("Please verify that you are not a robot.");
+      return;
+    }
 
     setError("");
     setLoading(true);
 
     try {
-      const response = await authService.login(form);
+      const response = await authService.login({
+        ...form,
+        captchaToken,
+      });
 
       // Save token
       localStorage.setItem("authToken", response.data.token);
@@ -43,6 +54,8 @@ export default function LoginPage() {
       navigate("/member/dashboard");
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
+      captchaRef.current?.reset();
+      setCaptchaToken("");
     } finally {
       setLoading(false);
     }
@@ -96,6 +109,16 @@ export default function LoginPage() {
                 </button>
               </div>
             </FormField>
+
+            <div className="overflow-hidden rounded-xl bg-white p-2">
+              <ReCAPTCHA
+                ref={captchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token || "")}
+                onExpired={() => setCaptchaToken("")}
+              />
+            </div>
+
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
             {/* <div className="rounded-xl border border-slate-300/50 bg-white p-3 text-black">reCAPTCHA placeholder</div> */}
             <Button type="submit" className="w-full" disabled={loading}>

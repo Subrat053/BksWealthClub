@@ -3,6 +3,7 @@ import {
   validateLoginInput,
   validateRegisterInput,
 } from "./auth.validation.js";
+import { verifyRecaptchaToken } from "../../common/helpers/recaptcha.helper.js";
 
 export const register = async (req, res) => {
   try {
@@ -84,6 +85,7 @@ export const login = async (req, res) => {
         .json({ success: false, message: errors[0], errors });
     }
 
+    await verifyRecaptchaToken(req.body.captchaToken, req.ip);
     const result = await authService.loginUser(req.body);
 
     return res.status(200).json({

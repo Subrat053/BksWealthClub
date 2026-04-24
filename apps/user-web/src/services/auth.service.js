@@ -33,6 +33,7 @@ export const authService = {
       body: JSON.stringify({
         identifier: payload.username,
         password: payload.password,
+        captchaToken: payload.captchaToken,
       }),
     }),
 
