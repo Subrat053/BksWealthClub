@@ -7,7 +7,10 @@ import { generateAccessToken } from "../../common/helpers/token.helper.js";
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await getAllUsersService();
+    const users = await getAllUsersService({
+      status: req.query?.status,
+      search: req.query?.search,
+    });
     return res.status(200).json({
       success: true,
       users,
@@ -151,13 +154,24 @@ export const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findByIdAndDelete(userId);
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        status: "blocked",
+        isSuspended: true,
+      },
+      { new: true },
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json({ message: "User deleted successfully" });
+    return res.json({
+      success: true,
+      message: "User banned successfully (soft delete).",
+      data: user,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -196,7 +210,10 @@ export const updateUserStatus = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { status },
+      {
+        status,
+        isSuspended: status === "blocked" || status === "suspended",
+      },
       { new: true },
     );
 
