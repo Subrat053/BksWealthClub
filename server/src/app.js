@@ -12,6 +12,7 @@ import { ApiResponse } from "./core/ApiResponse.js";
 // ADMIN ROUTES
 // ===========================================
 import { adminRouter } from "./modules/admin/admin.routes.js";
+import { supportRouter } from "./modules/support/support.routes.js";
 // -------------------------------------------
 
 
@@ -43,6 +44,7 @@ export function createApp() {
   });
 // -------------------
   app.use("/admin", adminRouter);
+  app.use("/support", supportRouter);
 // -------------------
   app.use(env.API_PREFIX, apiRouter);
 

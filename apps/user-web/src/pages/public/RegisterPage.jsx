@@ -152,7 +152,7 @@ export default function RegisterPage() {
         password: form.password,
       });
 
-      localStorage.setItem("authToken", loginResponse.data.token);
+      localStorage.setItem("userToken", loginResponse.data.token);
 
       login({
         id: loginResponse.data.user._id,

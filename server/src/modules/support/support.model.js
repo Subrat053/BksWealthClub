@@ -1,27 +1,89 @@
-﻿import mongoose from "mongoose";
-
-const supportReplySchema = new mongoose.Schema(
+﻿// models/SupportTicket.js
+// const mongoose = require("mongoose");
+import mongoose from "mongoose";
+const replySchema = new mongoose.Schema(
   {
-    senderRole: { type: String, enum: ["user", "admin"], required: true },
-    senderRef: { type: mongoose.Schema.Types.ObjectId, refPath: "senderRole" },
-    message: { type: String, required: true },
-    sentAt: { type: Date, default: Date.now },
+    senderType: {
+      type: String,
+      enum: ["user", "admin"],
+      required: true,
+    },
+    senderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
-  { _id: false },
+  { timestamps: true }
 );
 
 const supportTicketSchema = new mongoose.Schema(
   {
-    userRef: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    subject: { type: String, required: true },
-    message: { type: String, required: true },
-    status: { type: String, enum: ["open", "in_progress", "resolved", "closed"], default: "open" },
-    replies: { type: [supportReplySchema], default: [] },
-    submittedAt: { type: Date, default: Date.now },
-    responseAt: { type: Date },
+    ticketId: {
+      type: String,
+      unique: true,
+    },
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    category: {
+      type: String,
+      enum: [
+        "Account",
+        "Payment",
+        "Referral",
+        "Income",
+        "Withdrawal",
+        "Technical",
+        "Other",
+      ],
+      default: "Other",
+    },
+
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Urgent"],
+      default: "Medium",
+    },
+
+    status: {
+      type: String,
+      enum: ["Open", "In Progress", "Resolved", "Closed"],
+      default: "Open",
+    },
+
+    replies: [replySchema],
+
+    lastReplyBy: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-export const SupportTicketModel =
-  mongoose.models.SupportTicket || mongoose.model("SupportTicket", supportTicketSchema);
+supportTicketSchema.pre("save", async function (next) {
+  if (!this.ticketId) {
+    const count = await mongoose.model("SupportTicket").countDocuments();
+    this.ticketId = `TKT-${String(count + 1).padStart(5, "0")}`;
+  }
+  next();
+});
+
+// module.exports = mongoose.model("SupportTicket", supportTicketSchema);
+export const SupportTicket = mongoose.model("SupportTicket", supportTicketSchema);

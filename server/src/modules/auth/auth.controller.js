@@ -1,4 +1,4 @@
-﻿import * as authService from "./auth.service.js";
+import * as authService from "./auth.service.js";
 import {
   validateLoginInput,
   validateRegisterInput,
@@ -35,7 +35,7 @@ export const register = async (req, res) => {
 
 export const memberRegister = async (req, res) => {
   try {
-    if (req.user?.role !== "member") {
+    if (req.auth?.role !== "user") {
       return res.status(403).json({
         success: false,
         message: "Member access required.",
@@ -44,7 +44,7 @@ export const memberRegister = async (req, res) => {
 
     const errors = validateRegisterInput({
       ...req.body,
-      sponsorId: req.user.memberId,
+      sponsorId: req.auth.memberId,
     });
 
     if (errors.length) {
@@ -55,7 +55,7 @@ export const memberRegister = async (req, res) => {
 
     const result = await authService.registerUser({
       ...req.body,
-      sponsorId: req.user.memberId,
+      sponsorId: req.auth.memberId,
       registrationSource: "member_panel",
     });
 
@@ -167,7 +167,7 @@ export const resetPassword = async (req, res) => {
 
 export const me = async (req, res) => {
   try {
-    const result = await authService.getMyProfile(req.user.userId);
+    const result = await authService.getMyProfile(req.auth.userId);
 
     return res.status(200).json({
       success: true,
@@ -183,7 +183,7 @@ export const me = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const result = await authService.updateMyProfile(req.user.userId, req.body);
+    const result = await authService.updateMyProfile(req.auth.userId, req.body);
 
     return res.status(200).json({
       success: true,
@@ -201,7 +201,7 @@ export const updateProfile = async (req, res) => {
 export const updateCryptoDetails = async (req, res) => {
   try {
     const result = await authService.updateCryptoDetails(
-      req.user.userId,
+      req.auth.userId,
       req.body,
     );
 

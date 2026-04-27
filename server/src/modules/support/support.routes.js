@@ -1,17 +1,19 @@
-﻿import { Router } from "express";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
-import { adminMiddleware } from "../../middleware/admin.middleware.js";
+import { Router } from "express";
+import { protect, adminOnly } from "../../middleware/auth.middleware.js";
 import {
-  createTicketController,
-  getAllTicketsController,
-  getMyTicketsController,
-  replyTicketController,
+  createTicket,
+  getMyTickets,
+  getAllTickets,
+  replyTicket,
+  getTicketById,
+  updateTicketStatus,
 } from "./support.controller.js";
 
 export const supportRouter = Router();
 
-supportRouter.use(authMiddleware);
-supportRouter.post("/", createTicketController);
-supportRouter.get("/mine", getMyTicketsController);
-supportRouter.get("/admin/all", adminMiddleware, getAllTicketsController);
-supportRouter.post("/admin/:id/reply", adminMiddleware, replyTicketController);
+supportRouter.post("/", protect, createTicket);
+supportRouter.get("/my", protect, getMyTickets);
+supportRouter.get("/admin/all", protect, adminOnly, getAllTickets);
+supportRouter.get("/:id", protect, getTicketById);
+supportRouter.post("/:id/reply", protect, replyTicket);
+supportRouter.patch("/:id/status", protect, adminOnly, updateTicketStatus);

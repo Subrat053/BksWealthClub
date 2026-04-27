@@ -104,9 +104,8 @@ export default function AdminLoginPage() {
         throw new Error("Login failed. Token not received.");
       }
 
-      localStorage.setItem("token", token);
       localStorage.setItem("adminToken", token);
-      localStorage.setItem("adminUser", JSON.stringify(admin));
+      localStorage.setItem("adminUser", JSON.stringify(admin || {}));
 
       navigate("/admin/dashboard", { replace: true });
     } catch (err) {

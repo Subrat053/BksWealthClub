@@ -1,4 +1,4 @@
-﻿import { User } from "../user/user.model.js";
+import { User } from "../user/user.model.js";
 import { UserProfile } from "../user/user-profile.model.js";
 import { AdminModel } from "../admin/admin.model.js";
 import { EmailVerification, PasswordReset } from "./auth.model.js";
@@ -134,7 +134,7 @@ export const loginUser = async ({ identifier, password }) => {
   const token = generateAccessToken({
     userId: user._id,
     memberId: user.memberId,
-    role: "member",
+    role: "user",
   });
 
   return { user, token };

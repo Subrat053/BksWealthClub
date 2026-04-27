@@ -1,6 +1,5 @@
-﻿import { Router } from "express";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
-import { adminMiddleware } from "../../middleware/admin.middleware.js";
+import { Router } from "express";
+import { authMiddleware, adminOnly } from "../../middleware/auth.middleware.js";
 import {
   getContactController,
   getFaqController,
@@ -16,7 +15,7 @@ cmsRouter.get("/website", getWebsiteContentController);
 cmsRouter.get("/faqs", getFaqController);
 cmsRouter.get("/contact", getContactController);
 
-cmsRouter.use(authMiddleware, adminMiddleware);
+cmsRouter.use(authMiddleware, adminOnly);
 cmsRouter.put("/sections/:key", updateSectionController);
 cmsRouter.put("/faqs", upsertFaqController);
 cmsRouter.put("/contact", updateContactController);

@@ -1,4 +1,4 @@
-﻿import { ApiResponse } from "../../core/ApiResponse.js";
+import { ApiResponse } from "../../core/ApiResponse.js";
 import { asyncHandler } from "../../core/asyncHandler.js";
 import { referralService } from "./referral.service.js";
 
@@ -8,6 +8,6 @@ export const validateSponsorController = asyncHandler(async (req, res) => {
 });
 
 export const directStatsController = asyncHandler(async (req, res) => {
-  const data = await referralService.getDirectReferralStats(req.user.sub);
+  const data = await referralService.getDirectReferralStats(req.auth.sub);
   res.json(new ApiResponse({ message: "Direct stats fetched", data }));
 });

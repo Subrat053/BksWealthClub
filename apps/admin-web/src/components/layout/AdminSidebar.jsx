@@ -1,9 +1,20 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { adminNav } from "../../config/admin.nav.config";
 
 export default function AdminSidebar({ adminSession, mobileOpen, onClose }) {
   const adminId = adminSession?.adminId || adminSession?.displayName || "ADMIN";
   const adminRole = adminSession?.role || "admin";
+  const navigate = useNavigate();
+
+  const handleNavClick = (item) => {
+    if (item.label === "Logout") {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (onClose) onClose();
+  };
 
   const sidebar = (
     <>
@@ -25,7 +36,7 @@ export default function AdminSidebar({ adminSession, mobileOpen, onClose }) {
             <NavLink
               key={item.path}
               to={item.path}
-              onClick={onClose}
+              onClick={() => handleNavClick(item)}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
                   isActive ? "bg-[#162457] text-white" : "text-slate-300 hover:bg-[#101d49] hover:text-white"

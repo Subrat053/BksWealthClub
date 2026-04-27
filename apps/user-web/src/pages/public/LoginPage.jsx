@@ -39,7 +39,7 @@ export default function LoginPage() {
       });
 
       // Save token
-      localStorage.setItem("authToken", response.data.token);
+      localStorage.setItem("userToken", response.data.token);
 
       // Update auth context
       login({

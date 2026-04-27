@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("userToken");
     const storedUser = localStorage.getItem("user");
 
     if (token && storedUser) {
@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
         setUser(parsedUser);
         setIsAuthenticated(true);
       } catch (err) {
-        localStorage.removeItem("authToken");
+        localStorage.removeItem("userToken");
         localStorage.removeItem("user");
       }
     }
@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
       logout: () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem("authToken");
+        localStorage.removeItem("userToken");
         localStorage.removeItem("user");
       },
     }),

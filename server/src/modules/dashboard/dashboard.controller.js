@@ -1,9 +1,9 @@
-﻿import { ApiResponse } from "../../core/ApiResponse.js";
+import { ApiResponse } from "../../core/ApiResponse.js";
 import { asyncHandler } from "../../core/asyncHandler.js";
 import { dashboardService } from "./dashboard.service.js";
 
 export const getMemberDashboardController = asyncHandler(async (req, res) => {
-  const data = await dashboardService.getMemberSummary({ user: req.user || {} });
+  const data = await dashboardService.getMemberSummary({ user: req.auth || {} });
   res.json(new ApiResponse({ message: "Member dashboard summary fetched", data }));
 });
 

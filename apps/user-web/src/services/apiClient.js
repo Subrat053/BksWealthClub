@@ -6,7 +6,7 @@ export async function apiClient(url, options = {}) {
   };
 
   // Add token if it exists
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("userToken");
   if (token) {
     defaultHeaders.Authorization = `Bearer ${token}`;
   }
