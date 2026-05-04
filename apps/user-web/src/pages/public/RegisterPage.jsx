@@ -7,10 +7,14 @@ import FormField from "../../components/common/FormField";
 import Button from "../../components/common/Button";
 import { countries } from "../../utils/countries";
 
+import { useSearchParams } from "react-router-dom";
+
 export default function RegisterPage() {
-  const sponsorPattern = /^BWC\d{6,}$/;
+  const sponsorPattern = /^(BKS|BWC)\d{6,}$/;
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref");
 
   const defaultCountry = countries.find((item) => item.code === "IN");
 
@@ -34,10 +38,19 @@ export default function RegisterPage() {
   const [sponsorValidation, setSponsorValidation] = useState(null);
   const [sponsorLoading, setSponsorLoading] = useState(false);
 
+  useEffect(() => {
+    if (referralCode) {
+      setForm((prev) => ({
+        ...prev,
+        sponsor: referralCode.toUpperCase(),
+      }));
+    }
+  }, [referralCode]);
+
   const sponsorStatus = useMemo(() => {
     if (!form.sponsor) return null;
     if (!sponsorPattern.test(form.sponsor))
-      return "Enter sponsor ID like BWC123456";
+      return "Enter sponsor ID like BKS123456";
     if (sponsorLoading) return "Checking...";
     if (sponsorValidation?.error) return sponsorValidation.error;
     if (!sponsorValidation?.data) return null;
@@ -115,7 +128,7 @@ export default function RegisterPage() {
     }
 
     if (!sponsorPattern.test(form.sponsor.trim().toUpperCase())) {
-      setError("Sponsor ID must be like BWC123456.");
+      setError("Sponsor ID must be like BKS123456.");
       return;
     }
 
@@ -189,7 +202,7 @@ export default function RegisterPage() {
               <p
                 className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                   sponsorStatus === "Sponsor not Active" ||
-                  sponsorStatus === "Enter sponsor ID like BWC123456" ||
+                  sponsorStatus === "Enter sponsor ID like BKS123456" ||
                   sponsorValidation?.error
                     ? "bg-red-500/20 text-red-300"
                     : "bg-green-500/20 text-green-300"

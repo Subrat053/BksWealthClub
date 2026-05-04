@@ -38,6 +38,7 @@ export const registerUser = async (payload) => {
     phone,
     password,
     sponsorId,
+    referralCode, // 👈 ADD THIS
     registrationSource,
     bepAddress,
   } = payload;
@@ -47,65 +48,70 @@ export const registerUser = async (payload) => {
     throw new Error("Email already registered.");
   }
 
+  // -----------------------------
+  // 1. FIND SPONSOR (TREE POSITION)
+  // -----------------------------
   const normalizedSponsorId = sponsorId?.trim().toUpperCase();
   if (!normalizedSponsorId) {
     throw new Error("Sponsor ID is required.");
   }
 
   const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
-  const sponsorAdmin = sponsorUser
-    ? null
-    : await AdminModel.findOne({
-        sponsorId: normalizedSponsorId,
-        isActive: true,
-      });
 
-  if (!sponsorUser && !sponsorAdmin) {
+  if (!sponsorUser) {
     throw new Error("Sponsor ID not found.");
   }
 
+  // -----------------------------
+  // 2. FIND REFERRER (WHO INVITED)
+  // -----------------------------
+  let referrerUser = null;
+
+  if (referralCode) {
+    referrerUser = await User.findOne({
+      referralCode: referralCode.trim(),
+    });
+  }
+
+  // fallback: if no referral code → sponsor is referrer
+  if (!referrerUser) {
+    referrerUser = sponsorUser;
+  }
+
+  // -----------------------------
+  // 3. CREATE USER
+  // -----------------------------
   const memberId = await generateMemberId();
-  const referralCode = await generateReferralCode(fullName);
+  const newReferralCode = await generateReferralCode(fullName);
   const passwordHash = await hashPassword(password);
 
   const user = await User.create({
     memberId,
-    sponsorId: normalizedSponsorId,
-    sponsorUserId: sponsorUser?._id || null,
-    referredByUserId: sponsorUser?._id || null,
+
+    sponsorId: sponsorUser.memberId,
+    sponsorUserId: sponsorUser._id,
+
+    // ✅ FIXED
+    referredByUserId: referrerUser._id,
+
     fullName: fullName.trim(),
     email: email.toLowerCase().trim(),
     phone: phone?.trim() || null,
     passwordHash,
     bepAddress: bepAddress?.trim() || null,
-    referralCode,
-    referralLink: buildReferralLink(referralCode),
-    registrationSource,
+
+    referralCode: newReferralCode,
+    referralLink: buildReferralLink(newReferralCode),
+
+    registrationSource:
+      registrationSource || (referralCode ? "referral_link" : "website"),
+
     status: "pending",
     isEmailVerified: false,
     isActivated: false,
   });
 
-  await UserProfile.create({
-    userId: user._id,
-  });
-
-  const verifyToken = generateRandomToken();
-
-  await EmailVerification.create({
-    userId: user._id,
-    email: user.email,
-    token: verifyToken,
-    plainPassword: password,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-  });
-
-  await sendVerificationEmail(user.email, user.fullName, verifyToken);
-
-  return {
-    user,
-    verifyToken,
-  };
+  return { user };
 };
 
 export const loginUser = async ({ identifier, password }) => {
@@ -231,7 +237,9 @@ export const resetPassword = async ({ token, newPassword }) => {
 };
 
 export const getMyProfile = async (userId) => {
-  const user = await User.findById(userId).select("-passwordHash");
+  const user = await User.findById(userId).select(
+    "-passwordHash -twoFactorSecret -twoFactorPendingSecret",
+  );
   const profile = await UserProfile.findOne({ userId });
 
   return { user, profile };
@@ -247,7 +255,7 @@ export const updateMyProfile = async (userId, payload) => {
       phone,
     },
     { new: true },
-  ).select("-passwordHash");
+  ).select("-passwordHash -twoFactorSecret -twoFactorPendingSecret");
 
   const profile = await UserProfile.findOneAndUpdate(
     { userId },

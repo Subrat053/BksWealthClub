@@ -10,6 +10,7 @@ import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
 import { sendWelcomeEmail } from "../../common/service/email.service.js";
 import { sendOtpEmail } from "../../common/service/email.service.js";
+import { twoFactorService } from "../twofactor/twofactor.service.js";
 
 // 👁️ Get All Users
 export const getAllUsers = async (req, res) => {
@@ -427,6 +428,7 @@ export const getUserDetails = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId)
+      .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret")
       .populate("sponsorUserId", "fullName email memberId")
       .populate("referredByUserId", "fullName email memberId");
 
@@ -483,5 +485,24 @@ export const resetUserPassword = async (req, res) => {
     return res.json({ message: "Password reset successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const resetUserTwoFactor = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await twoFactorService.resetForUserByAdmin(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User 2FA reset successfully.",
+      data,
+    });
+  } catch (error) {
+    const statusCode = error?.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Server error",
+    });
   }
 };

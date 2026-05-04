@@ -14,6 +14,7 @@ export const memberRouteMeta = [
   { path: "account", title: "My Account" },
   { path: "deposit", title: "Deposit" },
   { path: "activation", title: "Activation" },
+  { path: "team/report", title: "Level Report" },
   { path: "team/direct", title: "Direct Team" },
   { path: "team/generation", title: "Generation Team" },
   { path: "team/autopool", title: "Autopool Community" },

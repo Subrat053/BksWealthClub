@@ -7,6 +7,7 @@ import {
   completeUserInvite,
   deleteUser,
   getUserDetails,
+  resetUserTwoFactor,
   updateUserStatus,
   resetUserPassword,
 } from "./admin.controller.js";
@@ -30,4 +31,5 @@ adminRouter.post("/create-user", createUserByAdmin);
 adminRouter.get("/users/:userId", getUserDetails);
 adminRouter.patch("/users/:userId/status", updateUserStatus);
 adminRouter.patch("/users/:userId/reset-password", resetUserPassword);
+adminRouter.post("/users/:userId/reset-2fa", resetUserTwoFactor);
 adminRouter.delete("/users/:userId", deleteUser);

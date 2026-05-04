@@ -10,7 +10,7 @@ export const validateRegisterInput = (body) => {
   if (!body.registrationSource?.trim())
     errors.push("Registration source is required.");
 
-  if (body.sponsorId && !/^BWC\d{6,}$/.test(body.sponsorId)) {
+  if (body.sponsorId && !/^(BKS|BWC)\d{6,}$/.test(body.sponsorId)) {
     errors.push("Sponsor ID format is invalid.");
   }
 
@@ -33,5 +33,5 @@ export const sponsorValidateSchema = z.object({
     .string()
     .trim()
     .min(1, "Sponsor ID is required")
-    .regex(/^BWC\d{6,}$/, "Sponsor ID format is invalid"),
+    .regex(/^(BKS|BWC)\d{6,}$/, "Sponsor ID format is invalid"),
 });

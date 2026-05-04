@@ -22,6 +22,8 @@ export const getAllUsers = async ({ status, search } = {}) => {
     ];
   }
 
-  const users = await User.find(query).sort({ createdAt: -1 });
+  const users = await User.find(query)
+    .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret")
+    .sort({ createdAt: -1 });
   return users;
 };

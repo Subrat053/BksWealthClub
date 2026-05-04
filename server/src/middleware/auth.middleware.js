@@ -14,7 +14,11 @@ export const protect = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = verifyAccessToken(token);
 
-    req.auth = decoded;
+    req.auth = {
+      ...decoded,
+      sub: decoded.sub || decoded.userId || decoded.adminId || null,
+    };
+
     next();
   } catch (error) {
     return res.status(401).json({

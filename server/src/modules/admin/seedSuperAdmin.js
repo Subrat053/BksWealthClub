@@ -22,7 +22,7 @@ export async function seedSuperAdmin() {
 
   if (!/^(BKS|BWC)\d{6,}$/.test(sponsorId)) {
     throw new Error(
-      "SUPERADMIN_SPONSOR_ID must be in BKS123456 or BWC123456 format",
+      "SUPERADMIN_SPONSOR_ID must be in BKS123456 format or the legacy BWC123456 format",
     );
   }
 

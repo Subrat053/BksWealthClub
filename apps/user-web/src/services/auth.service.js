@@ -2,7 +2,7 @@ import { apiClient } from "./apiClient";
 
 export const authService = {
   register: (payload) =>
-    apiClient("/api/v1/auth/register", {
+    apiClient("/auth/register", {
       method: "POST",
       body: JSON.stringify({
         fullName: payload.name,
@@ -15,7 +15,7 @@ export const authService = {
     }),
 
   memberRegister: (payload) =>
-    apiClient("/api/v1/auth/member-register", {
+    apiClient("/auth/member-register", {
       method: "POST",
       body: JSON.stringify({
         fullName: payload.name,
@@ -28,7 +28,7 @@ export const authService = {
     }),
 
   login: (payload) =>
-    apiClient("/api/v1/auth/login", {
+    apiClient("/auth/login", {
       method: "POST",
       body: JSON.stringify({
         identifier: payload.username,
@@ -38,16 +38,21 @@ export const authService = {
     }),
 
   validateSponsor: (sponsorId) =>
-    apiClient("/api/v1/referrals/validate-sponsor", {
+    apiClient("/referrals/validate-sponsor", {
       method: "POST",
       body: JSON.stringify({ sponsorId }),
     }),
 
   verifyEmail: (token) =>
-    apiClient("/api/v1/auth/verify-email", {
+    apiClient("/auth/verify-email", {
       method: "POST",
       body: JSON.stringify({ token }),
     }),
 
-  getProfile: () => apiClient("/api/v1/auth/me"),
+  getProfile: () => apiClient("/auth/me"),
+  updateProfile: (payload) =>
+    apiClient("/users/me", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
 };

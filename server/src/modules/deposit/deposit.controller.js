@@ -25,7 +25,7 @@ export const approveDepositController = asyncHandler(async (req, res) => {
 export const rejectDepositController = asyncHandler(async (req, res) => {
   const data = await depositService.rejectRequest({
     depositId: req.params.id,
-    adminId: req.auth.sub,
+    adminId: req.auth.sub,  
     reason: req.body.reason,
   });
   res.json(new ApiResponse({ message: "Deposit rejected", data }));

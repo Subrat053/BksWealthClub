@@ -45,3 +45,7 @@ export const completeUserInvite = async (payload) => {
   const res = await axiosInstance.post("/admin/users/invite/complete", payload);
   return res.data;
 };
+
+export const resetUserTwoFactor = (userId) => {
+  return axiosInstance.post(`/admin/users/${userId}/reset-2fa`);
+};

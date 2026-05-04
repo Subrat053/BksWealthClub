@@ -7,26 +7,34 @@ import { useAuth } from "../../hooks/useAuth";
 export default function MemberSidebar({ mobileOpen, onClose }) {
   const { user } = useAuth();
   const location = useLocation();
-  const [openMenus, setOpenMenus] = useState({ Team: true, Withdrawal: true, Incomes: true });
+  const [openMenus, setOpenMenus] = useState({
+    Team: true,
+    Withdrawal: true,
+    Incomes: true,
+  });
   const memberId = user?.memberId || user?.username || "MEMBER";
   const memberStatus = (user?.status || "Inactive").toLowerCase();
-  const statusClass = memberStatus === "active" ? "text-emerald-300" : "text-red-300";
+  const statusClass =
+    memberStatus === "active" ? "text-emerald-300" : "text-red-300";
 
   const sidebarContent = (
     <>
-      
-
-      
       <div className="px-6 py-6">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">Member Panel</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">
+          Member Panel
+        </p>
         <p className="mt-2 text-2xl font-bold">BksWealthClub</p>
       </div>
 
       <div className="px-6 pb-4">
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.35)]">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-slate-300">Member ID</p>
+          <p className="text-[11px] uppercase tracking-[0.15em] text-slate-300">
+            Member ID
+          </p>
           <p className="mt-1 text-lg font-semibold">{memberId}</p>
-          <p className={`mt-1 text-xs capitalize ${statusClass}`}>Status: {memberStatus}</p>
+          <p className={`mt-1 text-xs capitalize ${statusClass}`}>
+            Status: {memberStatus}
+          </p>
         </div>
       </div>
 
@@ -35,20 +43,32 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
           const Icon = item.icon;
 
           if (item.children) {
-            const activeChild = item.children.some((child) => location.pathname === child.path);
+            const activeChild = item.children.some(
+              (child) => location.pathname === child.path,
+            );
             return (
               <div key={item.label} className="mb-2">
                 <button
-                  onClick={() => setOpenMenus((prev) => ({ ...prev, [item.label]: !prev[item.label] }))}
+                  onClick={() =>
+                    setOpenMenus((prev) => ({
+                      ...prev,
+                      [item.label]: !prev[item.label],
+                    }))
+                  }
                   className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition ${
                     activeChild ? "bg-[#162457]" : "hover:bg-[#101d49]"
                   }`}
                 >
                   <span className="flex items-center gap-3 text-sm font-semibold">
-                    <span className="rounded-full bg-[#111b43] p-2">{Icon && <Icon size={16} />}</span>
+                    <span className="rounded-full bg-[#111b43] p-2">
+                      {Icon && <Icon size={16} />}
+                    </span>
                     {item.label}
                   </span>
-                  <ChevronDown size={16} className={`transition ${openMenus[item.label] ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    size={16}
+                    className={`transition ${openMenus[item.label] ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 {openMenus[item.label] && (
@@ -82,13 +102,14 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
                 }`
               }
             >
-              <span className="rounded-full bg-[#111b43] p-2">{Icon && <Icon size={16} />}</span>
+              <span className="rounded-full bg-[#111b43] p-2">
+                {Icon && <Icon size={16} />}
+              </span>
               {item.label}
             </NavLink>
           );
         })}
       </nav>
-      
     </>
   );
 
@@ -100,7 +121,11 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
 
       {mobileOpen ? (
         <>
-          <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={onClose} aria-label="Close menu" />
+          <button
+            className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+            onClick={onClose}
+            aria-label="Close menu"
+          />
           <aside className="fixed left-0 top-0 z-40 flex h-screen w-[280px] flex-col bg-[#020d2e] text-white lg:hidden">
             {sidebarContent}
           </aside>
