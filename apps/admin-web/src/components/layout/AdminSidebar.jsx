@@ -27,6 +27,12 @@ export default function AdminSidebar({ adminSession, mobileOpen, onClose }) {
           <p className="text-[11px] uppercase tracking-[0.14em] text-slate-300">Admin</p>
           <p className="mt-1 text-sm font-semibold text-white">{adminId}</p>
           <p className="mt-1 text-xs capitalize text-cyan-200">Role: {adminRole}</p>
+          {adminSession?.sponsorId && (
+            <div className="mt-2 flex flex-col gap-0.5 border-t border-white/5 pt-2">
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">Refer ID</p>
+              <p className="text-xs font-mono font-medium text-emerald-400">{adminSession.sponsorId}</p>
+            </div>
+          )}
         </div>
       </div>
       <nav className="space-y-1 px-3 pb-6">
@@ -54,13 +60,19 @@ export default function AdminSidebar({ adminSession, mobileOpen, onClose }) {
 
   return (
     <>
-      <aside className="hidden lg:fixed lg:top-0 lg:block lg:h-screen lg:w-[280px] lg:shrink-0 overflow-y-auto border-r border-white/10 bg-[#020d2e]">{sidebar}</aside>
-      {mobileOpen ? (
-        <>
-          <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={onClose} aria-label="Close admin menu" />
-          <aside className="fixed left-0 top-0 z-40 h-screen w-[280px] border-r border-white/10 bg-[#020d2e] lg:hidden">{sidebar}</aside>
-        </>
-      ) : null}
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-[280px] overflow-y-auto border-r border-white/10 bg-[#020d2e] shadow-2xl">
+        {sidebar}
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-[280px] border-r border-white/10 bg-[#020d2e] shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebar}
+      </aside>
     </>
   );
 }

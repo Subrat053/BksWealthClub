@@ -1,8 +1,8 @@
 export default function DataTable({ columns = [], data = [], renderActions }) {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+    <div className="w-full overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
+        <table className="w-full min-w-[1000px] text-left">
           <thead className="bg-[#112766]/70">
             <tr>
               {columns.map((col) => (

@@ -211,7 +211,6 @@ export default function UserListPage() {
         primaryActionText="Add User"
         onPrimaryClick={() => setShowModal(true)}
       />
-
       <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
         <input
           type="text"
@@ -251,14 +250,7 @@ export default function UserListPage() {
             >
               View
             </button>
-            <button
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10"
-              onClick={() => navigate(`/admin/users/${row._id}?mode=edit`)}
-            >
-              Edit
-            </button>
 
-            {/* Password Button */}
             <button
               className="rounded-lg border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
               onClick={() => setPasswordModalUser(row)}
