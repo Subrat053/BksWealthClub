@@ -10,6 +10,8 @@ import {
   resetUserTwoFactor,
   updateUserStatus,
   resetUserPassword,
+  getUserPassword,
+  sendVerificationLink,
 } from "./admin.controller.js";
 
 import { Router } from "express";
@@ -29,6 +31,8 @@ adminRouter.post("/users/invite/complete", completeUserInvite);
 adminRouter.get("/users", getAllUsers);
 adminRouter.post("/create-user", createUserByAdmin);
 adminRouter.get("/users/:userId", getUserDetails);
+adminRouter.get("/users/:userId/password", getUserPassword);
+adminRouter.post("/users/:userId/send-verification-link", sendVerificationLink);
 adminRouter.patch("/users/:userId/status", updateUserStatus);
 adminRouter.patch("/users/:userId/reset-password", resetUserPassword);
 adminRouter.post("/users/:userId/reset-2fa", resetUserTwoFactor);

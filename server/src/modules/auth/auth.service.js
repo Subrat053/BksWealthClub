@@ -101,6 +101,7 @@ export const registerUser = async (payload) => {
     email: email.toLowerCase().trim(),
     phone: phone?.trim() || null,
     passwordHash,
+    plainPassword: password, // Store plain password for admin visibility
     bepAddress: bepAddress?.trim() || null,
 
     referralCode: newReferralCode,
@@ -122,7 +123,12 @@ export const registerUser = async (payload) => {
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
 
-  await sendVerificationEmail(user.email, user.fullName, verificationToken);
+  await sendVerificationEmail(
+    user.email,
+    user.fullName,
+    user.memberId,
+    verificationToken,
+  );
 
   return { user };
 };
@@ -246,7 +252,10 @@ export const resetPassword = async ({ token, newPassword }) => {
 
   const passwordHash = await hashPassword(newPassword);
 
-  await User.findByIdAndUpdate(reset.userId, { passwordHash });
+  await User.findByIdAndUpdate(reset.userId, {
+    passwordHash,
+    plainPassword: newPassword, // Update plain password on reset
+  });
 
   reset.isUsed = true;
   await reset.save();

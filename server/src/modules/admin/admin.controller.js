@@ -1,4 +1,4 @@
-﻿import { getAllUsers as getAllUsersService } from "./admin.service.js";
+import { getAllUsers as getAllUsersService } from "./admin.service.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { User } from "../user/user.model.js";
@@ -8,7 +8,7 @@ import { comparePassword } from "../../common/helpers/password.helper.js";
 import { generateAccessToken } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
-import { sendWelcomeEmail } from "../../common/service/email.service.js";
+import { sendWelcomeEmail, sendVerificationEmail } from "../../common/service/email.service.js";
 import { sendOtpEmail } from "../../common/service/email.service.js";
 import { twoFactorService } from "../twofactor/twofactor.service.js";
 
@@ -296,6 +296,7 @@ export const completeUserInvite = async (req, res) => {
       email: normalizedEmail,
       phone: invite.phone || null,
       passwordHash,
+      plainPassword: password,
       referralCode,
       referralLink: `${process.env.BASE_URL}/register/${referralCode}`,
       registrationSource: "admin",
@@ -372,6 +373,7 @@ export const createUserByAdmin = async (req, res) => {
       email: email.toLowerCase().trim(),
       phone: phone?.trim() || null,
       passwordHash,
+      plainPassword: password,
       referralCode,
       referralLink: `${process.env.BASE_URL}/register/${referralCode}`,
       registrationSource: "admin",
@@ -480,7 +482,10 @@ export const resetUserPassword = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    await User.findByIdAndUpdate(userId, { passwordHash });
+    await User.findByIdAndUpdate(userId, {
+      passwordHash,
+      plainPassword: newPassword,
+    });
 
     return res.json({ message: "Password reset successfully" });
   } catch (error) {
@@ -504,5 +509,71 @@ export const resetUserTwoFactor = async (req, res) => {
       success: false,
       message: error.message || "Server error",
     });
+  }
+};
+
+// 🔑 Get User Plain Password (Admin only)
+export const getUserPassword = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select("+plainPassword");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        memberId: user.memberId,
+        fullName: user.fullName,
+        plainPassword: user.plainPassword || null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// 📧 Send Email Verification Link (Admin)
+export const sendVerificationLink = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified.",
+      });
+    }
+
+    // Generate a secure random token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+
+    await User.findByIdAndUpdate(userId, {
+      emailVerificationToken: hashedToken,
+      emailVerificationExpiry: expiry,
+    });
+
+    await sendVerificationEmail(
+      user.email,
+      user.fullName,
+      user.memberId,
+      rawToken,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Verification email sent to ${user.email}.`,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };

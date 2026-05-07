@@ -1,4 +1,4 @@
-﻿import { User } from "../user/user.model.js";
+import { User } from "../user/user.model.js";
 
 // 👉 Get All Users
 export const getAllUsers = async ({ status, search } = {}) => {
@@ -24,6 +24,8 @@ export const getAllUsers = async ({ status, search } = {}) => {
 
   const users = await User.find(query)
     .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret")
+    .populate("sponsorUserId", "fullName memberId email")
+    .populate("referredByUserId", "fullName memberId email")
     .sort({ createdAt: -1 });
   return users;
 };

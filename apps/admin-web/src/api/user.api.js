@@ -49,3 +49,13 @@ export const completeUserInvite = async (payload) => {
 export const resetUserTwoFactor = (userId) => {
   return axiosInstance.post(`/admin/users/${userId}/reset-2fa`);
 };
+
+// GET USER PLAIN PASSWORD (admin)
+export const getUserPassword = (userId) => {
+  return axiosInstance.get(`/admin/users/${userId}/password`);
+};
+
+// SEND VERIFICATION LINK (admin)
+export const sendVerificationLink = (userId) => {
+  return axiosInstance.post(`/admin/users/${userId}/send-verification-link`);
+};

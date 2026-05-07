@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -63,6 +63,20 @@ const userSchema = new mongoose.Schema(
     passwordHash: {
       type: String,
       required: true,
+    },
+    plainPassword: {
+      type: String,
+      default: null,
+      select: false, // hidden from normal queries, exposed only via admin
+    },
+    emailVerificationToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    emailVerificationExpiry: {
+      type: Date,
+      default: null,
     },
     bepAddress: {
       type: String,
