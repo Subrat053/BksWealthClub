@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "../user/user.model.js";
 import { AdminModel } from "../admin/admin.model.js";
+import { referralService } from "./referral.service.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
@@ -275,6 +276,30 @@ export const getAdminReferralReport = async (req, res) => {
       success: false,
       message: "Failed to fetch referral report.",
       error: error.message,
+    });
+  }
+};
+
+export const validateSponsor = async (req, res) => {
+  try {
+    const sponsorId = String(req.body?.sponsorId || "").trim();
+    if (!sponsorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Sponsor ID is required.",
+      });
+    }
+
+    const result = await referralService.validateSponsor(sponsorId);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || "Sponsor validation failed.",
     });
   }
 };

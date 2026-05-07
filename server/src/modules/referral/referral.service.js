@@ -21,8 +21,11 @@ export const referralService = {
 
   validateSponsor: async (sponsorId) => {
     const normalizedSponsorId = sponsorId.trim().toUpperCase();
-    if (!/^(BKS|BWC)\d{6,}$/.test(normalizedSponsorId)) {
-      throw new ApiError(400, "Sponsor ID format is invalid");
+    if (!/^(BKS|BWC)\d{5,}$/.test(normalizedSponsorId)) {
+      throw new ApiError(
+        400,
+        "Sponsor ID must look like BKS12345 or BWC12345",
+      );
     }
 
     const sponsor =
