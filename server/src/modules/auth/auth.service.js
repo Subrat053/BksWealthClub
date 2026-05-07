@@ -47,22 +47,28 @@ export const registerUser = async (payload) => {
     throw new Error("Email already registered.");
   }
 
-  const normalizedSponsorId = sponsorId?.trim().toUpperCase();
-  if (!normalizedSponsorId) {
-    throw new Error("Sponsor ID is required.");
+  const normalizedSponsorInput = sponsorId?.trim().toUpperCase();
+  if (!normalizedSponsorInput) {
+    throw new Error("Sponsor ID or referral code is required.");
   }
 
-  const sponsorUser = await User.findOne({ memberId: normalizedSponsorId });
-  const sponsorAdmin = sponsorUser
+  let sponsorUser = await User.findOne({ memberId: normalizedSponsorInput });
+  let sponsorAdmin = sponsorUser
     ? null
     : await AdminModel.findOne({
-        sponsorId: normalizedSponsorId,
+        sponsorId: normalizedSponsorInput,
         isActive: true,
       });
 
   if (!sponsorUser && !sponsorAdmin) {
+    sponsorUser = await User.findOne({ referralCode: normalizedSponsorInput });
+  }
+
+  if (!sponsorUser && !sponsorAdmin) {
     throw new Error("Sponsor ID not found.");
   }
+
+  const resolvedSponsorId = sponsorUser?.memberId || sponsorAdmin?.sponsorId;
 
   const memberId = await generateMemberId();
   const referralCode = await generateReferralCode(fullName);
@@ -70,7 +76,7 @@ export const registerUser = async (payload) => {
 
   const user = await User.create({
     memberId,
-    sponsorId: normalizedSponsorId,
+    sponsorId: resolvedSponsorId,
     sponsorUserId: sponsorUser?._id || null,
     referredByUserId: sponsorUser?._id || null,
     fullName: fullName.trim(),

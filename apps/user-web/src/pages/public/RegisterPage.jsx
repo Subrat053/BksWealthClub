@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
 import FormField from "../../components/common/FormField";
@@ -8,9 +7,9 @@ import Button from "../../components/common/Button";
 import { countries } from "../../utils/countries";
 
 export default function RegisterPage() {
-  const sponsorPattern = /^BWC\d{6,}$/;
+  const sponsorPattern = /^[A-Z]{1,4}\d{6,}$/;
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
 
   const defaultCountry = countries.find((item) => item.code === "IN");
 
@@ -31,13 +30,14 @@ export default function RegisterPage() {
   });
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [sponsorValidation, setSponsorValidation] = useState(null);
   const [sponsorLoading, setSponsorLoading] = useState(false);
 
   const sponsorStatus = useMemo(() => {
     if (!form.sponsor) return null;
     if (!sponsorPattern.test(form.sponsor))
-      return "Enter sponsor ID like BWC123456";
+      return "Enter sponsor or referral code like BWC123456";
     if (sponsorLoading) return "Checking...";
     if (sponsorValidation?.error) return sponsorValidation.error;
     if (!sponsorValidation?.data) return null;
@@ -45,6 +45,15 @@ export default function RegisterPage() {
       ? "Sponsor Active"
       : "Sponsor not Active";
   }, [form.sponsor, sponsorValidation, sponsorLoading]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get("ref");
+
+    if (refCode && !form.sponsor) {
+      setForm((prev) => ({ ...prev, sponsor: refCode.toUpperCase() }));
+    }
+  }, [location.search, form.sponsor]);
 
   useEffect(() => {
     const sponsorId = form.sponsor.trim().toUpperCase();
@@ -115,7 +124,7 @@ export default function RegisterPage() {
     }
 
     if (!sponsorPattern.test(form.sponsor.trim().toUpperCase())) {
-      setError("Sponsor ID must be like BWC123456.");
+      setError("Sponsor or referral code must be like BWC123456.");
       return;
     }
 
@@ -130,6 +139,7 @@ export default function RegisterPage() {
     }
 
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -147,22 +157,13 @@ export default function RegisterPage() {
         confirmPassword: form.confirmPassword,
       });
 
-      const loginResponse = await authService.login({
-        username: form.email,
-        password: form.password,
+      setSuccess(
+        "Registration successful. Please verify your email, then log in.",
+      );
+
+      navigate("/login", {
+        state: { registeredEmail: form.email.trim() },
       });
-
-      localStorage.setItem("userToken", loginResponse.data.token);
-
-      login({
-        id: loginResponse.data.user._id,
-        memberId: loginResponse.data.user.memberId,
-        email: loginResponse.data.user.email,
-        displayName: loginResponse.data.user.fullName,
-        role: "member",
-      });
-
-      navigate("/member/dashboard");
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -177,19 +178,19 @@ export default function RegisterPage() {
         className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
       >
         <form className="space-y-4" onSubmit={onSubmit}>
-          <FormField label="Sponsor ID">
+          <FormField label="Sponsor or Referral Code">
             <input
               value={form.sponsor}
               onChange={onSponsorChange}
               className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
-              placeholder="Enter sponsor ID"
+              placeholder="Enter sponsor or referral code"
             />
 
             {sponsorStatus && (
               <p
                 className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                   sponsorStatus === "Sponsor not Active" ||
-                  sponsorStatus === "Enter sponsor ID like BWC123456" ||
+                  sponsorStatus === "Enter sponsor or referral code like BWC123456" ||
                   sponsorValidation?.error
                     ? "bg-red-500/20 text-red-300"
                     : "bg-green-500/20 text-green-300"
@@ -303,6 +304,7 @@ export default function RegisterPage() {
           </FormField>
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
+          {success ? <p className="text-sm text-green-300">{success}</p> : null}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Registering..." : "Register"}

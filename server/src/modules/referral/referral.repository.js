@@ -3,7 +3,9 @@ import { ReferralRelationModel } from "./referral.model.js";
 
 export const referralRepository = {
   findSponsorById: async (sponsorId) =>
-    User.findOne({ memberId: sponsorId }).lean(),
+    User.findOne({
+      $or: [{ memberId: sponsorId }, { referralCode: sponsorId }],
+    }).lean(),
 
   createRelation: async (payload) => ReferralRelationModel.create(payload),
 

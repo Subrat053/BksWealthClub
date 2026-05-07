@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
@@ -9,6 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const captchaRef = useRef(null);
 
   const { login } = useAuth();
@@ -17,6 +18,15 @@ export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [captchaToken, setCaptchaToken] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const registeredEmail = location.state?.registeredEmail;
+    if (registeredEmail) {
+      setForm((prev) => ({ ...prev, username: registeredEmail }));
+      setSuccess("Registration successful. Please verify your email, then log in.");
+    }
+  }, [location.state]);
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -120,6 +130,9 @@ export default function LoginPage() {
             </div>
 
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
+            {success ? (
+              <p className="text-sm text-green-300">{success}</p>
+            ) : null}
             {/* <div className="rounded-xl border border-slate-300/50 bg-white p-3 text-black">reCAPTCHA placeholder</div> */}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
