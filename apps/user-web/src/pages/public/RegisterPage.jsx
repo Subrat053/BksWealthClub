@@ -7,7 +7,10 @@ import Button from "../../components/common/Button";
 import { countries } from "../../utils/countries";
 
 export default function RegisterPage() {
-  const sponsorPattern = /^(BKS|BWC)\d{5,}$/i;
+  const sponsorIdPattern = /^(BKS|BWC)\d{5,}$/i;
+  const referralCodePattern = /^[A-Z]{1,4}\d{6}$/i;
+  const sponsorPattern = (value) =>
+    sponsorIdPattern.test(value) || referralCodePattern.test(value);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref");
@@ -46,8 +49,8 @@ export default function RegisterPage() {
 
   const sponsorStatus = useMemo(() => {
     if (!form.sponsor) return null;
-    if (!sponsorPattern.test(form.sponsor))
-      return "Enter sponsor ID like BKS12345 or BWC12345";
+    if (!sponsorPattern(form.sponsor))
+      return "Enter sponsor ID or referral code like BKS12345 or ABCD123456";
     if (sponsorLoading) return "Checking...";
     if (sponsorValidation?.error) return sponsorValidation.error;
     if (!sponsorValidation?.data) return null;
@@ -59,7 +62,7 @@ export default function RegisterPage() {
   useEffect(() => {
     const sponsorId = form.sponsor.trim().toUpperCase();
 
-    if (!sponsorId || !sponsorPattern.test(sponsorId)) {
+    if (!sponsorId || !sponsorPattern(sponsorId)) {
       setSponsorLoading(false);
       setSponsorValidation(null);
       return;
@@ -124,8 +127,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!sponsorPattern.test(form.sponsor.trim())) {
-      setError("Sponsor ID must look like BKS12345 or BWC12345.");
+    if (!sponsorPattern(form.sponsor.trim())) {
+      setError("Sponsor ID or referral code must look like BKS12345 or ABCD123456.");
       return;
     }
 
@@ -191,7 +194,8 @@ export default function RegisterPage() {
               <p
                 className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                   sponsorStatus === "Sponsor not Active" ||
-                  sponsorStatus === "Enter sponsor ID like BKS12345 or BWC12345" ||
+                  sponsorStatus ===
+                    "Enter sponsor ID or referral code like BKS12345 or ABCD123456" ||
                   sponsorValidation?.error
                     ? "bg-red-500/20 text-red-300"
                     : "bg-green-500/20 text-green-300"

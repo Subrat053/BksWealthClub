@@ -16,8 +16,9 @@ import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
 import { seedSuperAdmin } from "../admin/seedSuperAdmin.js";
 
-const buildReferralLink = (sponsorId) => {
-  return `${process.env.CLIENT_URL}/register?ref=${sponsorId}`;
+const buildReferralLink = (referralCode) => {
+  const baseUrl = process.env.BASE_URL || process.env.CLIENT_URL;
+  return `${baseUrl}/register?ref=${referralCode}`;
 };
 
 const findUserByLoginIdentifier = async (identifier) => {
@@ -53,7 +54,14 @@ export const registerUser = async (payload) => {
     throw new Error("Sponsor ID or referral code is required.");
   }
 
-  const sponsorUser = await User.findOne({ memberId: normalizedSponsorInput });
+  const sponsorIdPattern = /^(BKS|BWC)\d{5,}$/i;
+
+  const sponsorUser = await User.findOne({
+    $or: [
+      { memberId: normalizedSponsorInput },
+      { referralCode: normalizedSponsorInput },
+    ],
+  });
   let sponsorAdmin = sponsorUser
     ? null
     : await AdminModel.findOne({
@@ -61,7 +69,12 @@ export const registerUser = async (payload) => {
         isActive: true,
       });
 
-  if (!sponsorUser && !sponsorAdmin && normalizedSponsorInput === "BKS000000") {
+  if (
+    !sponsorUser &&
+    !sponsorAdmin &&
+    sponsorIdPattern.test(normalizedSponsorInput) &&
+    normalizedSponsorInput === "BKS000000"
+  ) {
     await seedSuperAdmin();
     sponsorAdmin = await AdminModel.findOne({
       sponsorId: normalizedSponsorInput,
@@ -91,7 +104,7 @@ export const registerUser = async (payload) => {
     bepAddress: bepAddress?.trim() || null,
 
     referralCode: newReferralCode,
-    referralLink: buildReferralLink(memberId),
+    referralLink: buildReferralLink(newReferralCode),
 
     registrationSource: registrationSource || "website",
 
@@ -99,6 +112,17 @@ export const registerUser = async (payload) => {
     isEmailVerified: false,
     isActivated: false,
   });
+
+  const verificationToken = generateRandomToken();
+  await EmailVerification.create({
+    userId: user._id,
+    email: user.email,
+    token: verificationToken,
+    plainPassword: null,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+  });
+
+  await sendVerificationEmail(user.email, user.fullName, verificationToken);
 
   return { user };
 };
@@ -149,9 +173,14 @@ export const verifyUserEmail = async (token) => {
     throw new Error("Verification token expired.");
   }
 
-  const user = await User.findByIdAndUpdate(verification.userId, {
-    isEmailVerified: true,
-  }).select("fullName email");
+  const user = await User.findByIdAndUpdate(
+    verification.userId,
+    {
+      isEmailVerified: true,
+      status: "active",
+    },
+    { new: true },
+  ).select("fullName email");
 
   verification.isUsed = true;
   await verification.save();

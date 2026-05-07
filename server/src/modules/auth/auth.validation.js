@@ -2,7 +2,8 @@
 
 export const validateRegisterInput = (body) => {
   const errors = [];
-  const sponsorPattern = /^(BKS|BWC)\d{5,}$/i;
+  const sponsorIdPattern = /^(BKS|BWC)\d{5,}$/i;
+  const referralCodePattern = /^[A-Z]{1,4}\d{6}$/i;
 
   if (!body.fullName?.trim()) errors.push("Full name is required.");
   if (!body.email?.trim()) errors.push("Email is required.");
@@ -11,8 +12,12 @@ export const validateRegisterInput = (body) => {
   if (!body.registrationSource?.trim())
     errors.push("Registration source is required.");
 
-  if (body.sponsorId && !sponsorPattern.test(body.sponsorId.trim())) {
-    errors.push("Sponsor ID must look like BKS12345 or BWC12345.");
+  if (
+    body.sponsorId &&
+    !sponsorIdPattern.test(body.sponsorId.trim()) &&
+    !referralCodePattern.test(body.sponsorId.trim())
+  ) {
+    errors.push("Sponsor ID or referral code must look like BKS12345 or ABCD123456.");
   }
 
   if (body.password && body.password.length < 6) {
@@ -35,7 +40,7 @@ export const sponsorValidateSchema = z.object({
     .trim()
     .min(1, "Sponsor ID is required")
     .regex(
-      /^(BKS|BWC)\d{5,}$/i,
-      "Sponsor ID must look like BKS12345 or BWC12345",
+      /^(?:BKS|BWC)\d{5,}$|^[A-Z]{1,4}\d{6}$/i,
+      "Sponsor ID or referral code must look like BKS12345 or ABCD123456",
     ),
 });

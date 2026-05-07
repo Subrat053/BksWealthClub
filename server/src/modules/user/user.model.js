@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema(
     sponsorId: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       index: true,
     },

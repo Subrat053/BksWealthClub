@@ -1,4 +1,5 @@
 import { createContext, useEffect, useMemo, useState } from "react";
+import { authService } from "../services/auth.service";
 
 export const AuthContext = createContext(null);
 
@@ -12,16 +13,45 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem("userToken");
     const storedUser = localStorage.getItem("user");
 
-    if (token && storedUser) {
+    const syncProfile = async (fallbackUser) => {
       try {
-        const parsedUser = JSON.parse(storedUser);
+        const response = await authService.getProfile();
+        const nextUser = {
+          ...fallbackUser,
+          ...response.data?.user,
+        };
+        setUser(nextUser);
+        setIsAuthenticated(true);
+        localStorage.setItem("user", JSON.stringify(nextUser));
+      } catch (err) {
+        if (!fallbackUser) {
+          localStorage.removeItem("userToken");
+          localStorage.removeItem("user");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      let parsedUser = null;
+      if (storedUser) {
+        try {
+          parsedUser = JSON.parse(storedUser);
+        } catch (err) {
+          localStorage.removeItem("user");
+        }
+      }
+
+      if (parsedUser) {
         setUser(parsedUser);
         setIsAuthenticated(true);
-      } catch (err) {
-        localStorage.removeItem("userToken");
-        localStorage.removeItem("user");
       }
+
+      syncProfile(parsedUser);
+      return;
     }
+
     setLoading(false);
   }, []);
 

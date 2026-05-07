@@ -57,6 +57,11 @@ export default function LoginPage() {
         memberId: response.data.user.memberId,
         email: response.data.user.email,
         displayName: response.data.user.fullName,
+        status: response.data.user.status,
+        isEmailVerified: response.data.user.isEmailVerified,
+        isActivated: response.data.user.isActivated,
+        referralCode: response.data.user.referralCode,
+        referralLink: response.data.user.referralLink,
         role: "member",
       });
 

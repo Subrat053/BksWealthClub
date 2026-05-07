@@ -5,6 +5,11 @@ export const referralRepository = {
   findSponsorById: async (sponsorId) =>
     User.findOne({ memberId: sponsorId }).lean(),
 
+  findSponsorByIdentifier: async (identifier) =>
+    User.findOne({
+      $or: [{ memberId: identifier }, { referralCode: identifier }],
+    }).lean(),
+
   createRelation: async (payload) => ReferralRelationModel.create(payload),
 
   getDirectsBySponsor: async (sponsorUserRef) =>

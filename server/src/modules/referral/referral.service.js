@@ -22,15 +22,21 @@ export const referralService = {
 
   validateSponsor: async (sponsorId) => {
     const normalizedSponsorId = sponsorId.trim().toUpperCase();
-    if (!/^(BKS|BWC)\d{5,}$/.test(normalizedSponsorId)) {
+    const sponsorIdPattern = /^(BKS|BWC)\d{5,}$/i;
+    const referralCodePattern = /^[A-Z]{1,4}\d{6}$/i;
+
+    if (
+      !sponsorIdPattern.test(normalizedSponsorId) &&
+      !referralCodePattern.test(normalizedSponsorId)
+    ) {
       throw new ApiError(
         400,
-        "Sponsor ID must look like BKS12345 or BWC12345",
+        "Sponsor ID or referral code must look like BKS12345 or ABCD123456",
       );
     }
 
     const sponsor =
-      await referralRepository.findSponsorById(normalizedSponsorId);
+      await referralRepository.findSponsorByIdentifier(normalizedSponsorId);
 
     if (sponsor) {
       return {
@@ -48,7 +54,11 @@ export const referralService = {
       isActive: true,
     }).lean();
 
-    if (!superAdmin && normalizedSponsorId === "BKS000000") {
+    if (
+      !superAdmin &&
+      sponsorIdPattern.test(normalizedSponsorId) &&
+      normalizedSponsorId === "BKS000000"
+    ) {
       await seedSuperAdmin();
       superAdmin = await AdminModel.findOne({
         sponsorId: normalizedSponsorId,
