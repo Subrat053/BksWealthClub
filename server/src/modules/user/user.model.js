@@ -114,6 +114,25 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    twoFactorSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    twoFactorPendingSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    twoFactorVerifiedAt: {
+      type: Date,
+      default: null,
+    },
     registeredAt: {
       type: Date,
       default: Date.now,

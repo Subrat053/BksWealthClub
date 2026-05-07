@@ -8,7 +8,19 @@ export const getProfileController = asyncHandler(async (req, res) => {
 });
 
 export const updateProfileController = asyncHandler(async (req, res) => {
-  const data = await userService.updateProfile(req.auth.sub, req.body);
+  // Map frontend field names to database field names
+  const mappedPayload = {
+    fullName: req.body.name || undefined,
+    phone: req.body.mobile || undefined,
+    bepAddress: req.body.walletAddresses?.[0]?.address || undefined,
+  };
+
+  // Remove undefined values
+  Object.keys(mappedPayload).forEach((key) => {
+    if (mappedPayload[key] === undefined) delete mappedPayload[key];
+  });
+
+  const data = await userService.updateProfile(req.auth.sub, mappedPayload);
   res.json(new ApiResponse({ message: "Profile updated", data }));
 });
 

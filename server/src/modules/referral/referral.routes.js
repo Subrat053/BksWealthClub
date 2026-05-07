@@ -1,10 +1,17 @@
-﻿import { Router } from "express";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
-import { validate } from "../../middleware/validate.middleware.js";
-import { sponsorValidateSchema } from "../auth/auth.validation.js";
-import { directStatsController, validateSponsorController } from "./referral.controller.js";
+﻿import express from "express";
+import {
+  getMyReferrals,
+  getMyReferralTree,
+  getAdminReferralTree,
+  getAdminReferralReport,
+} from "./referral.controller.js";
 
-export const referralRouter = Router();
+import { protect, userOnly, adminOnly } from "../../middleware/auth.middleware.js";
 
-referralRouter.post("/validate-sponsor", validate(sponsorValidateSchema), validateSponsorController);
-referralRouter.get("/direct-stats", authMiddleware, directStatsController);
+export const referralRouter = express.Router();
+
+referralRouter.get("/my-referrals", protect, userOnly, getMyReferrals);
+referralRouter.get("/my-tree", protect, userOnly, getMyReferralTree);
+
+referralRouter.get("/admin/tree", protect, adminOnly, getAdminReferralTree);
+referralRouter.get("/admin/report", protect, adminOnly, getAdminReferralReport);

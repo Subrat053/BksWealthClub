@@ -2,7 +2,10 @@
 import { WalletModel } from "./wallet.model.js";
 
 export const userRepository = {
-  findById: async (id) => User.findById(id).lean(),
+  findById: async (id) =>
+    User.findById(id)
+      .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret")
+      .lean(),
 
   findByUsername: async (username) => User.findOne({ username }).lean(),
 
@@ -12,7 +15,9 @@ export const userRepository = {
     User.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
-    }).lean(),
+    })
+      .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret")
+      .lean(),
 
   getWalletSummary: async (userRef) => WalletModel.findOne({ userRef }).lean(),
 };

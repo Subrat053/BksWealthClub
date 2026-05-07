@@ -5,7 +5,7 @@ import StatusBadge from "../../components/StatusBadge";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsers } from "../../hooks/useUsers";
-import { updateUserStatus } from "../../api/user.api";
+import { resetUserTwoFactor, updateUserStatus } from "../../api/user.api";
 import CreateUserModal from "./CreateUserModal";
 
 export default function UserListPage() {
@@ -35,6 +35,20 @@ export default function UserListPage() {
         label: "JOINED",
         render: (_value, row) => row.joinedAtExact || "-",
       },
+      {
+        key: "twoFactorEnabled",
+        label: "2FA",
+        render: (value) =>
+          value ? (
+            <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+              Enabled
+            </span>
+          ) : (
+            <span className="inline-flex rounded-full border border-slate-400/20 bg-slate-500/15 px-3 py-1 text-xs font-semibold text-slate-300">
+              Disabled
+            </span>
+          ),
+      },
     ],
     [],
   );
@@ -50,6 +64,18 @@ export default function UserListPage() {
     }
 
     await updateUserStatus(row._id, "blocked");
+    refetch();
+  };
+
+  const handleResetTwoFactor = async (row) => {
+    if (!row.twoFactorEnabled) return;
+    if (
+      !confirm(`Reset 2FA for ${row.name}? They will need to set it up again.`)
+    ) {
+      return;
+    }
+
+    await resetUserTwoFactor(row._id);
     refetch();
   };
 
@@ -117,6 +143,13 @@ export default function UserListPage() {
               disabled={row.status === "blocked"}
             >
               {row.status === "blocked" ? "Banned" : "Ban"}
+            </button>
+            <button
+              className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => handleResetTwoFactor(row)}
+              disabled={!row.twoFactorEnabled}
+            >
+              {row.twoFactorEnabled ? "Reset 2FA" : "2FA Off"}
             </button>
           </div>
         )}

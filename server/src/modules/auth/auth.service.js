@@ -15,8 +15,8 @@ import {
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
 
-const buildReferralLink = (referralCode) => {
-  return `${process.env.CLIENT_URL}/register?ref=${referralCode}`;
+const buildReferralLink = (sponsorId) => {
+  return `${process.env.CLIENT_URL}/register?ref=${sponsorId}`;
 };
 
 const findUserByLoginIdentifier = async (identifier) => {
@@ -52,7 +52,7 @@ export const registerUser = async (payload) => {
     throw new Error("Sponsor ID or referral code is required.");
   }
 
-  let sponsorUser = await User.findOne({ memberId: normalizedSponsorInput });
+  const sponsorUser = await User.findOne({ memberId: normalizedSponsorInput });
   let sponsorAdmin = sponsorUser
     ? null
     : await AdminModel.findOne({
@@ -61,17 +61,13 @@ export const registerUser = async (payload) => {
       });
 
   if (!sponsorUser && !sponsorAdmin) {
-    sponsorUser = await User.findOne({ referralCode: normalizedSponsorInput });
-  }
-
-  if (!sponsorUser && !sponsorAdmin) {
     throw new Error("Sponsor ID not found.");
   }
 
   const resolvedSponsorId = sponsorUser?.memberId || sponsorAdmin?.sponsorId;
 
   const memberId = await generateMemberId();
-  const referralCode = await generateReferralCode(fullName);
+  const newReferralCode = await generateReferralCode(fullName);
   const passwordHash = await hashPassword(password);
 
   const user = await User.create({
@@ -84,34 +80,18 @@ export const registerUser = async (payload) => {
     phone: phone?.trim() || null,
     passwordHash,
     bepAddress: bepAddress?.trim() || null,
-    referralCode,
-    referralLink: buildReferralLink(referralCode),
-    registrationSource,
+
+    referralCode: newReferralCode,
+    referralLink: buildReferralLink(memberId),
+
+    registrationSource: registrationSource || "website",
+
     status: "pending",
     isEmailVerified: false,
     isActivated: false,
   });
 
-  await UserProfile.create({
-    userId: user._id,
-  });
-
-  const verifyToken = generateRandomToken();
-
-  await EmailVerification.create({
-    userId: user._id,
-    email: user.email,
-    token: verifyToken,
-    plainPassword: password,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-  });
-
-  await sendVerificationEmail(user.email, user.fullName, verifyToken);
-
-  return {
-    user,
-    verifyToken,
-  };
+  return { user };
 };
 
 export const loginUser = async ({ identifier, password }) => {
@@ -237,7 +217,9 @@ export const resetPassword = async ({ token, newPassword }) => {
 };
 
 export const getMyProfile = async (userId) => {
-  const user = await User.findById(userId).select("-passwordHash");
+  const user = await User.findById(userId).select(
+    "-passwordHash -twoFactorSecret -twoFactorPendingSecret",
+  );
   const profile = await UserProfile.findOne({ userId });
 
   return { user, profile };
@@ -253,7 +235,7 @@ export const updateMyProfile = async (userId, payload) => {
       phone,
     },
     { new: true },
-  ).select("-passwordHash");
+  ).select("-passwordHash -twoFactorSecret -twoFactorPendingSecret");
 
   const profile = await UserProfile.findOneAndUpdate(
     { userId },

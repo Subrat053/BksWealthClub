@@ -43,6 +43,7 @@ export const useUsers = (filters) => {
           phone: u.phone,
           role: u.role || "user",
           status: u.status,
+          twoFactorEnabled: Boolean(u.twoFactorEnabled),
           createdAtMs: u.createdAt ? new Date(u.createdAt).getTime() : null,
           joinedAt: u.createdAt || null,
           joinedAtExact: formatExactTimestamp(u.createdAt || u.registeredAt),

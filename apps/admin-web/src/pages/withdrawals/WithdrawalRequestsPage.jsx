@@ -4,7 +4,6 @@ import AdminTable from "../../components/common/AdminTable";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import StatusBadge from "../../components/StatusBadge";
 
-
 const withdrawals = [
   {
     id: "WDR001",
@@ -32,7 +31,6 @@ const withdrawals = [
   },
 ];
 
-
 const columns = [
   { key: "username", label: "Username" },
   { key: "amount", label: "Amount" },
@@ -56,12 +54,24 @@ export default function WithdrawalRequestsPage() {
           <table className="min-w-full text-left">
             <thead className="bg-[#112766]/70">
               <tr>
-                <th className="px-5 py-4 text-sm font-semibold text-white">USERNAME</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">AMOUNT</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">CHARGES</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">PAYABLE</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">STATUS</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">ACTIONS</th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  USERNAME
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  AMOUNT
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  CHARGES
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  PAYABLE
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  STATUS
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-white">
+                  ACTIONS
+                </th>
               </tr>
             </thead>
 
@@ -69,10 +79,18 @@ export default function WithdrawalRequestsPage() {
               {withdrawals.length > 0 ? (
                 withdrawals.map((item) => (
                   <tr key={item.id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-sm text-blue-100/85">{item.username}</td>
-                    <td className="px-5 py-4 text-sm text-blue-100/85">₹{item.amount.toLocaleString()}</td>
-                    <td className="px-5 py-4 text-sm text-blue-100/85">₹{item.charges.toLocaleString()}</td>
-                    <td className="px-5 py-4 text-sm text-blue-100/85">₹{item.payable.toLocaleString()}</td>
+                    <td className="px-5 py-4 text-sm text-blue-100/85">
+                      {item.username}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-blue-100/85">
+                      ₹{item.amount.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-blue-100/85">
+                      ₹{item.charges.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-blue-100/85">
+                      ₹{item.payable.toLocaleString()}
+                    </td>
                     <td className="px-5 py-4 text-sm text-blue-100/85">
                       <StatusBadge status={item.status} />
                     </td>
@@ -90,7 +108,10 @@ export default function WithdrawalRequestsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-5 py-10 text-center text-sm text-blue-100/65">
+                  <td
+                    colSpan="6"
+                    className="px-5 py-10 text-center text-sm text-blue-100/65"
+                  >
                     No withdrawal requests
                   </td>
                 </tr>

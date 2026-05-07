@@ -1,8 +1,21 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../../middleware/auth.middleware.js";
-import { getCommunityTreeController, placeMemberController } from "./autopool.controller.js";
+import {
+  getMemberTreeController,
+  getCommunityTreeController,
+  getPoolStatsController,
+} from "./autopool.controller.js";
 
 export const autopoolRouter = Router();
 
-autopoolRouter.get("/community-tree", authMiddleware, getCommunityTreeController);
-autopoolRouter.post("/place", authMiddleware, adminOnly, placeMemberController);
+// Member routes
+autopoolRouter.get("/my-tree", authMiddleware, getMemberTreeController);
+
+// Admin routes
+autopoolRouter.get(
+  "/community-tree",
+  authMiddleware,
+  adminOnly,
+  getCommunityTreeController,
+);
+autopoolRouter.get("/stats", authMiddleware, adminOnly, getPoolStatsController);

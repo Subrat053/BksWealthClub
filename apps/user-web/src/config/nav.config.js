@@ -18,6 +18,7 @@ export const memberNav = [
     label: "Team",
     icon: Users,
     children: [
+      { label: "Level Report", path: "/member/team/report" },
       { label: "Direct", path: "/member/team/direct" },
       { label: "Generation", path: "/member/team/generation" },
       { label: "Autopool", path: "/member/team/autopool" },
