@@ -14,6 +14,7 @@ import {
 } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
+import { seedSuperAdmin } from "../admin/seedSuperAdmin.js";
 
 const buildReferralLink = (sponsorId) => {
   return `${process.env.CLIENT_URL}/register?ref=${sponsorId}`;
@@ -59,6 +60,14 @@ export const registerUser = async (payload) => {
         sponsorId: normalizedSponsorInput,
         isActive: true,
       });
+
+  if (!sponsorUser && !sponsorAdmin && normalizedSponsorInput === "BKS000000") {
+    await seedSuperAdmin();
+    sponsorAdmin = await AdminModel.findOne({
+      sponsorId: normalizedSponsorInput,
+      isActive: true,
+    });
+  }
 
   if (!sponsorUser && !sponsorAdmin) {
     throw new Error("Sponsor ID not found.");

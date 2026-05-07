@@ -2,6 +2,7 @@
 import { referralRepository } from "./referral.repository.js";
 import { AdminModel } from "../admin/admin.model.js";
 import { USER_ROLES } from "../../common/enums/index.js";
+import { seedSuperAdmin } from "../admin/seedSuperAdmin.js";
 
 export const referralService = {
   findSponsorById: async (sponsorId) =>
@@ -41,11 +42,20 @@ export const referralService = {
       };
     }
 
-    const superAdmin = await AdminModel.findOne({
+    let superAdmin = await AdminModel.findOne({
       sponsorId: normalizedSponsorId,
       role: USER_ROLES.SUPERADMIN,
       isActive: true,
     }).lean();
+
+    if (!superAdmin && normalizedSponsorId === "BKS000000") {
+      await seedSuperAdmin();
+      superAdmin = await AdminModel.findOne({
+        sponsorId: normalizedSponsorId,
+        role: USER_ROLES.SUPERADMIN,
+        isActive: true,
+      }).lean();
+    }
 
     if (!superAdmin) {
       throw new ApiError(404, "Sponsor not found");
