@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 /**
  * AutopoolNode — represents a single "slot" in the global BFS matrix.
@@ -103,6 +103,17 @@ const autopoolNodeSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
       default: null,
+    },
+
+    /**
+     * Set to true the moment _placeNodeInTree() finishes for this node.
+     * Used to detect "already placed" safely on retry, since positionUnderParent
+     * is null for BOTH unplaced nodes AND the root node (which has no parent).
+     */
+    isPlacedInTree: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
   },
   { timestamps: true },

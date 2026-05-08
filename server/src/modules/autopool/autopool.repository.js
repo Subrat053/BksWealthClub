@@ -1,12 +1,32 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import { AutopoolNodeModel } from "./autopool.model.js";
 
 export const autopoolRepository = {
   // ─── Node Creation ──────────────────────────────────────────────────────────
 
-  createNode: async (payload) => AutopoolNodeModel.create(payload),
+  /**
+   * Upsert-safe node creation. If a node with the same nodeId already exists
+   * (e.g. from a retried transaction), it simply returns the existing document.
+   * This replaces the old `.create()` which threw E11000 on retry.
+   */
+  createNode: async (payload, session = null) => {
+    const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
+    if (session) opts.session = session;
+    return AutopoolNodeModel.findOneAndUpdate(
+      { nodeId: payload.nodeId },
+      { $setOnInsert: payload },
+      opts,
+    );
+  },
 
-  createManyNodes: async (payloads) => AutopoolNodeModel.insertMany(payloads),
+  createManyNodes: async (payloads, session = null) => {
+    // insertMany is NOT upsert-safe; use serial upserts for idempotency
+    const results = [];
+    for (const payload of payloads) {
+      results.push(await autopoolRepository.createNode(payload, session));
+    }
+    return results;
+  },
 
   // ─── BFS Queue ──────────────────────────────────────────────────────────────
 
@@ -15,19 +35,25 @@ export const autopoolRepository = {
    * - status = "active" or "regenerated"
    * - childrenCount < 3
    * - oldest joinedAt first (millisecond precision)
+   *
+   * Accepts an optional session so reads are consistent within a transaction.
    */
-  findNextAvailableParent: async () => {
-    return AutopoolNodeModel.findOne({
+  findNextAvailableParent: async (session = null) => {
+    const query = AutopoolNodeModel.findOne({
       status: { $in: ["active", "regenerated"] },
       childrenCount: { $lt: 3 },
-    })
-      .sort({ childrenCount: 1, joinedAt: 1 }) // prefer less-filled nodes first, then oldest
-      .lean();
+    }).sort({ childrenCount: 1, joinedAt: 1 }); // prefer less-filled nodes, then oldest
+    if (session) query.session(session);
+    return query.lean();
   },
 
   // ─── Node Reads ─────────────────────────────────────────────────────────────
 
-  findById: async (id) => AutopoolNodeModel.findById(id).lean(),
+  findById: async (id, session = null) => {
+    const query = AutopoolNodeModel.findById(id);
+    if (session) query.session(session);
+    return query.lean();
+  },
 
   findByNodeId: async (nodeId) => AutopoolNodeModel.findOne({ nodeId }).lean(),
 
@@ -43,27 +69,40 @@ export const autopoolRepository = {
 
   /**
    * Atomically increment childrenCount on a parent node.
-   * Returns the updated doc. If childrenCount reaches 3, mark completed.
+   * Returns the updated doc. If childrenCount reaches 3, marks it completed.
+   *
+   * Accepts an optional session so writes participate in the active transaction.
    */
-  incrementChildrenCount: async (parentNodeId) => {
+  incrementChildrenCount: async (parentNodeId, session = null) => {
+    const opts = { new: true };
+    if (session) opts.session = session;
+
     const updated = await AutopoolNodeModel.findByIdAndUpdate(
       parentNodeId,
       { $inc: { childrenCount: 1 } },
-      { new: true },
+      opts,
     );
 
-    // If now full → mark completed
+    // If now full → mark completed (still within same session/transaction)
     if (updated && updated.childrenCount >= 3) {
+      const completionOpts = session ? { session } : {};
+      await AutopoolNodeModel.findByIdAndUpdate(
+        parentNodeId,
+        { status: "completed", completedAt: new Date() },
+        completionOpts,
+      );
       updated.status = "completed";
       updated.completedAt = new Date();
-      await updated.save();
     }
 
     return updated;
   },
 
-  updateStatus: async (nodeId, status) =>
-    AutopoolNodeModel.findByIdAndUpdate(nodeId, { status }, { new: true }),
+  updateStatus: async (nodeId, status, session = null) => {
+    const opts = { new: true };
+    if (session) opts.session = session;
+    return AutopoolNodeModel.findByIdAndUpdate(nodeId, { status }, opts);
+  },
 
   // ─── Tree / Community View ───────────────────────────────────────────────────
 

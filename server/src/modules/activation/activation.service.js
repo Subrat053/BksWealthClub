@@ -1,4 +1,5 @@
-﻿import { activationRepository } from "./activation.repository.js";
+import mongoose from "mongoose";
+import { activationRepository } from "./activation.repository.js";
 import { settingsService } from "../settings/settings.service.js";
 import { autopoolService } from "../autopool/autopool.service.js";
 import { User } from "../user/user.model.js";
@@ -31,25 +32,43 @@ export const activationService = {
    * Useful for admin-added members or manual overrides.
    */
   adminExecuteActivation: async ({ userId }) => {
-    const user = await User.findById(userId).lean();
-    if (!user) throw new ApiError(404, "User not found");
-    if (user.isActivated) throw new ApiError(400, "Account already activated");
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Create an activation record
-    await activationRepository.create({
-      userRef: userId,
-      amount: 75,
-      status: "activated",
-      triggeredBy: "admin",
-      note: "Manually activated by admin",
-    });
+    try {
+      const user = await User.findById(userId).session(session);
+      if (!user) throw new ApiError(404, "User not found");
+      if (user.isActivated) throw new ApiError(400, "Account already activated");
 
-    // Fire the autopool workflow
-    const result = await autopoolService.activateMemberInAutopool({
-      userId: user._id,
-      memberId: user.memberId,
-    });
+      // Create an activation record
+      await activationRepository.create([
+        {
+          userRef: userId,
+          amount: 75,
+          status: "activated",
+          triggeredBy: "admin",
+          note: "Manually activated by admin",
+        },
+      ], { session });
 
-    return { activated: true, ...result };
+      // Mark user as activated
+      user.isActivated = true;
+      user.status = "active";
+      await user.save({ session });
+
+      // Fire the autopool workflow (pass the session)
+      const result = await autopoolService.activateMemberInAutopool({
+        userId: user._id,
+        memberId: user.memberId,
+      }, session);
+
+      await session.commitTransaction();
+      return { activated: true, ...result };
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
   },
 };

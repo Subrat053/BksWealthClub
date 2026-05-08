@@ -11,7 +11,7 @@ import {
 import { incomeService } from "../income/income.service.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { User } from "../user/user.model.js";
-import { ApiError } from "../../core/ApiError.js";
+import { AutopoolNodeModel } from "./autopool.model.js";
 
 export const autopoolService = {
   // ─── 1. Activate Member → Create Dual IDs → Place in Pool ──────────────────
@@ -19,58 +19,53 @@ export const autopoolService = {
   /**
    * Called when admin approves a $75 deposit for a user.
    * Creates two AutopoolNodes (.1 active, .2 on_hold) and places .1 into BFS tree.
-   * Also credits sponsor income.
+   *
+   * IMPORTANT: accepts an existing `session` from the deposit approval transaction
+   * so all operations are part of the SAME atomic transaction. No nested session.
+   *
+   * Uses upsert (set-on-insert) so repeated calls for the same memberId are safe
+   * (idempotent — duplicate calls just return the already-created nodes).
    */
-  activateMemberInAutopool: async ({ userId, memberId }) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  activateMemberInAutopool: async ({ userId, memberId }, session = null) => {
+    const dualPayloads = buildDualNodePayloads({
+      userRef: userId,
+      memberId,
+      cycleNumber: 1,
+    });
 
-    try {
-      // --- Build the two node payloads ---
-      const dualPayloads = buildDualNodePayloads({
-        userRef: userId,
-        memberId,
-        cycleNumber: 1,
-      });
+    // ── Upsert both nodes (safe against duplicate-key on retry) ───────────────
+    const upsertOpts = session
+      ? { upsert: true, new: true, setDefaultsOnInsert: true, session }
+      : { upsert: true, new: true, setDefaultsOnInsert: true };
 
-      // --- Insert both nodes ---
-      const [activeNode, holdNode] = await Promise.all([
-        autopoolRepository.createNode(dualPayloads[0]),
-        autopoolRepository.createNode(dualPayloads[1]),
-      ]);
+    const [activeNode, holdNode] = await Promise.all([
+      AutopoolNodeModel.findOneAndUpdate(
+        { nodeId: dualPayloads[0].nodeId },
+        { $setOnInsert: dualPayloads[0] },
+        upsertOpts,
+      ),
+      AutopoolNodeModel.findOneAndUpdate(
+        { nodeId: dualPayloads[1].nodeId },
+        { $setOnInsert: dualPayloads[1] },
+        upsertOpts,
+      ),
+    ]);
 
-      // --- Place the active node (.1) in BFS tree ---
-      const placedNode = await autopoolService._placeNodeInTree(
-        activeNode._id,
-        session,
-      );
+    // ── Only place in BFS tree if the node has never been placed before ────────
+    // We use the explicit isPlacedInTree flag for reliability.
+    const needsPlacement = !activeNode.isPlacedInTree;
 
-      // --- Mark user as activated ---
-      await User.findByIdAndUpdate(userId, {
-        isActivated: true,
-        status: "active",
-      }).session(session);
-
-      // ── Sponsor income is now handled by incomeDistribution.service.js ──────
-      // When the deposit is approved, deposit.service.js calls
-      // distributeDepositIncome() which credits sponsor income, level income,
-      // superadmin funds, and rebirth wallets. No duplicate credit here.
-
-      await session.commitTransaction();
-
-      return {
-        activeNode,
-        holdNode,
-        placedAt: placedNode?.parentNodeRef || null,
-        message:
-          "Member activated. Two IDs created. Slot .1 placed in autopool.",
-      };
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
+    let placedNode = activeNode;
+    if (needsPlacement) {
+      placedNode = await autopoolService._placeNodeInTree(activeNode._id, session);
     }
+
+    return {
+      activeNode,
+      holdNode,
+      placedAt: placedNode?.parentNodeRef || null,
+      message: "Member activated. Two IDs created. Slot .1 placed in autopool.",
+    };
   },
 
   // ─── 2. BFS Placement ──────────────────────────────────────────────────────
@@ -81,42 +76,45 @@ export const autopoolService = {
    * If the parent reaches 3 children → triggers completion workflow.
    */
   _placeNodeInTree: async (nodeId, session) => {
-    const parent = await autopoolRepository.findNextAvailableParent();
+    // Pass session to findNextAvailableParent so we don't read stale data
+    const parent = await autopoolRepository.findNextAvailableParent(session);
 
     if (!parent) {
       // Pool is empty (very first node) → this node IS the root
-      await mongoose
-        .model("AutopoolNode")
-        .findByIdAndUpdate(
-          nodeId,
-          { level: 0, parentNodeRef: null, positionUnderParent: null },
-          { session },
-        );
-      return await autopoolRepository.findById(nodeId);
+      const updateOpts = session ? { session, new: true } : { new: true };
+      return await AutopoolNodeModel.findByIdAndUpdate(
+        nodeId,
+        { level: 0, parentNodeRef: null, positionUnderParent: null, isPlacedInTree: true },
+        updateOpts,
+      );
     }
 
     const position = resolveChildPosition(parent.childrenCount);
     const level = resolveChildLevel(parent.level);
 
+    const updateOpts = session ? { session, new: true } : { new: true };
+
     // Attach child to parent
-    await mongoose.model("AutopoolNode").findByIdAndUpdate(
+    await AutopoolNodeModel.findByIdAndUpdate(
       nodeId,
       {
         parentNodeRef: parent._id,
         positionUnderParent: position,
         level,
+        isPlacedInTree: true,
       },
-      { session },
+      updateOpts,
     );
 
     // Increment parent's children count (may trigger completion)
+    // Pass session so the increment is part of the transaction
     const updatedParent = await autopoolRepository.incrementChildrenCount(
       parent._id,
+      session
     );
 
-    // If parent just completed → fire async completion workflow
+    // If parent just completed → fire async completion workflow (outside main txn)
     if (updatedParent?.status === "completed") {
-      // Don't await — let it run in background so placement doesn't block
       setImmediate(() => {
         autopoolService
           ._handleNodeCompletion(updatedParent)
@@ -124,7 +122,7 @@ export const autopoolService = {
       });
     }
 
-    return await autopoolRepository.findById(nodeId);
+    return await autopoolRepository.findById(nodeId, session);
   },
 
   // ─── 3. Node Completion → Income + Rebirth ─────────────────────────────────
@@ -133,7 +131,7 @@ export const autopoolService = {
    * Called when a node reaches 3 children.
    * 1. Calculates income for the node owner
    * 2. Credits withdrawable amount to wallet
-   * 3. Creates rebirth nodes back into the pool
+   * 3. Creates rebirth nodes back into the pool (upsert-safe)
    * 4. Activates the on-hold (.2) slot if it was waiting
    */
   _handleNodeCompletion: async (completedNode) => {
@@ -160,7 +158,7 @@ export const autopoolService = {
       { upsert: true },
     );
 
-    // --- Create rebirth nodes and place them in pool ---
+    // --- Create rebirth nodes via upsert (safe on retry) ---
     const rebirthPayloads = buildRebirthNodePayloads({
       userRef: completedNode.userRef,
       memberId: user.memberId,
@@ -170,26 +168,29 @@ export const autopoolService = {
     });
 
     for (const payload of rebirthPayloads) {
-      const newNode = await autopoolRepository.createNode(payload);
-      await autopoolService._placeNodeInTree(newNode._id, null);
+      const newNode = await AutopoolNodeModel.findOneAndUpdate(
+        { nodeId: payload.nodeId },
+        { $setOnInsert: payload },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+      // Only place in tree if freshly upserted (never placed before)
+      if (!newNode.isPlacedInTree) {
+        await autopoolService._placeNodeInTree(newNode._id, null);
+      }
     }
 
     // --- Activate the on_hold slot (.2) if this was a cycle 1 completion ---
-    // The .2 node enters the pool after the member's structure completes once
     if (cycleNumber === 1) {
-      const holdNode = await mongoose
-        .model("AutopoolNode")
-        .findOne({
-          userRef: completedNode.userRef,
-          slotIndex: 2,
-          status: "on_hold",
-        })
-        .lean();
+      const holdNode = await AutopoolNodeModel.findOne({
+        userRef: completedNode.userRef,
+        slotIndex: 2,
+        status: "on_hold",
+      }).lean();
 
-      if (holdNode) {
-        await mongoose
-          .model("AutopoolNode")
-          .findByIdAndUpdate(holdNode._id, { status: "active" });
+      if (holdNode && !holdNode.isPlacedInTree) {
+        await AutopoolNodeModel.findByIdAndUpdate(holdNode._id, {
+          status: "active",
+        });
         await autopoolService._placeNodeInTree(holdNode._id, null);
       }
     }
@@ -215,7 +216,6 @@ export const autopoolService = {
       return { nodes: [], message: "No autopool nodes found for this member." };
     }
 
-    // Return the subtree rooted at member's first active node
     const rootNode =
       userNodes.find((n) => n.status === "active") || userNodes[0];
     const subtree = await autopoolRepository.findSubtreeByNodeId(rootNode._id);

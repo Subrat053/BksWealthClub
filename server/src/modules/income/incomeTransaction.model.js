@@ -86,8 +86,12 @@ const incomeTransactionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Fast lookup: all transactions for a specific deposit
-incomeTransactionSchema.index({ depositId: 1, type: 1 });
+// Strict unique guard: prevent double-crediting any income type for the same deposit.
+// This is the primary defense for idempotency along with ordered:false insertMany.
+incomeTransactionSchema.index(
+  { depositId: 1, type: 1, level: 1, userId: 1, rebirthId: 1 },
+  { unique: true }
+);
 
 export const IncomeTransactionModel =
   mongoose.models.IncomeTransaction ||

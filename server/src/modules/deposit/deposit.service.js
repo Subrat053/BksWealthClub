@@ -8,6 +8,45 @@ import { WalletModel } from "../user/wallet.model.js";
 import { ACTIVATION_AMOUNT_USD } from "../autopool/autopool.engine.js";
 import { distributeDepositIncome } from "../income/incomeDistribution.service.js";
 
+// ─── Retry helper for TransientTransactionError ────────────────────────────────
+const MAX_RETRIES = 3;
+
+async function withTransactionRetry(fn) {
+  let lastErr;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction({
+        readConcern: { level: "snapshot" },
+        writeConcern: { w: "majority" },
+      });
+      const result = await fn(session);
+      await session.commitTransaction();
+      return result;
+    } catch (err) {
+      await session.abortTransaction().catch(() => {});
+      lastErr = err;
+
+      const isTransient =
+        err?.errorLabels?.includes("TransientTransactionError") ||
+        err?.errorResponse?.errorLabels?.includes("TransientTransactionError") ||
+        err?.code === 112; // WriteConflict
+
+      if (isTransient && attempt < MAX_RETRIES) {
+        console.warn(
+          `[Deposit] Transient transaction error (attempt ${attempt}/${MAX_RETRIES}), retrying…`,
+        );
+        await new Promise((r) => setTimeout(r, 100 * attempt)); // back-off
+        continue;
+      }
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  }
+  throw lastErr;
+}
+
 export const depositService = {
   createRequest: async ({ userId, payload }) => {
     return depositRepository.create({
@@ -24,26 +63,45 @@ export const depositService = {
   getPendingRequests: async () => depositRepository.getPending(),
 
   approveRequest: async ({ depositId, adminId }) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-      const deposit = await DepositModel.findById(depositId).session(session);
-      if (!deposit) throw new ApiError(404, "Deposit request not found");
-      if (deposit.status !== "pending")
-        throw new ApiError(400, "Deposit already processed");
-      if (deposit.incomeDistributed)
-        throw new ApiError(400, "Income already distributed for this deposit");
+    return withTransactionRetry(async (session) => {
+      // ── 1. Atomic status lock ────────────────────────────────────────────────
+      // Use findOneAndUpdate with { status: "pending" } as filter so only ONE
+      // concurrent request wins. Any duplicate call sees a null result → 400.
+      const deposit = await DepositModel.findOneAndUpdate(
+        { _id: depositId, status: "pending" },
+        { status: "approved", reviewedBy: adminId, reviewReason: "" },
+        { new: true, session },
+      );
 
-      // Mark deposit as approved
-      deposit.status = "approved";
-      deposit.reviewedBy = adminId;
-      deposit.reviewReason = "";
-      await deposit.save({ session });
+      if (!deposit) {
+        // Either doesn't exist OR was already approved/rejected by a concurrent request
+        const existing = await DepositModel.findById(depositId).session(session);
+        if (!existing) throw new ApiError(404, "Deposit request not found");
+        if (existing.status === "approved" && existing.incomeDistributed) {
+          // Fully processed already — return a safe response instead of 500
+          return {
+            deposit: existing,
+            alreadyProcessed: true,
+            message: "Deposit was already approved and income distributed.",
+          };
+        }
+        throw new ApiError(400, "Deposit already processed or locked by another request");
+      }
 
+      // ── 2. Guard: income already distributed? ────────────────────────────────
+      if (deposit.incomeDistributed) {
+        return {
+          deposit,
+          alreadyProcessed: true,
+          message: "Income already distributed for this deposit.",
+        };
+      }
+
+      // ── 3. Fetch user ────────────────────────────────────────────────────────
       const user = await User.findById(deposit.userRef).session(session);
       if (!user) throw new ApiError(404, "User not found");
 
-      // Credit the approved amount to the user's fund wallet first.
+      // ── 4. Credit fund wallet ────────────────────────────────────────────────
       await WalletModel.findOneAndUpdate(
         { userRef: deposit.userRef },
         { $inc: { fundWallet: deposit.amount } },
@@ -54,27 +112,40 @@ export const depositService = {
       let distributionResult = null;
 
       if (deposit.amount >= ACTIVATION_AMOUNT_USD) {
-        // ── Activation flow ─────────────────────────────────────────────
+        // ── 5. Autopool activation (ONLY if not already activated) ─────────────
         if (!user.isActivated) {
           try {
+            // Pass session so autopool runs INSIDE this transaction (no nested session)
             activationResult = await autopoolService.activateMemberInAutopool(
-              {
-                userId: user._id,
-                memberId: user.memberId,
-              },
-              session // note: if activateMemberInAutopool doesn't take session, it might run outside the transaction
+              { userId: user._id, memberId: user.memberId },
+              session,
             );
             user.isActivated = true;
+            user.status = "active";
             await user.save({ session });
           } catch (err) {
-            console.error(
-              `[Deposit] Autopool activation failed for ${user.memberId}:`,
-              err.message,
-            );
+            // Duplicate-key = already activated by a prior attempt; safe to continue
+            if (err?.code === 11000) {
+              console.warn(
+                `[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`,
+              );
+              // Ensure user flags are set
+              await User.findByIdAndUpdate(
+                user._id,
+                { isActivated: true, status: "active" },
+                { session },
+              );
+            } else {
+              console.error(
+                `[Deposit] Autopool activation failed for ${user.memberId}:`,
+                err.message,
+              );
+              throw err;
+            }
           }
         }
 
-        // ── Income Distribution ─────────────────────────────────────────────────
+        // ── 6. Income Distribution ───────────────────────────────────────────
         try {
           distributionResult = await distributeDepositIncome({
             userId: user._id,
@@ -94,8 +165,6 @@ export const depositService = {
         }
       }
 
-      await session.commitTransaction();
-
       return {
         deposit,
         activated: deposit.amount >= ACTIVATION_AMOUNT_USD && user.isActivated,
@@ -103,12 +172,7 @@ export const depositService = {
         incomeDistribution: distributionResult,
         credited: deposit.amount,
       };
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
-    }
+    });
   },
 
   rejectRequest: async ({ depositId, adminId, reason }) => {
@@ -121,4 +185,3 @@ export const depositService = {
     return updated;
   },
 };
-

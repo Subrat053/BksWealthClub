@@ -141,45 +141,34 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     const txnDocs = [];
     let totalDistributed = 0;
 
-    // ── 5. Create 2 Rebirth IDs ──────────────────────────────────────────────
+    // ── 5. Create 2 Rebirth IDs (upsert-safe for retries) ───────────────────
     const rb1Code = `${user.memberId}-RB1`;
     const rb2Code = `${user.memberId}-RB2`;
 
-    // Check if rebirths already exist for this deposit (edge case / retry)
-    const existingRebirths = await RebirthModel.find({
-      sourceDepositId: depositId,
-    }).session(session);
+    // Use findOneAndUpdate with $setOnInsert so a retry won't create duplicates.
+    // The compound unique index (userId, sourceDepositId, sequenceNo) enforces
+    // exactly one rebirth per slot per deposit at the DB level.
+    const rb1 = await RebirthModel.findOneAndUpdate(
+      { userId, sourceDepositId: depositId, sequenceNo: 1 },
+      {
+        $setOnInsert: {
+          rebirthCode: rb1Code,
+          walletBalance: 0,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, session },
+    );
 
-    let rb1, rb2;
-    if (existingRebirths.length >= 2) {
-      rb1 = existingRebirths.find((r) => r.sequenceNo === 1);
-      rb2 = existingRebirths.find((r) => r.sequenceNo === 2);
-    } else {
-      [rb1] = await RebirthModel.create(
-        [
-          {
-            userId,
-            rebirthCode: rb1Code,
-            sequenceNo: 1,
-            walletBalance: 0,
-            sourceDepositId: depositId,
-          },
-        ],
-        { session },
-      );
-      [rb2] = await RebirthModel.create(
-        [
-          {
-            userId,
-            rebirthCode: rb2Code,
-            sequenceNo: 2,
-            walletBalance: 0,
-            sourceDepositId: depositId,
-          },
-        ],
-        { session },
-      );
-    }
+    const rb2 = await RebirthModel.findOneAndUpdate(
+      { userId, sourceDepositId: depositId, sequenceNo: 2 },
+      {
+        $setOnInsert: {
+          rebirthCode: rb2Code,
+          walletBalance: 0,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, session },
+    );
 
     // ── 6. Credit RB1 wallet $20 ─────────────────────────────────────────────
     await RebirthModel.findByIdAndUpdate(
@@ -218,8 +207,22 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     totalDistributed = round2(totalDistributed + RB2_AMOUNT);
 
     // ── 8. Sponsor Income ($5) ───────────────────────────────────────────────
-    const sponsorUserId = user.referredByUserId || user.sponsorUserId || null;
+    let sponsorUserId = user.referredByUserId || user.sponsorUserId || null;
     let sponsorCredited = false;
+
+    // If no direct sponsor reference, try to find by string sponsorId (legacy/admin referrals)
+    if (!sponsorUserId && user.sponsorId) {
+      const sponsorByMemberId = await User.findOne(
+        { memberId: String(user.sponsorId).trim().toUpperCase() },
+        "_id isActivated status",
+      )
+        .session(session)
+        .lean();
+      
+      if (sponsorByMemberId) {
+        sponsorUserId = sponsorByMemberId._id;
+      }
+    }
 
     if (sponsorUserId) {
       const sponsor = await User.findById(
@@ -401,7 +404,13 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     }
 
     // ── 14. Persist all IncomeTransaction documents ──────────────────────────
-    await IncomeTransactionModel.insertMany(txnDocs, { session });
+    // ordered:false lets duplicate-key docs (retry) be skipped without aborting
+    // the rest of the batch. Combined with the incomeDistributed guard above,
+    // this is the second line of defence against double-crediting.
+    await IncomeTransactionModel.insertMany(txnDocs, {
+      session,
+      ordered: false,
+    });
 
     // ── 15. Mark deposit as distributed ──────────────────────────────────────
     await DepositModel.findByIdAndUpdate(
