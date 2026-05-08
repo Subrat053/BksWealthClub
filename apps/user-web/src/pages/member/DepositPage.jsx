@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import SectionTitle from "../../components/common/SectionTitle";
-import Card from "../../components/common/Card";
 import { apiClient } from "../../services/apiClient";
 import { ACTIVATION_AMOUNT_USD } from "../../utils/constants";
 
@@ -134,6 +133,12 @@ export default function DepositPage() {
   // ── QR data ──────────────────────────────────────────────────────────────
   const qrValue = COMPANY_WALLET.address;
 
+  const handleCloseModal = () => {
+    setStep("form");
+    setError("");
+    setTxHash("");
+  };
+
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -182,7 +187,7 @@ export default function DepositPage() {
 
             <button
               onClick={handlePayNow}
-              className="h-12 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98]"
+              className="h-12 w-full rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98]"
             >
               Pay Now
             </button>
@@ -192,34 +197,18 @@ export default function DepositPage() {
 
       {/* ── Step 2: QR + wallet address + txHash ── */}
       {step === "qr" && (
-        <div className="mx-auto max-w-md">
-          <div className="rounded-2xl border border-white/10 bg-[#0d1f4a]/80 p-6 shadow-xl backdrop-blur-sm">
-            {/* Back button */}
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#03081ccc] p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[linear-gradient(170deg,rgba(5,18,58,0.98)_0%,rgba(12,33,94,0.98)_100%)] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
             <button
-              onClick={() => {
-                setStep("form");
-                setError("");
-              }}
-              className="mb-4 flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition"
+              type="button"
+              onClick={handleCloseModal}
+              className="absolute right-4 top-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
+              Close
             </button>
 
             {/* Header */}
-            <div className="mb-5 text-center">
+            <div className="mb-5 pr-12 text-center">
               <h2 className="text-lg font-semibold text-white">
                 BKS Wealth Club
               </h2>
@@ -244,7 +233,7 @@ export default function DepositPage() {
                   BSC
                 </span>
                 <span className="text-sm font-semibold text-amber-200">
-                  {parseFloat(amount).toFixed(2)} USDT
+                  {Number(amount).toFixed(2)} USDT
                 </span>
               </div>
             </div>
@@ -259,8 +248,9 @@ export default function DepositPage() {
                   {COMPANY_WALLET.address}
                 </p>
                 <button
+                  type="button"
                   onClick={handleCopyAddress}
-                  className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/10 transition"
+                  className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/10"
                 >
                   {copied ? "✓ Copied" : "Copy"}
                 </button>
@@ -268,11 +258,11 @@ export default function DepositPage() {
             </div>
 
             {/* Instructions */}
-            <div className="mb-5 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-xs text-blue-200/80 space-y-1">
+            <div className="mb-5 space-y-1 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-xs text-blue-200/80">
               <p>
                 1. Send exactly{" "}
                 <strong className="text-white">
-                  ${parseFloat(amount).toFixed(2)} USDT
+                  ${Number(amount).toFixed(2)} USDT
                 </strong>{" "}
                 to the address above.
               </p>
@@ -294,16 +284,26 @@ export default function DepositPage() {
               value={txHash}
               onChange={(e) => setTxHash(e.target.value)}
               placeholder="Paste transaction hash (0x...)"
-              className="mb-4 h-12 w-full rounded-xl border border-white/10 bg-[#1a2d5a] px-4 font-mono text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20 transition"
+              className="mb-4 h-12 w-full rounded-xl border border-white/10 bg-[#1a2d5a] px-4 font-mono text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20"
             />
 
-            <button
-              onClick={handleSubmitProof}
-              disabled={submitLoading}
-              className="h-12 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] disabled:opacity-60"
-            >
-              {submitLoading ? "Submitting..." : "Confirm Payment"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="h-12 flex-1 rounded-xl border border-white/10 bg-white/5 font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitProof}
+                disabled={submitLoading}
+                className="h-12 flex-1 rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] disabled:opacity-60"
+              >
+                {submitLoading ? "Submitting..." : "Confirm Payment"}
+              </button>
+            </div>
           </div>
         </div>
       )}

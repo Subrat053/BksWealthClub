@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../../middleware/auth.middleware.js";
-import { requireTwoFactorOtp } from "../../middleware/twofactor.middleware.js";
 import {
   createDepositController,
   getMyDepositsController,
@@ -12,12 +11,7 @@ import {
 export const depositRouter = Router();
 
 // ── Member routes ─────────────────────────────────────────────────────────────
-depositRouter.post(
-  "/",
-  authMiddleware,
-  requireTwoFactorOtp,
-  createDepositController,
-);
+depositRouter.post("/", authMiddleware, createDepositController);
 depositRouter.get("/my", authMiddleware, getMyDepositsController);
 
 // ── Admin routes ──────────────────────────────────────────────────────────────

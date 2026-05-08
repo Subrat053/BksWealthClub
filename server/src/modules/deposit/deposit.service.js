@@ -45,6 +45,14 @@ export const depositService = {
     const user = await User.findById(deposit.userRef).lean();
     if (!user) throw new ApiError(404, "User not found");
 
+    // Credit the approved amount to the user's fund wallet first.
+    // Activation deposits still need to increase the wallet balance.
+    await WalletModel.findOneAndUpdate(
+      { userRef: deposit.userRef },
+      { $inc: { fundWallet: deposit.amount } },
+      { upsert: true },
+    );
+
     // ── Activation flow (first-time $75 deposit) ─────────────────────────────
     if (!user.isActivated && deposit.amount >= ACTIVATION_AMOUNT_USD) {
       try {
@@ -61,13 +69,6 @@ export const depositService = {
       }
       return { deposit: updated, activated: true };
     }
-
-    // ── Top-up deposit (user already active) ─────────────────────────────────
-    await WalletModel.findOneAndUpdate(
-      { userRef: deposit.userRef },
-      { $inc: { fundWallet: deposit.amount } },
-      { upsert: true },
-    );
 
     return { deposit: updated, activated: false, credited: deposit.amount };
   },

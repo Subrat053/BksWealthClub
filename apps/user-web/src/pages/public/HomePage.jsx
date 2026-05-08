@@ -299,7 +299,7 @@ export default function HomePage() {
             </h3>
             <p className="mt-6 text-base leading-8 text-slate-600">
               The best crowd funding platform. Using AI based technology and the
-              advantages of crowd funding, it is an auto-pool plan which has
+              advantages of crowd funding, it is an auto-pool plan which has q
               stopped somewhere, but the peculiar feature of bkswealthclub is
               multiplication which makes it extraordinary from others.
             </p>

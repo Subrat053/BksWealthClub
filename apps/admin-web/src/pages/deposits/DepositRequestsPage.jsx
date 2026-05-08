@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
+import { depositService } from "../../services/deposit.service";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function shortHash(hash) {
@@ -95,35 +96,13 @@ export default function DepositRequestsPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const getToken = () =>
-    localStorage.getItem("adminToken") || localStorage.getItem("userToken");
-
-  const apiFetch = async (url, options = {}) => {
-    const base =
-      (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(
-        /\/+$/,
-        "",
-      ) + "/api/v1";
-    const res = await fetch(base + url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-        ...options.headers,
-      },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Request failed");
-    return data;
-  };
-
   const fetchDeposits = async () => {
     setLoading(true);
     try {
-      const res = await apiFetch("/deposits/pending");
-      // merge with approved/rejected if endpoint returns all; otherwise just pending
+      const res = await depositService.getPendingDeposits();
       setDeposits(res?.data || []);
-    } catch {
+    } catch (err) {
+      showToast(err.message || "Failed to fetch deposits", "error");
       setDeposits([]);
     } finally {
       setLoading(false);
@@ -133,13 +112,13 @@ export default function DepositRequestsPage() {
   const handleApprove = async (depositId) => {
     setActionLoading(depositId);
     try {
-      await apiFetch(`/deposits/${depositId}/approve`, { method: "PATCH" });
+      await depositService.approveDeposit(depositId);
       setDeposits((prev) =>
         prev.map((d) =>
           d._id === depositId ? { ...d, status: "approved" } : d,
         ),
       );
-      showToast("Deposit approved. Member activated in autopool.");
+      showToast("Deposit approved. Amount added to user wallet.");
     } catch (err) {
       showToast(err.message || "Approval failed.", "error");
     } finally {
@@ -152,10 +131,7 @@ export default function DepositRequestsPage() {
     const depositId = rejectTarget._id;
     setActionLoading(depositId);
     try {
-      await apiFetch(`/deposits/${depositId}/reject`, {
-        method: "PATCH",
-        body: JSON.stringify({ reason }),
-      });
+      await depositService.rejectDeposit(depositId, reason);
       setDeposits((prev) =>
         prev.map((d) =>
           d._id === depositId ? { ...d, status: "rejected" } : d,
