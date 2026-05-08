@@ -259,6 +259,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     }
 
     // If no sponsor → leftover goes to leftoverFund only (not companyFund)
+    let pendingLeftoverAmount = 0;
     if (!sponsorCredited) {
       await SuperAdminFundModel.findOneAndUpdate(
         {},
@@ -266,15 +267,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         { session },
       );
 
-      txnDocs.push({
-        fromUserId: userId,
-        depositId,
-        type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
-        amount: SPONSOR_TOTAL,
-        status: "CREDITED",
-        remarks: `Sponsor income $${SPONSOR_TOTAL} → leftover fund (no sponsor found)`,
-      });
-
+      pendingLeftoverAmount = round2(pendingLeftoverAmount + SPONSOR_TOTAL);
       totalDistributed = round2(totalDistributed + SPONSOR_TOTAL);
     }
 
@@ -354,8 +347,21 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
 
         totalDistributed = round2(totalDistributed + rule.total);
       } else {
-        // No upline at this level → leftover
+        // No upline at this level → leftover. 
+        // We push a record per level to maintain uniqueness in the index 
+        // (depositId, type, level, userId, rebirthId)
+        txnDocs.push({
+          fromUserId: userId,
+          depositId,
+          type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
+          level: rule.level,
+          amount: rule.total,
+          status: "CREDITED",
+          remarks: `Level ${rule.level} income leftover $${rule.total} → leftover fund (missing upline)`,
+        });
+
         levelLeftover = round2(levelLeftover + rule.total);
+        totalDistributed = round2(totalDistributed + rule.total);
       }
     }
 
@@ -367,16 +373,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         { session },
       );
 
-      txnDocs.push({
-        fromUserId: userId,
-        depositId,
-        type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
-        amount: levelLeftover,
-        status: "CREDITED",
-        remarks: `Level income leftover $${levelLeftover} → leftover fund (missing uplines)`,
-      });
-
-      totalDistributed = round2(totalDistributed + levelLeftover);
+      // (Transactions were pushed individually inside the loop for uniqueness)
     }
 
     // ── 13. Final remainder check ────────────────────────────────────────────
@@ -389,16 +386,21 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         { session },
       );
 
+      pendingLeftoverAmount = round2(pendingLeftoverAmount + remainder);
+      totalDistributed = round2(totalDistributed + remainder);
+    }
+
+    // ── 13b. Push unified record for all level-less leftovers ────────────────
+    if (pendingLeftoverAmount > 0) {
       txnDocs.push({
         fromUserId: userId,
         depositId,
         type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
-        amount: remainder,
+        level: null,
+        amount: pendingLeftoverAmount,
         status: "CREDITED",
-        remarks: `Calculation remainder $${remainder} → leftover fund`,
+        remarks: `System leftovers (Sponsor/Remainder) totaling $${pendingLeftoverAmount} → leftover fund`,
       });
-
-      totalDistributed = round2(totalDistributed + remainder);
     }
 
     // ── 14. Persist all IncomeTransaction documents ──────────────────────────
