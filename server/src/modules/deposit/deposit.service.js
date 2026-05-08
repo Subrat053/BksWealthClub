@@ -157,11 +157,8 @@ export const depositService = {
               `$${distributionResult.totalDistributed} across ${distributionResult.transactionCount} entries`,
           );
         } catch (err) {
-          console.error(
-            `[Deposit] Income distribution failed for ${user.memberId}:`,
-            err.message,
-          );
-          throw new ApiError(500, "Income distribution failed: " + err.message);
+          console.error(`[Deposit] Approval failed for ${user.memberId}:`, err);
+          throw new ApiError(500, `Income distribution failed: ${err.message}`);
         }
       }
 
