@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
 import FormField from "../../components/common/FormField";
@@ -11,6 +12,7 @@ export default function RegisterPage() {
   const referralCodePattern = /^[A-Z]{1,4}\d{6}$/i;
   const sponsorPattern = (value) =>
     sponsorIdPattern.test(value) || referralCodePattern.test(value);
+  const registerModalLogo = `${import.meta.env.BASE_URL}logo.png`;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref");
@@ -20,6 +22,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [registeredMemberId, setRegisteredMemberId] = useState("");
 
   const [form, setForm] = useState({
     sponsor: "",
@@ -55,7 +59,7 @@ export default function RegisterPage() {
     if (sponsorValidation?.error) return sponsorValidation.error;
     if (!sponsorValidation?.data) return null;
     return sponsorValidation.data.active
-      ? "Sponsor Active"
+      ? `Sponsor: ${sponsorValidation.data.sponsorName}`
       : "Sponsor not Active";
   }, [form.sponsor, sponsorValidation, sponsorLoading]);
 
@@ -128,7 +132,9 @@ export default function RegisterPage() {
     }
 
     if (!sponsorPattern(form.sponsor.trim())) {
-      setError("Sponsor ID or referral code must look like BKS12345 or ABCD123456.");
+      setError(
+        "Sponsor ID or referral code must look like BKS12345 or ABCD123456.",
+      );
       return;
     }
 
@@ -149,7 +155,7 @@ export default function RegisterPage() {
     try {
       const fullMobileNumber = `${form.dialCode}${form.mobile}`;
 
-      await authService.register({
+      const response = await authService.register({
         sponsor: form.sponsor.trim(),
         name: form.name.trim(),
         email: form.email.trim(),
@@ -161,13 +167,12 @@ export default function RegisterPage() {
         confirmPassword: form.confirmPassword,
       });
 
-      setSuccess(
-        "Registration successful. Please verify your email, then log in.",
-      );
+      const newMemberId =
+        response?.data?.memberId || response?.memberId || "BKS000000";
 
-      navigate("/login", {
-        state: { registeredEmail: form.email.trim() },
-      });
+      setSuccess("Registration successful.");
+      setRegisteredMemberId(newMemberId);
+      setShowWelcomeModal(true);
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -323,6 +328,137 @@ export default function RegisterPage() {
           </p>
         </form>
       </Card>
+
+      {/* Welcome Modal */}
+      <AnimatePresence>
+        {showWelcomeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-8 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", duration: 0.6, bounce: 0.3 }}
+              className="relative w-full max-w-lg rounded-2xl border border-amber-500/30 bg-[#09153a] p-8 shadow-[0_0_40px_rgba(245,158,11,0.15)] text-left m-auto"
+            >
+              <div className="mb-6 text-center">
+                <img
+                  src={registerModalLogo}
+                  alt="BKS Wealth Club Logo"
+                  className="mx-auto h-32 w-auto object-contain drop-shadow-md"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+              </div>
+
+              <div className="space-y-4 text-blue-100/90 text-[15px] leading-relaxed">
+                <p>
+                  Dear{" "}
+                  <strong className="text-white text-base capitalize">
+                    {form.name}
+                  </strong>
+                  ,
+                </p>
+
+                <p className="text-lg font-bold text-amber-400">
+                  Welcome to BKS Wealth Club Family
+                </p>
+
+                <div className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-3 shadow-inner">
+                  <p>
+                    Your Id is{" "}
+                    <strong className="text-cyan-400 font-mono text-base">
+                      {registeredMemberId}
+                    </strong>
+                  </p>
+                  <p>
+                    Your password is{" "}
+                    <strong className="text-emerald-400 font-mono text-base">
+                      {form.password}
+                    </strong>
+                  </p>
+                  <p>
+                    Your registration date and time :{" "}
+                    <strong className="text-white">
+                      {new Date().toLocaleString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </strong>
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <h3 className="text-white font-semibold text-base mb-3 border-b border-white/10 pb-2 uppercase tracking-wide">
+                    Next steps
+                  </h3>
+                  <ul className="space-y-2 list-none pl-0">
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-400 font-bold">1)</span>
+                      <span>
+                        Check your email we have sent a verification link.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-400 font-bold">2)</span>
+                      <span>
+                        Secure your account with 2FA (google authenticator).
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-400 font-bold">3)</span>
+                      <span>Activate your id and enjoy your earnings.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-400 font-bold">4)</span>
+                      <span>Refer other members and build your community.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 mt-2">
+                  <p>
+                    For support email to{" "}
+                    <a
+                      href="mailto:support@bkswealth.club"
+                      className="text-amber-400 hover:underline"
+                    >
+                      support@bkswealth.club
+                    </a>
+                  </p>
+                  <p>Or use the support form in your member login.</p>
+                </div>
+
+                <div className="pt-4">
+                  <p>Best Regards,</p>
+                  <p className="font-semibold text-amber-400 tracking-wide mt-1">
+                    Team BKS Wealth Club
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() =>
+                  navigate("/login", {
+                    state: { registeredEmail: form.email.trim() },
+                  })
+                }
+                className="mt-8 w-full rounded-xl bg-linear-to-r from-amber-500 to-amber-600 py-3.5 font-bold text-[#09153a] shadow-[0_0_20px_rgba(245,158,11,0.3)] transition hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.5)]"
+              >
+                Continue to Login
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -303,8 +303,8 @@ export default function UserListPage() {
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        title="Users & Rebirth IDs"
-        subtitle="Manage users, rebirth accounts, status, roles, and account access."
+        title="Users List"
+        subtitle="Manage users, status, roles, and account access."
         primaryActionText="Add User"
         onPrimaryClick={() => setShowModal(true)}
       />

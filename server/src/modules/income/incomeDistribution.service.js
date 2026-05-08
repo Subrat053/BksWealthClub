@@ -13,8 +13,11 @@ import {
   RB1_AMOUNT,
   RB2_AMOUNT,
   SPONSOR_TOTAL,
+  COMPANY_FUND_PER_RB,
   COMPANY_FUND_TOTAL,
+  ACHIEVER_FUND_PER_RB,
   ACHIEVER_FUND_TOTAL,
+  ADMIN_FUND_PER_RB,
   ADMIN_FUND_TOTAL,
   LEVEL_INCOME_RULES,
   INCOME_TYPES,
@@ -255,11 +258,11 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       }
     }
 
-    // If no sponsor → leftover to company fund
+    // If no sponsor → leftover goes to leftoverFund only (not companyFund)
     if (!sponsorCredited) {
       await SuperAdminFundModel.findOneAndUpdate(
         {},
-        { $inc: { leftoverFund: SPONSOR_TOTAL, companyFund: SPONSOR_TOTAL } },
+        { $inc: { leftoverFund: SPONSOR_TOTAL } },
         { session },
       );
 
@@ -269,13 +272,13 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
         amount: SPONSOR_TOTAL,
         status: "CREDITED",
-        remarks: `Sponsor income $${SPONSOR_TOTAL} → company (no sponsor found)`,
+        remarks: `Sponsor income $${SPONSOR_TOTAL} → leftover fund (no sponsor found)`,
       });
 
       totalDistributed = round2(totalDistributed + SPONSOR_TOTAL);
     }
 
-    // ── 9. SuperAdmin Company Fund ($5) ──────────────────────────────────────
+    // ── 9. SuperAdmin Company Fund ($2.5 × 2 RB = $5) ───────────────────────
     await SuperAdminFundModel.findOneAndUpdate(
       {},
       { $inc: { companyFund: COMPANY_FUND_TOTAL } },
@@ -287,11 +290,11 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       type: INCOME_TYPES.COMPANY_FUND,
       amount: COMPANY_FUND_TOTAL,
       status: "CREDITED",
-      remarks: `Company fund $${COMPANY_FUND_TOTAL} from ${user.memberId} deposit`,
+      remarks: `Company fund $${COMPANY_FUND_PER_RB}/RB × 2 = $${COMPANY_FUND_TOTAL} from ${user.memberId}`,
     });
     totalDistributed = round2(totalDistributed + COMPANY_FUND_TOTAL);
 
-    // ── 10. SuperAdmin Achiever Fund ($4) ────────────────────────────────────
+    // ── 10. SuperAdmin Achiever Fund ($2 × 2 RB = $4) ────────────────────────
     await SuperAdminFundModel.findOneAndUpdate(
       {},
       { $inc: { achieverFund: ACHIEVER_FUND_TOTAL } },
@@ -303,11 +306,11 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       type: INCOME_TYPES.ACHIEVER_FUND,
       amount: ACHIEVER_FUND_TOTAL,
       status: "CREDITED",
-      remarks: `Achiever fund $${ACHIEVER_FUND_TOTAL} from ${user.memberId} deposit`,
+      remarks: `Achiever fund $${ACHIEVER_FUND_PER_RB}/RB × 2 = $${ACHIEVER_FUND_TOTAL} from ${user.memberId}`,
     });
     totalDistributed = round2(totalDistributed + ACHIEVER_FUND_TOTAL);
 
-    // ── 11. SuperAdmin Admin Fund ($5) ───────────────────────────────────────
+    // ── 11. SuperAdmin Admin Fund ($2.5 × 2 RB = $5) ────────────────────────
     await SuperAdminFundModel.findOneAndUpdate(
       {},
       { $inc: { adminFund: ADMIN_FUND_TOTAL } },
@@ -319,7 +322,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       type: INCOME_TYPES.ADMIN_FUND,
       amount: ADMIN_FUND_TOTAL,
       status: "CREDITED",
-      remarks: `Admin fund $${ADMIN_FUND_TOTAL} from ${user.memberId} deposit`,
+      remarks: `Admin fund $${ADMIN_FUND_PER_RB}/RB × 2 = $${ADMIN_FUND_TOTAL} from ${user.memberId}`,
     });
     totalDistributed = round2(totalDistributed + ADMIN_FUND_TOTAL);
 
@@ -356,16 +359,11 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       }
     }
 
-    // Send any level leftover to company fund
+    // Send any level leftover to leftoverFund only (not companyFund)
     if (levelLeftover > 0) {
       await SuperAdminFundModel.findOneAndUpdate(
         {},
-        {
-          $inc: {
-            leftoverFund: levelLeftover,
-            companyFund: levelLeftover,
-          },
-        },
+        { $inc: { leftoverFund: levelLeftover } },
         { session },
       );
 
@@ -375,19 +373,19 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
         amount: levelLeftover,
         status: "CREDITED",
-        remarks: `Level income leftover $${levelLeftover} → company (missing uplines)`,
+        remarks: `Level income leftover $${levelLeftover} → leftover fund (missing uplines)`,
       });
 
       totalDistributed = round2(totalDistributed + levelLeftover);
     }
 
     // ── 13. Final remainder check ────────────────────────────────────────────
-    // If floating-point math leaves a remainder, send it to company fund.
+    // If any amount is left due to floating-point math, send to leftoverFund.
     const remainder = round2(DEPOSIT_AMOUNT - totalDistributed);
     if (remainder > 0) {
       await SuperAdminFundModel.findOneAndUpdate(
         {},
-        { $inc: { leftoverFund: remainder, companyFund: remainder } },
+        { $inc: { leftoverFund: remainder } },
         { session },
       );
 
@@ -397,7 +395,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
         type: INCOME_TYPES.LEFTOVER_TO_COMPANY,
         amount: remainder,
         status: "CREDITED",
-        remarks: `Calculation remainder $${remainder} → company fund`,
+        remarks: `Calculation remainder $${remainder} → leftover fund`,
       });
 
       totalDistributed = round2(totalDistributed + remainder);
@@ -619,7 +617,10 @@ export async function getFundsSummary() {
     adminFund: saFund.adminFund,
     leftoverFund: saFund.leftoverFund,
     totalSuperAdminFund: round2(
-      saFund.companyFund + saFund.achieverFund + saFund.adminFund,
+      saFund.companyFund +
+        saFund.achieverFund +
+        saFund.adminFund +
+        saFund.leftoverFund,
     ),
     totalUserIncomeDistributed: incomeAgg?.totalUserIncome || 0,
     totalRebirthWalletDistributed: incomeAgg?.totalRebirthWallet || 0,

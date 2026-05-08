@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import { getUserDetails, updateUserStatus } from "../../api/user.api";
 import { adminIncomeService } from "../../services/adminIncome.service";
@@ -18,6 +18,7 @@ function formatDate(dateStr) {
 
 export default function UserDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -98,6 +99,14 @@ export default function UserDetailsPage() {
 
   return (
     <div className="space-y-5">
+      <div className="mb-2">
+        <button
+          onClick={() => navigate("/admin/users")}
+          className="flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          &larr; Back to Users
+        </button>
+      </div>
       <PageHeader
         title="User Details"
         subtitle={`Viewing profile for ${user.fullName}`}
