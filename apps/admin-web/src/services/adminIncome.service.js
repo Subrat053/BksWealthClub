@@ -2,7 +2,7 @@ import { adminApiClient } from "./deposit.service";
 
 export const adminIncomeService = {
   // ─── Fund Summary ─────────────────────────────────────────────────────────
-  getFundsSummary: () => adminApiClient("/api/v1/income/admin/funds-summary"),
+  getFundsSummary: () => adminApiClient("/income/admin/funds-summary"),
 
   // ─── Fund Transactions ────────────────────────────────────────────────────
   getFundTransactions: (filters = {}) => {
@@ -15,7 +15,7 @@ export const adminIncomeService = {
     if (filters.userId) params.set("userId", filters.userId);
     if (filters.depositId) params.set("depositId", filters.depositId);
     const qs = params.toString();
-    return adminApiClient(`/api/v1/income/admin/fund-transactions${qs ? `?${qs}` : ""}`);
+    return adminApiClient(`/income/admin/fund-transactions${qs ? `?${qs}` : ""}`);
   },
 
   // ─── Income Logs ──────────────────────────────────────────────────────────
@@ -25,12 +25,12 @@ export const adminIncomeService = {
     if (filters.limit) params.set("limit", filters.limit);
     if (filters.type) params.set("type", filters.type);
     const qs = params.toString();
-    return adminApiClient(`/api/v1/income/admin/logs${qs ? `?${qs}` : ""}`);
+    return adminApiClient(`/income/admin/logs${qs ? `?${qs}` : ""}`);
   },
 
   // ─── User Income Summary ──────────────────────────────────────────────────
   getUserIncomeSummary: (userId) =>
-    adminApiClient(`/api/v1/income/admin/user/${userId}/income-summary`),
+    adminApiClient(`/income/admin/user/${userId}/income-summary`),
 
   // ─── Users with Rebirths ──────────────────────────────────────────────────
   getUsersWithRebirths: (filters = {}) => {
@@ -39,14 +39,14 @@ export const adminIncomeService = {
     if (filters.status) params.set("status", filters.status);
     if (filters.type) params.set("type", filters.type);
     const qs = params.toString();
-    return adminApiClient(`/api/v1/income/admin/users-with-rebirths${qs ? `?${qs}` : ""}`);
+    return adminApiClient(`/income/admin/users-with-rebirths${qs ? `?${qs}` : ""}`);
   },
 
   // ─── Deposit Distribution Detail ──────────────────────────────────────────
   getDepositDistribution: (depositId) =>
-    adminApiClient(`/api/v1/income/admin/deposit/${depositId}/distribution`),
+    adminApiClient(`/income/admin/deposit/${depositId}/distribution`),
 
   // ─── Trigger Distribution (manual) ─────────────────────────────────────────
   triggerDistribution: (depositId) =>
-    adminApiClient(`/api/v1/income/admin/distribute/${depositId}`, { method: "POST" }),
+    adminApiClient(`/income/admin/distribute/${depositId}`, { method: "POST" }),
 };

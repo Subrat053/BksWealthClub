@@ -1,27 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() ||
-  import.meta.env.VITE_API_URL?.trim() ||
-  "http://localhost:5008/api/v1";
-
-const normalizeApiBaseUrl = (url) => {
-  if (!url) return "http://localhost:5008/api/v1";
-  const trimmed = url.trim().replace(/\/+$/, "");
-  return trimmed.endsWith("/api") ? `${trimmed}/v1` : trimmed;
-};
-
-const buildLoginUrls = (baseUrl) => {
-  const normalizedBase = normalizeApiBaseUrl(baseUrl);
-  const urls = [`${normalizedBase}/admin/login`];
-
-  if (normalizedBase !== "http://localhost:5008/api/v1") {
-    urls.push("http://localhost:5008/api/v1/admin/login");
-  }
-
-  return urls;
-};
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -59,43 +39,21 @@ export default function AdminLoginPage() {
         password: formData.password,
       };
 
-      let data = null;
-      let lastErrorMessage = "Invalid admin credentials.";
-      const loginUrls = buildLoginUrls(API_BASE_URL);
+      const res = await fetch(`${API_BASE_URL}/admin/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginPayload),
+      });
 
-      for (const loginUrl of loginUrls) {
-        const res = await fetch(loginUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(loginPayload),
-        });
+      const responseData = await res.json();
 
-        let responseData = null;
-        try {
-          responseData = await res.json();
-        } catch {
-          responseData = null;
-        }
-
-        if (res.ok && responseData?.success) {
-          data = responseData;
-          break;
-        }
-
-        if (responseData?.message) {
-          lastErrorMessage = responseData.message;
-        }
-
-        if (responseData?.message !== "Route not found") {
-          break;
-        }
+      if (!res.ok || !responseData?.success) {
+        throw new Error(responseData?.message || "Invalid admin credentials.");
       }
 
-      if (!data?.success) {
-        throw new Error(lastErrorMessage);
-      }
+      const data = responseData;
 
       const token = data.data?.token;
       const admin = data.data?.admin;
