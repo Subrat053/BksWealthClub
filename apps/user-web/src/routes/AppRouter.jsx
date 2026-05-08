@@ -26,6 +26,7 @@ import MakeWithdrawalPage from "../pages/member/MakeWithdrawalPage";
 import WithdrawalHistoryPage from "../pages/member/WithdrawalHistoryPage";
 import SupportPage from "../pages/member/SupportPage";
 import MyTeamReportPage from "../pages/member/MyTeamReportPage";
+import WalletIncomePage from "../pages/member/WalletIncomePage";
 
 function LogoutPage() {
   return <Navigate to="/login" replace />;
@@ -76,6 +77,7 @@ export const router = createBrowserRouter([
             path: "income/representative",
             element: <RepresentativeIncomePage />,
           },
+          { path: "income/wallet", element: <WalletIncomePage /> },
           { path: "withdrawal/make", element: <MakeWithdrawalPage /> },
           { path: "withdrawal/history", element: <WithdrawalHistoryPage /> },
           { path: "support", element: <SupportPage /> },

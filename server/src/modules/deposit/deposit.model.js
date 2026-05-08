@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const depositSchema = new mongoose.Schema(
   {
@@ -13,6 +13,10 @@ const depositSchema = new mongoose.Schema(
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
     reviewReason: { type: String, default: "" },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+    /** Whether the $75 income distribution has been executed for this deposit */
+    incomeDistributed: { type: Boolean, default: false, index: true },
+    /** When the income distribution was completed */
+    distributedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

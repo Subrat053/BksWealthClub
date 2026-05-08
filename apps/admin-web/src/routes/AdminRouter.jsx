@@ -12,6 +12,7 @@ import DepositRequestsPage from "../pages/deposits/DepositRequestsPage";
 import WithdrawalRequestsPage from "../pages/withdrawals/WithdrawalRequestsPage";
 import IncomeLogsPage from "../pages/income/IncomeLogsPage";
 import IncomeRulesPage from "../pages/income/IncomeRulesPage";
+import FundsPage from "../pages/income/FundsPage";
 import SupportTicketsPage from "../pages/support/SupportTicketsPage";
 import WebsiteContentPage from "../pages/cms/WebsiteContentPage";
 import BannersPage from "../pages/cms/BannersPage";
@@ -42,6 +43,7 @@ export const adminRouter = createBrowserRouter([
           { path: "withdrawals", element: <WithdrawalRequestsPage /> },
           { path: "income/logs", element: <IncomeLogsPage /> },
           { path: "income/rules", element: <IncomeRulesPage /> },
+          { path: "funds", element: <FundsPage /> },
           { path: "support", element: <SupportTicketsPage /> },
           { path: "cms/site", element: <WebsiteContentPage /> },
           { path: "cms/banners", element: <BannersPage /> },

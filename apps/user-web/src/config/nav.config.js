@@ -38,6 +38,7 @@ export const memberNav = [
     label: "Incomes",
     icon: BadgeDollarSign,
     children: [
+      { label: "Wallet & Income", path: "/member/income/wallet" },
       { label: "Sponsor Income", path: "/member/income/sponsor" },
       { label: "Representative Income", path: "/member/income/representative" },
     ],

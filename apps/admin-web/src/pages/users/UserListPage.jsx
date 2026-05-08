@@ -2,7 +2,7 @@ import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import DataTable from "../../components/DataTable";
 import StatusBadge from "../../components/StatusBadge";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsers } from "../../hooks/useUsers";
 import {
@@ -11,6 +11,7 @@ import {
   getUserPassword,
   sendVerificationLink,
 } from "../../api/user.api";
+import { adminIncomeService } from "../../services/adminIncome.service";
 import CreateUserModal from "./CreateUserModal";
 
 // ─── Password Modal ────────────────────────────────────────────────────────────
@@ -85,9 +86,9 @@ function PasswordModal({ user, onClose }) {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#06112e] px-4 py-3">
-              <span className="flex-1 font-mono text-sm text-emerald-300 break-all">
+               <span className="flex-1 font-mono text-sm text-emerald-300 break-all">
                 {password}
-              </span>
+               </span>
               <button
                 onClick={handleCopy}
                 className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10"
@@ -113,6 +114,7 @@ function PasswordModal({ user, onClose }) {
 
 // ─── Email Verified Badge ──────────────────────────────────────────────────────
 function EmailVerifiedBadge({ verified }) {
+  if (verified === undefined || verified === null) return <span className="text-slate-500 text-xs">—</span>;
   return verified ? (
     <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
       ✓ Verified
@@ -127,15 +129,34 @@ function EmailVerifiedBadge({ verified }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function UserListPage() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ search: "", status: "" });
+  const [filters, setFilters] = useState({ search: "", status: "", type: "all" });
+  
+  const [mergedUsers, setMergedUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const { users, loading, refetch } = useUsers(filters);
   const [showModal, setShowModal] = useState(false);
   const [passwordModalUser, setPasswordModalUser] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
 
+  const fetchUsersWithRebirths = async () => {
+    setLoading(true);
+    try {
+      const res = await adminIncomeService.getUsersWithRebirths(filters);
+      setMergedUsers(res?.data?.users || []);
+    } catch (err) {
+      console.error(err);
+      setMergedUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsersWithRebirths();
+  }, [filters]);
+
   const handleSendVerification = async (row) => {
-    if (row.isEmailVerified) return;
+    if (row.isEmailVerified || row.isRebirth) return;
     setVerifyingId(row._id);
     try {
       await sendVerificationLink(row._id);
@@ -150,16 +171,50 @@ export default function UserListPage() {
 
   const columns2 = useMemo(
     () => [
-      { key: "id", label: "USER ID" },
-      { key: "name", label: "NAME" },
-      { key: "email", label: "EMAIL" },
-      { key: "phone", label: "PHONE" },
-      { key: "sponsorId", label: "SPONSOR ID" },
-      { key: "referrerName", label: "SPONSOR NAME" },
+      {
+        key: "type",
+        label: "TYPE",
+        render: (_value, row) =>
+          row.isRebirth ? (
+            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/15 px-2 py-0.5 text-xs font-medium text-cyan-300">
+              Rebirth
+            </span>
+          ) : (
+            <span className="inline-flex rounded-full border border-slate-400/30 bg-slate-400/15 px-2 py-0.5 text-xs font-medium text-slate-300">
+              User
+            </span>
+          ),
+      },
+      {
+        key: "displayLabel",
+        label: "MEMBER",
+        render: (_value, row) => (
+          <div className="flex flex-col">
+            <span className={row.isRebirth ? "font-bold text-cyan-300" : "font-semibold text-white"}>
+              {row.displayLabel}
+            </span>
+            <span className="font-mono text-xs text-slate-400">{row.id}</span>
+          </div>
+        ),
+      },
+      {
+        key: "wallet",
+        label: "FUNDS",
+        render: (_value, row) => (
+          <div className="flex flex-col gap-1 text-xs">
+            {row.isRebirth ? (
+              <span className="text-cyan-300">RB Wallet: ${row.walletBalance}</span>
+            ) : (
+              <span className="text-emerald-300">Withdrawable: ${row.withdrawableFund}</span>
+            )}
+          </div>
+        ),
+      },
+      { key: "sponsorId", label: "SPONSOR ID", render: (v, r) => r.isRebirth ? "—" : v },
       {
         key: "isEmailVerified",
         label: "EMAIL",
-        render: (value) => <EmailVerifiedBadge verified={value} />,
+        render: (value, row) => row.isRebirth ? <span className="text-slate-500">—</span> : <EmailVerifiedBadge verified={value} />,
       },
       {
         key: "status",
@@ -168,22 +223,8 @@ export default function UserListPage() {
       },
       {
         key: "joinedAt",
-        label: "JOINED",
-        render: (_value, row) => row.joinedAtExact || "-",
-      },
-      {
-        key: "twoFactorEnabled",
-        label: "2FA",
-        render: (value) =>
-          value ? (
-            <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
-              Enabled
-            </span>
-          ) : (
-            <span className="inline-flex rounded-full border border-slate-400/20 bg-slate-500/15 px-3 py-1 text-xs font-semibold text-slate-300">
-              Disabled
-            </span>
-          ),
+        label: "CREATED",
+        render: (_value, row) => new Date(row.createdAt).toLocaleDateString(),
       },
     ],
     [],
@@ -193,21 +234,21 @@ export default function UserListPage() {
     if (row.status === "blocked") return;
     if (!confirm(`Ban user ${row.name}? This is a soft ban and keeps data in database.`)) return;
     await updateUserStatus(row._id, "blocked");
-    refetch();
+    fetchUsersWithRebirths();
   };
 
   const handleResetTwoFactor = async (row) => {
     if (!row.twoFactorEnabled) return;
     if (!confirm(`Reset 2FA for ${row.name}? They will need to set it up again.`)) return;
     await resetUserTwoFactor(row._id);
-    refetch();
+    fetchUsersWithRebirths();
   };
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        title="Users"
-        subtitle="Manage users, status, roles, and account access."
+        title="Users & Rebirth IDs"
+        subtitle="Manage users, rebirth accounts, status, roles, and account access."
         primaryActionText="Add User"
         onPrimaryClick={() => setShowModal(true)}
       />
@@ -226,64 +267,75 @@ export default function UserListPage() {
         >
           <option value="">All Status</option>
           <option value="approved">Approved</option>
+          <option value="active">Active</option>
           <option value="blocked">Blocked</option>
           <option value="pending">Pending</option>
           <option value="inactive">Inactive</option>
           <option value="suspended">Suspended</option>
         </select>
-        <button
-          className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]"
-          onClick={refetch}
+        <select
+          value={filters.type}
+          onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
+          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
-          Apply Filters
-        </button>
+          <option value="all">All Types</option>
+          <option value="user">Normal Users</option>
+          <option value="rebirth">Rebirth Accounts</option>
+        </select>
       </div>
 
       <DataTable
         columns={columns2}
-        data={users}
+        data={mergedUsers}
         renderActions={(row) => (
           <div className="flex flex-wrap gap-2">
-            <button
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10"
-              onClick={() => navigate(`/admin/users/${row._id}`)}
-            >
-              View
-            </button>
+            {!row.isRebirth && (
+              <>
+                <button
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10"
+                  onClick={() => navigate(`/admin/users/${row._id}`)}
+                >
+                  View
+                </button>
 
-            <button
-              className="rounded-lg border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
-              onClick={() => setPasswordModalUser(row)}
-            >
-              🔑 Password
-            </button>
+                <button
+                  className="rounded-lg border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
+                  onClick={() => setPasswordModalUser(row)}
+                >
+                  🔑 Password
+                </button>
 
-            {/* Send Verification Link */}
-            {!row.isEmailVerified && (
-              <button
-                className="rounded-lg border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => handleSendVerification(row)}
-                disabled={verifyingId === row._id}
-              >
-                {verifyingId === row._id ? "Sending…" : "✉ Verify Email"}
-              </button>
+                {/* Send Verification Link */}
+                {!row.isEmailVerified && (
+                  <button
+                    className="rounded-lg border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => handleSendVerification(row)}
+                    disabled={verifyingId === row._id}
+                  >
+                    {verifyingId === row._id ? "Sending…" : "✉ Verify Email"}
+                  </button>
+                )}
+
+                <button
+                  className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => handleBanUser(row)}
+                  disabled={row.status === "blocked"}
+                >
+                  {row.status === "blocked" ? "Banned" : "Ban"}
+                </button>
+
+                <button
+                  className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => handleResetTwoFactor(row)}
+                  disabled={!row.twoFactorEnabled}
+                >
+                  {row.twoFactorEnabled ? "Reset 2FA" : "2FA Off"}
+                </button>
+              </>
             )}
-
-            <button
-              className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={() => handleBanUser(row)}
-              disabled={row.status === "blocked"}
-            >
-              {row.status === "blocked" ? "Banned" : "Ban"}
-            </button>
-
-            <button
-              className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={() => handleResetTwoFactor(row)}
-              disabled={!row.twoFactorEnabled}
-            >
-              {row.twoFactorEnabled ? "Reset 2FA" : "2FA Off"}
-            </button>
+            {row.isRebirth && (
+               <span className="text-xs text-slate-500 italic">No actions for Rebirth IDs</span>
+            )}
           </div>
         )}
       />
@@ -291,7 +343,7 @@ export default function UserListPage() {
       <CreateUserModal
         open={showModal}
         onClose={() => setShowModal(false)}
-        onSuccess={refetch}
+        onSuccess={fetchUsersWithRebirths}
       />
 
       {passwordModalUser && (

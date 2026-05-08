@@ -9,6 +9,7 @@ import {
   Shield,
   UserPlus,
   Users,
+  Wallet,
   Workflow,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ export const adminNav = [
   { label: "Withdrawals", path: "/admin/withdrawals", icon: CircleDollarSign },
   { label: "Income Logs", path: "/admin/income/logs", icon: FileText },
   { label: "Income Rules", path: "/admin/income/rules", icon: FileText },
+  { label: "Funds", path: "/admin/funds", icon: Wallet },
   { label: "Support", path: "/admin/support", icon: LifeBuoy },
   { label: "CMS", path: "/admin/cms/site", icon: Contact },
   { label: "Settings", path: "/admin/settings/general", icon: Settings },

@@ -78,13 +78,144 @@ function RejectModal({ deposit, onConfirm, onCancel, loading }) {
   );
 }
 
+// ─── Approve Confirmation Modal ───────────────────────────────────────────────
+function ApproveConfirmModal({ deposit, onConfirm, onCancel, loading }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1f4a] p-6 shadow-2xl">
+        <h3 className="mb-1 text-base font-semibold text-white">
+          Approve Deposit
+        </h3>
+        <p className="mb-3 text-sm text-slate-400">
+          Approve deposit from{" "}
+          <span className="text-white font-medium">
+            {deposit?.userRef?.memberId || deposit?.userRef?.fullName || "user"}
+          </span>{" "}
+          — <span className="text-emerald-300 font-bold">${deposit?.amount}</span>
+        </p>
+        <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          ⚠️ This will trigger income distribution: rebirth IDs, sponsor income,
+          level income, and fund allocations.
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 rounded-xl bg-emerald-500/80 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition disabled:opacity-60"
+          >
+            {loading ? "Approving..." : "Confirm Approve"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Distribution Summary Modal ───────────────────────────────────────────────
+function DistributionSummaryModal({ summary, onClose }) {
+  if (!summary) return null;
+
+  const dist = summary.incomeDistribution || summary;
+  const rows = [
+    { label: "RB1 Wallet Credit", value: dist?.rebirths?.rb1?.walletCredit ?? 20, color: "text-cyan-300" },
+    { label: "RB2 Wallet Credit", value: dist?.rebirths?.rb2?.walletCredit ?? 20, color: "text-cyan-300" },
+    { label: "Sponsor Income", value: dist?.sponsorIncome?.amount ?? 5, color: "text-emerald-300" },
+    { label: "Company Fund", value: dist?.superAdminFunds?.companyFund ?? 5, color: "text-blue-300" },
+    { label: "Achiever Fund", value: dist?.superAdminFunds?.achieverFund ?? 4, color: "text-purple-300" },
+    { label: "Admin Fund", value: dist?.superAdminFunds?.adminFund ?? 5, color: "text-amber-300" },
+    { label: "Level Income (9 levels)", value: 16 - (dist?.levelIncome?.leftover ?? 0), color: "text-teal-300" },
+  ];
+
+  if (dist?.levelIncome?.leftover > 0) {
+    rows.push({
+      label: "Level Leftover → Company",
+      value: dist.levelIncome.leftover,
+      color: "text-orange-300",
+    });
+  }
+
+  if (dist?.remainder > 0) {
+    rows.push({
+      label: "Remainder → Company",
+      value: dist.remainder,
+      color: "text-slate-300",
+    });
+  }
+
+  const total = dist?.totalDistributed ?? 75;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1f4a] p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-white">
+            ✅ Distribution Summary
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/10 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+
+        {dist?.memberId && (
+          <p className="mb-3 text-sm text-slate-400">
+            Member: <span className="font-mono text-cyan-300">{dist.memberId}</span>
+          </p>
+        )}
+
+        <div className="space-y-2">
+          {rows.map((r, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-4 py-2.5"
+            >
+              <span className="text-sm text-slate-300">{r.label}</span>
+              <span className={`text-sm font-bold ${r.color}`}>
+                ${r.value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
+          <span className="text-sm font-semibold text-emerald-200">Total Distributed</span>
+          <span className="text-lg font-bold text-emerald-300">${total}</span>
+        </div>
+
+        {dist?.transactionCount && (
+          <p className="mt-2 text-center text-xs text-slate-500">
+            {dist.transactionCount} audit log entries created
+          </p>
+        )}
+
+        <button
+          onClick={onClose}
+          className="mt-4 w-full rounded-xl bg-[#1e327d] py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DepositRequestsPage() {
   const [deposits, setDeposits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // depositId being acted on
-  const [rejectTarget, setRejectTarget] = useState(null); // deposit obj to reject
-  const [filter, setFilter] = useState("all"); // "all" | "pending" | "approved" | "rejected"
+  const [actionLoading, setActionLoading] = useState(null);
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [distributionSummary, setDistributionSummary] = useState(null);
+  const [filter, setFilter] = useState("all");
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -93,7 +224,7 @@ export default function DepositRequestsPage() {
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const fetchDeposits = async () => {
@@ -109,20 +240,32 @@ export default function DepositRequestsPage() {
     }
   };
 
-  const handleApprove = async (depositId) => {
+  const handleApproveClick = (deposit) => {
+    setApproveTarget(deposit);
+  };
+
+  const handleApproveConfirm = async () => {
+    if (!approveTarget) return;
+    const depositId = approveTarget._id;
     setActionLoading(depositId);
     try {
-      await depositService.approveDeposit(depositId);
+      const res = await depositService.approveDeposit(depositId);
       setDeposits((prev) =>
         prev.map((d) =>
           d._id === depositId ? { ...d, status: "approved" } : d,
         ),
       );
-      showToast("Deposit approved. Amount added to user wallet.");
+      showToast("Deposit approved and income distributed successfully.");
+      // Show distribution summary if available
+      const distData = res?.data?.incomeDistribution || res?.data;
+      if (distData) {
+        setDistributionSummary(distData);
+      }
     } catch (err) {
       showToast(err.message || "Approval failed.", "error");
     } finally {
       setActionLoading(null);
+      setApproveTarget(null);
     }
   };
 
@@ -171,13 +314,29 @@ export default function DepositRequestsPage() {
         </div>
       )}
 
-      {/* Reject modal */}
+      {/* Modals */}
       {rejectTarget && (
         <RejectModal
           deposit={rejectTarget}
           onConfirm={handleReject}
           onCancel={() => setRejectTarget(null)}
           loading={actionLoading === rejectTarget._id}
+        />
+      )}
+
+      {approveTarget && (
+        <ApproveConfirmModal
+          deposit={approveTarget}
+          onConfirm={handleApproveConfirm}
+          onCancel={() => setApproveTarget(null)}
+          loading={actionLoading === approveTarget._id}
+        />
+      )}
+
+      {distributionSummary && (
+        <DistributionSummaryModal
+          summary={distributionSummary}
+          onClose={() => setDistributionSummary(null)}
         />
       )}
 
@@ -282,7 +441,7 @@ export default function DepositRequestsPage() {
                       {item.status === "pending" ? (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleApprove(item._id)}
+                            onClick={() => handleApproveClick(item)}
                             disabled={actionLoading === item._id}
                             className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition disabled:opacity-50"
                           >

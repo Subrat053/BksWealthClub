@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import { autopoolRepository } from "./autopool.repository.js";
 import {
   buildDualNodePayloads,
@@ -6,7 +6,6 @@ import {
   resolveChildPosition,
   resolveChildLevel,
   calculateCompletionRewards,
-  buildSponsorIncomeEntry,
   buildAutopoolIncomeEntry,
 } from "./autopool.engine.js";
 import { incomeService } from "../income/income.service.js";
@@ -52,28 +51,10 @@ export const autopoolService = {
         status: "active",
       }).session(session);
 
-      // --- Credit sponsor income ---
-      const user = await User.findById(userId).lean();
-      if (user?.referredByUserId) {
-        // $2.5 for slot .1
-        await incomeService.createEntry(
-          buildSponsorIncomeEntry({
-            sponsorUserRef: user.referredByUserId,
-            fromUserRef: userId,
-            slotNodeId: activeNode.nodeId,
-            amount: 2.5,
-          }),
-        );
-        // $2.5 for slot .2
-        await incomeService.createEntry(
-          buildSponsorIncomeEntry({
-            sponsorUserRef: user.referredByUserId,
-            fromUserRef: userId,
-            slotNodeId: holdNode.nodeId,
-            amount: 2.5,
-          }),
-        );
-      }
+      // ── Sponsor income is now handled by incomeDistribution.service.js ──────
+      // When the deposit is approved, deposit.service.js calls
+      // distributeDepositIncome() which credits sponsor income, level income,
+      // superadmin funds, and rebirth wallets. No duplicate credit here.
 
       await session.commitTransaction();
 

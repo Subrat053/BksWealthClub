@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const walletSchema = new mongoose.Schema(
   {
@@ -7,6 +7,8 @@ const walletSchema = new mongoose.Schema(
     fundWallet: { type: Number, default: 0 },
     holdingWallet: { type: Number, default: 0 },
     lockedAmount: { type: Number, default: 0 },
+    /** Accumulated income from sponsor + level distributions (available for withdrawal) */
+    withdrawableFund: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
