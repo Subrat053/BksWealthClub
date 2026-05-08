@@ -4,7 +4,10 @@ import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { RebirthModel } from "./rebirth.model.js";
 import { IncomeTransactionModel } from "./incomeTransaction.model.js";
-import { SuperAdminFundModel, getOrCreateFund } from "./superAdminFund.model.js";
+import {
+  SuperAdminFundModel,
+  getOrCreateFund,
+} from "./superAdminFund.model.js";
 import {
   DEPOSIT_AMOUNT,
   RB1_AMOUNT,
@@ -32,17 +35,46 @@ const round2 = (n) => Math.round(n * 100) / 100;
 async function getUplineChain(userId, maxLevels = 9, session = null) {
   const uplines = [];
   let currentUserId = userId;
+  const visited = new Set([String(userId)]);
 
   for (let level = 1; level <= maxLevels; level++) {
     const opts = session ? { session } : {};
-    const currentUser = await User.findById(currentUserId, "referredByUserId", opts).lean();
+    const currentUser = await User.findById(
+      currentUserId,
+      "referredByUserId sponsorUserId sponsorId",
+      opts,
+    ).lean();
 
-    if (!currentUser?.referredByUserId) break;
+    if (!currentUser) break;
 
-    const sponsorId = currentUser.referredByUserId;
+    let sponsor = null;
+    let sponsorId =
+      currentUser.referredByUserId || currentUser.sponsorUserId || null;
 
-    // Verify the sponsor user actually exists and is a real user
-    const sponsor = await User.findById(sponsorId, "_id isActivated status", opts).lean();
+    // Fallback for legacy records that only have string sponsorId.
+    if (!sponsorId && currentUser.sponsorId) {
+      sponsor = await User.findOne(
+        { memberId: String(currentUser.sponsorId).trim().toUpperCase() },
+        "_id isActivated status",
+        opts,
+      ).lean();
+      sponsorId = sponsor?._id || null;
+    }
+
+    if (!sponsorId) break;
+
+    if (visited.has(String(sponsorId))) {
+      // Defensive guard against malformed cyclic sponsor chains.
+      break;
+    }
+
+    if (!sponsor) {
+      sponsor = await User.findById(
+        sponsorId,
+        "_id isActivated status",
+        opts,
+      ).lean();
+    }
     if (!sponsor) break;
 
     uplines.push({
@@ -51,6 +83,7 @@ async function getUplineChain(userId, maxLevels = 9, session = null) {
       isActive: sponsor.isActivated && sponsor.status === "active",
     });
 
+    visited.add(String(sponsor._id));
     currentUserId = sponsor._id;
   }
 
@@ -74,14 +107,17 @@ async function getUplineChain(userId, maxLevels = 9, session = null) {
  * @returns {Object} Full distribution summary
  */
 export async function distributeDepositIncome({ userId, depositId, session }) {
-  if (!session) throw new Error("A MongoDB session is required to distribute income");
+  if (!session)
+    throw new Error("A MongoDB session is required to distribute income");
 
   try {
     // ── 1. Fetch and validate deposit ────────────────────────────────────────
     const deposit = await DepositModel.findById(depositId).session(session);
     if (!deposit) throw new Error("Deposit not found");
     if (deposit.status !== "approved") {
-      throw new Error(`Deposit status is "${deposit.status}", expected "approved"`);
+      throw new Error(
+        `Deposit status is "${deposit.status}", expected "approved"`,
+      );
     }
     if (deposit.amount !== DEPOSIT_AMOUNT) {
       throw new Error(
@@ -89,7 +125,9 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       );
     }
     if (deposit.incomeDistributed === true) {
-      throw new Error("Income already distributed for this deposit (idempotency check)");
+      throw new Error(
+        "Income already distributed for this deposit (idempotency check)",
+      );
     }
 
     // ── 2. Fetch the depositing user ─────────────────────────────────────────
@@ -184,7 +222,10 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     let sponsorCredited = false;
 
     if (sponsorUserId) {
-      const sponsor = await User.findById(sponsorUserId, "_id isActivated status")
+      const sponsor = await User.findById(
+        sponsorUserId,
+        "_id isActivated status",
+      )
         .session(session)
         .lean();
 
@@ -456,7 +497,10 @@ export async function getAllIncomeLogs({ page = 1, limit = 50, type = null }) {
 /**
  * Get income transactions for a specific user (admin or user self-view).
  */
-export async function getUserIncomeLogs(targetUserId, { page = 1, limit = 50 } = {}) {
+export async function getUserIncomeLogs(
+  targetUserId,
+  { page = 1, limit = 50 } = {},
+) {
   const filter = { userId: targetUserId };
   const skip = (page - 1) * limit;
 
@@ -471,7 +515,13 @@ export async function getUserIncomeLogs(targetUserId, { page = 1, limit = 50 } =
     IncomeTransactionModel.countDocuments(filter),
   ]);
 
-  return { logs: docs, total, page, limit, totalPages: Math.ceil(total / limit) };
+  return {
+    logs: docs,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 /**
@@ -488,7 +538,12 @@ export async function getFundsSummary() {
         totalUserIncome: {
           $sum: {
             $cond: [
-              { $in: ["$type", [INCOME_TYPES.SPONSOR_INCOME, INCOME_TYPES.LEVEL_INCOME]] },
+              {
+                $in: [
+                  "$type",
+                  [INCOME_TYPES.SPONSOR_INCOME, INCOME_TYPES.LEVEL_INCOME],
+                ],
+              },
               "$amount",
               0,
             ],
@@ -538,9 +593,16 @@ export async function getFundsSummary() {
     { $group: { _id: "$type", count: { $sum: 1 } } },
   ]);
   const txnCountMap = {};
-  fundTxnCounts.forEach((r) => { txnCountMap[r._id] = r.count; });
+  fundTxnCounts.forEach((r) => {
+    txnCountMap[r._id] = r.count;
+  });
 
-  const saFund = fund || { companyFund: 0, achieverFund: 0, adminFund: 0, leftoverFund: 0 };
+  const saFund = fund || {
+    companyFund: 0,
+    achieverFund: 0,
+    adminFund: 0,
+    leftoverFund: 0,
+  };
 
   return {
     companyFund: saFund.companyFund,
@@ -552,7 +614,9 @@ export async function getFundsSummary() {
     ),
     totalUserIncomeDistributed: incomeAgg?.totalUserIncome || 0,
     totalRebirthWalletDistributed: incomeAgg?.totalRebirthWallet || 0,
-    totalDepositsDistributed: Math.floor((incomeAgg?.totalDepositsDistributed || 0) / 2),
+    totalDepositsDistributed: Math.floor(
+      (incomeAgg?.totalDepositsDistributed || 0) / 2,
+    ),
     lastCredits,
     transactionCounts: {
       companyFund: txnCountMap[INCOME_TYPES.COMPANY_FUND] || 0,
@@ -605,7 +669,13 @@ export async function getFundTransactions({
     IncomeTransactionModel.countDocuments(filter),
   ]);
 
-  return { logs: docs, total, page, limit, totalPages: Math.ceil(total / limit) };
+  return {
+    logs: docs,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 /**
@@ -635,7 +705,10 @@ export async function getUserWallet(userId) {
 
   // Also get rebirth wallet totals
   const rebirths = await RebirthModel.find({ userId }).lean();
-  const totalRebirthBalance = rebirths.reduce((sum, r) => sum + (r.walletBalance || 0), 0);
+  const totalRebirthBalance = rebirths.reduce(
+    (sum, r) => sum + (r.walletBalance || 0),
+    0,
+  );
 
   return {
     ...wallet,
@@ -672,7 +745,9 @@ export async function getAdminUsersWithRebirths({
     }
 
     const users = await User.find(userFilter)
-      .select("-passwordHash -twoFactorSecret -twoFactorPendingSecret -plainPassword")
+      .select(
+        "-passwordHash -twoFactorSecret -twoFactorPendingSecret -plainPassword",
+      )
       .populate("sponsorUserId", "fullName memberId")
       .populate("referredByUserId", "fullName memberId")
       .sort({ createdAt: -1 })
@@ -682,7 +757,10 @@ export async function getAdminUsersWithRebirths({
       // Get wallet info
       const wallet = await WalletModel.findOne({ userRef: u._id }).lean();
       const rebirths = await RebirthModel.find({ userId: u._id }).lean();
-      const totalRebirthBalance = rebirths.reduce((s, r) => s + (r.walletBalance || 0), 0);
+      const totalRebirthBalance = rebirths.reduce(
+        (s, r) => s + (r.walletBalance || 0),
+        0,
+      );
 
       result.push({
         _id: u._id,
@@ -691,7 +769,8 @@ export async function getAdminUsersWithRebirths({
         email: u.email,
         phone: u.phone,
         sponsorId: u.sponsorId,
-        sponsorName: u.sponsorUserId?.fullName || u.referredByUserId?.fullName || "System",
+        sponsorName:
+          u.sponsorUserId?.fullName || u.referredByUserId?.fullName || "System",
         status: u.status,
         isRebirth: false,
         isActivated: u.isActivated,
@@ -710,13 +789,19 @@ export async function getAdminUsersWithRebirths({
   if (type === "all" || type === "rebirths") {
     const rbFilter = {};
     if (search) {
-      rbFilter.$or = [
-        { rebirthCode: { $regex: search, $options: "i" } },
-      ];
+      rbFilter.$or = [{ rebirthCode: { $regex: search, $options: "i" } }];
     }
 
     const rebirths = await RebirthModel.find(rbFilter)
-      .populate("userId", "fullName memberId email phone sponsorId status")
+      .populate({
+        path: "userId",
+        select:
+          "fullName memberId email phone sponsorId status sponsorUserId referredByUserId",
+        populate: [
+          { path: "sponsorUserId", select: "fullName memberId" },
+          { path: "referredByUserId", select: "fullName memberId" },
+        ],
+      })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -726,14 +811,20 @@ export async function getAdminUsersWithRebirths({
       // Filter by status if specified
       if (status && parentUser.status !== status) continue;
 
+      const rebirthSponsor =
+        parentUser.referredByUserId || parentUser.sponsorUserId || null;
+      const rebirthSponsorId =
+        rebirthSponsor?.memberId || parentUser.sponsorId || "System";
+      const rebirthSponsorName = rebirthSponsor?.fullName || "System";
+
       result.push({
         _id: rb._id,
         memberId: rb.rebirthCode,
         fullName: `${parentUser.fullName} (R)`,
         email: parentUser.email,
         phone: parentUser.phone,
-        sponsorId: parentUser.sponsorId,
-        sponsorName: "",
+        sponsorId: rebirthSponsorId,
+        sponsorName: rebirthSponsorName,
         status: parentUser.status,
         isRebirth: true,
         isActivated: true,
@@ -763,8 +854,28 @@ export async function getAdminUsersWithRebirths({
  * Get user income summary for admin detail view.
  */
 export async function getUserIncomeSummary(userId) {
+  const userProfile = await User.findById(userId)
+    .select("memberId fullName sponsorId sponsorUserId referredByUserId")
+    .populate("sponsorUserId", "memberId fullName")
+    .populate("referredByUserId", "memberId fullName")
+    .lean();
+
   const wallet = await getUserWallet(userId);
-  const rebirths = await getUserRebirthIds(userId);
+  const rawRebirths = await getUserRebirthIds(userId);
+
+  const sponsoredBy =
+    userProfile?.referredByUserId || userProfile?.sponsorUserId || null;
+  const sponsorName = sponsoredBy?.fullName || "System";
+  const sponsorMemberId =
+    sponsoredBy?.memberId || userProfile?.sponsorId || "System";
+
+  const rebirths = rawRebirths.map((rb) => ({
+    ...rb,
+    ownerMemberId: userProfile?.memberId || "—",
+    sponsorId: sponsorMemberId,
+    sponsorName,
+    rebirthUserId: rb.rebirthCode,
+  }));
 
   // Aggregate income by type for this user
   const incomeAgg = await IncomeTransactionModel.aggregate([
@@ -791,6 +902,11 @@ export async function getUserIncomeSummary(userId) {
     .lean();
 
   return {
+    userProfile: {
+      memberId: userProfile?.memberId || "—",
+      sponsorId: sponsorMemberId,
+      sponsorName,
+    },
     wallet,
     rebirths,
     incomeByType,

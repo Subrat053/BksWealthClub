@@ -55,7 +55,8 @@ export default function UserDetailsPage() {
   }, [id]);
 
   const handleUpdateStatus = async (status) => {
-    if (!confirm(`Are you sure you want to change status to ${status}?`)) return;
+    if (!confirm(`Are you sure you want to change status to ${status}?`))
+      return;
     try {
       setUpdating(true);
       await updateUserStatus(id, status);
@@ -67,14 +68,33 @@ export default function UserDetailsPage() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center text-blue-100/60">Loading user details...</div>;
-  if (error) return <div className="p-10 text-center text-red-400">{error}</div>;
-  if (!user) return <div className="p-10 text-center text-blue-100/60">User not found.</div>;
+  if (loading)
+    return (
+      <div className="p-10 text-center text-blue-100/60">
+        Loading user details...
+      </div>
+    );
+  if (error)
+    return <div className="p-10 text-center text-red-400">{error}</div>;
+  if (!user)
+    return (
+      <div className="p-10 text-center text-blue-100/60">User not found.</div>
+    );
 
   const w = incomeSummary?.wallet || {};
   const rebirths = incomeSummary?.rebirths || [];
   const incomeByType = incomeSummary?.incomeByType || {};
   const recentLogs = incomeSummary?.recentLogs || [];
+  const summaryUserProfile = incomeSummary?.userProfile || {};
+
+  const sponsoredByUser = user.referredByUserId || user.sponsorUserId || null;
+  const sponsoredByName =
+    summaryUserProfile.sponsorName || sponsoredByUser?.fullName || "System";
+  const sponsoredById =
+    summaryUserProfile.sponsorId ||
+    sponsoredByUser?.memberId ||
+    user.sponsorId ||
+    "System";
 
   return (
     <div className="space-y-5">
@@ -87,7 +107,9 @@ export default function UserDetailsPage() {
         {/* Profile Snapshot */}
         <section className="col-span-2 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Profile Information</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Profile Information
+            </h3>
             <StatusBadge status={user.status} />
           </div>
 
@@ -98,7 +120,9 @@ export default function UserDetailsPage() {
             </div>
             <div>
               <p className="text-blue-200/50">User ID (Member ID)</p>
-              <p className="font-mono font-medium text-emerald-400">{user.memberId}</p>
+              <p className="font-mono font-medium text-emerald-400">
+                {user.memberId}
+              </p>
             </div>
             <div>
               <p className="text-blue-200/50">Email Address</p>
@@ -110,22 +134,41 @@ export default function UserDetailsPage() {
             </div>
             <div>
               <p className="text-blue-200/50">Sponsor ID</p>
-              <p className="font-mono font-medium text-blue-300">{user.sponsorId}</p>
+              <p className="font-mono font-medium text-blue-300">
+                {user.sponsorId}
+              </p>
+            </div>
+            <div>
+              <p className="text-blue-200/50">Sponsored By ID</p>
+              <p className="font-mono font-medium text-cyan-300">
+                {sponsoredById}
+              </p>
+            </div>
+            <div>
+              <p className="text-blue-200/50">Sponsored By Name</p>
+              <p className="font-medium text-white">{sponsoredByName}</p>
             </div>
             <div>
               <p className="text-blue-200/50">Registration Source</p>
-              <p className="font-medium capitalize text-white">{user.registrationSource || "Web"}</p>
+              <p className="font-medium capitalize text-white">
+                {user.registrationSource || "Web"}
+              </p>
             </div>
             <div>
               <p className="text-blue-200/50">Email Verified</p>
-              <p className={user.isEmailVerified ? "text-emerald-400" : "text-red-400"}>
+              <p
+                className={
+                  user.isEmailVerified ? "text-emerald-400" : "text-red-400"
+                }
+              >
                 {user.isEmailVerified ? "Verified" : "Not Verified"}
               </p>
             </div>
             <div>
               <p className="text-blue-200/50">Joined On</p>
               <p className="font-medium text-white">
-                {new Date(user.createdAt).toLocaleDateString()} {new Date(user.createdAt).toLocaleTimeString()}
+                {new Date(user.createdAt).toLocaleDateString()}{" "}
+                {new Date(user.createdAt).toLocaleTimeString()}
               </p>
             </div>
           </div>
@@ -133,7 +176,9 @@ export default function UserDetailsPage() {
 
         {/* Quick Actions */}
         <section className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-6 text-lg font-semibold text-white">Admin Actions</h3>
+          <h3 className="mb-6 text-lg font-semibold text-white">
+            Admin Actions
+          </h3>
           <div className="flex flex-col gap-3">
             {user.status !== "active" && (
               <button
@@ -165,17 +210,29 @@ export default function UserDetailsPage() {
           </div>
 
           <div className="mt-8 rounded-2xl bg-white/5 p-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-200/40">Security Status</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-200/40">
+              Security Status
+            </h4>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-blue-100/60">2FA Enabled</span>
-                <span className={user.twoFactorEnabled ? "text-emerald-400" : "text-slate-400"}>
+                <span
+                  className={
+                    user.twoFactorEnabled
+                      ? "text-emerald-400"
+                      : "text-slate-400"
+                  }
+                >
                   {user.twoFactorEnabled ? "YES" : "NO"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-blue-100/60">Account Locked</span>
-                <span className={user.isSuspended ? "text-red-400" : "text-emerald-400"}>
+                <span
+                  className={
+                    user.isSuspended ? "text-red-400" : "text-emerald-400"
+                  }
+                >
                   {user.isSuspended ? "YES" : "NO"}
                 </span>
               </div>
@@ -187,20 +244,36 @@ export default function UserDetailsPage() {
       {/* ── Wallet & Income Section ──────────────────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">Withdrawable Fund</p>
-          <h4 className="mt-2 text-3xl font-bold text-emerald-300">${w.withdrawableFund?.toFixed(2) || "0.00"}</h4>
+          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+            Withdrawable Fund
+          </p>
+          <h4 className="mt-2 text-3xl font-bold text-emerald-300">
+            ${w.withdrawableFund?.toFixed(2) || "0.00"}
+          </h4>
         </div>
         <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">Fund Wallet</p>
-          <h4 className="mt-2 text-3xl font-bold text-cyan-300">${w.fundWallet?.toFixed(2) || "0.00"}</h4>
+          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+            Fund Wallet
+          </p>
+          <h4 className="mt-2 text-3xl font-bold text-cyan-300">
+            ${w.fundWallet?.toFixed(2) || "0.00"}
+          </h4>
         </div>
         <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">Main Wallet</p>
-          <h4 className="mt-2 text-3xl font-bold text-blue-300">${w.mainWallet?.toFixed(2) || "0.00"}</h4>
+          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+            Main Wallet
+          </p>
+          <h4 className="mt-2 text-3xl font-bold text-blue-300">
+            ${w.mainWallet?.toFixed(2) || "0.00"}
+          </h4>
         </div>
         <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">Total Rebirth Balance</p>
-          <h4 className="mt-2 text-3xl font-bold text-purple-300">${w.totalRebirthBalance?.toFixed(2) || "0.00"}</h4>
+          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+            Total Rebirth Balance
+          </p>
+          <h4 className="mt-2 text-3xl font-bold text-purple-300">
+            ${w.totalRebirthBalance?.toFixed(2) || "0.00"}
+          </h4>
         </div>
       </div>
 
@@ -208,25 +281,54 @@ export default function UserDetailsPage() {
       {rebirths.length > 0 && (
         <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
           <h3 className="mb-4 text-lg font-semibold text-white">Rebirth IDs</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rebirths.map((rb) => (
-              <div key={rb._id} className="rounded-[20px] border border-cyan-400/15 bg-[#0c1f57]/70 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-sm font-bold text-cyan-300">{rb.rebirthCode}</span>
-                  <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-xs text-cyan-200">
-                    RB{rb.sequenceNo}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">Wallet Balance</span>
-                  <span className="font-bold text-emerald-300">${rb.walletBalance?.toFixed(2) || "0.00"}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs mt-1">
-                  <span className="text-slate-500">Created</span>
-                  <span className="text-slate-300">{formatDate(rb.createdAt)}</span>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead className="bg-[#112766]/70">
+                <tr>
+                  {[
+                    "Rebirth User ID",
+                    "Parent User ID",
+                    "Sponsored By ID",
+                    "Sponsored By Name",
+                    "Wallet Balance",
+                    "Created",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {rebirths.map((rb) => (
+                  <tr key={rb._id} className="transition hover:bg-white/5">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-cyan-300">
+                      {rb.rebirthUserId || rb.rebirthCode}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-blue-200">
+                      {rb.ownerMemberId ||
+                        summaryUserProfile.memberId ||
+                        user.memberId}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-amber-300">
+                      {rb.sponsorId || sponsoredById}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-200">
+                      {rb.sponsorName || sponsoredByName}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-emerald-300">
+                      ${rb.walletBalance?.toFixed(2) || "0.00"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400">
+                      {formatDate(rb.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -234,13 +336,24 @@ export default function UserDetailsPage() {
       {/* Income Breakdown by Type */}
       {Object.keys(incomeByType).length > 0 && (
         <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">Income Breakdown</h3>
+          <h3 className="mb-4 text-lg font-semibold text-white">
+            Income Breakdown
+          </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(incomeByType).map(([type, data]) => (
-              <div key={type} className="rounded-[18px] border border-white/10 bg-[#0c1f57]/70 p-4">
-                <p className="text-xs text-slate-400 uppercase">{type.replace(/_/g, " ")}</p>
-                <p className="mt-1 text-xl font-bold text-white">${data.total?.toFixed(2)}</p>
-                <p className="text-xs text-slate-500">{data.count} transaction(s)</p>
+              <div
+                key={type}
+                className="rounded-[18px] border border-white/10 bg-[#0c1f57]/70 p-4"
+              >
+                <p className="text-xs text-slate-400 uppercase">
+                  {type.replace(/_/g, " ")}
+                </p>
+                <p className="mt-1 text-xl font-bold text-white">
+                  ${data.total?.toFixed(2)}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {data.count} transaction(s)
+                </p>
               </div>
             ))}
           </div>
@@ -250,26 +363,41 @@ export default function UserDetailsPage() {
       {/* Recent Income Logs */}
       {recentLogs.length > 0 && (
         <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">Recent Income Logs</h3>
+          <h3 className="mb-4 text-lg font-semibold text-white">
+            Recent Income Logs
+          </h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left">
               <thead className="bg-[#112766]/70">
                 <tr>
                   {["Date", "From", "Type", "Amount", "Remarks"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{h}</th>
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {recentLogs.map((log) => (
                   <tr key={log._id} className="transition hover:bg-white/5">
-                    <td className="px-4 py-3 text-xs text-slate-400">{formatDate(log.createdAt)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-400">
+                      {formatDate(log.createdAt)}
+                    </td>
                     <td className="px-4 py-3 text-sm font-mono text-cyan-300">
                       {log.fromUserId?.memberId || "System"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-300">{log.type?.replace(/_/g, " ")}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-emerald-300">${log.amount}</td>
-                    <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">{log.remarks || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-300">
+                      {log.type?.replace(/_/g, " ")}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-emerald-300">
+                      ${log.amount}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">
+                      {log.remarks || "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

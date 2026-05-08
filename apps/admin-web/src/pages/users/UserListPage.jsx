@@ -62,8 +62,9 @@ function PasswordModal({ user, onClose }) {
         </div>
 
         <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
-          ⚠️ <strong>Security Warning:</strong> This reveals the user's plain-text
-          password stored at registration or last reset. Handle with extreme care.
+          ⚠️ <strong>Security Warning:</strong> This reveals the user's
+          plain-text password stored at registration or last reset. Handle with
+          extreme care.
         </div>
 
         <div className="mb-4 space-y-1 text-sm">
@@ -86,9 +87,9 @@ function PasswordModal({ user, onClose }) {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#06112e] px-4 py-3">
-               <span className="flex-1 font-mono text-sm text-emerald-300 break-all">
+              <span className="flex-1 font-mono text-sm text-emerald-300 break-all">
                 {password}
-               </span>
+              </span>
               <button
                 onClick={handleCopy}
                 className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10"
@@ -114,7 +115,8 @@ function PasswordModal({ user, onClose }) {
 
 // ─── Email Verified Badge ──────────────────────────────────────────────────────
 function EmailVerifiedBadge({ verified }) {
-  if (verified === undefined || verified === null) return <span className="text-slate-500 text-xs">—</span>;
+  if (verified === undefined || verified === null)
+    return <span className="text-slate-500 text-xs">—</span>;
   return verified ? (
     <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
       ✓ Verified
@@ -129,8 +131,12 @@ function EmailVerifiedBadge({ verified }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function UserListPage() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ search: "", status: "", type: "all" });
-  
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "",
+    type: "all",
+  });
+
   const [mergedUsers, setMergedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -162,7 +168,8 @@ export default function UserListPage() {
       await sendVerificationLink(row._id);
       alert(`Verification email sent to ${row.email}`);
     } catch (err) {
-      const msg = err?.response?.data?.message || "Failed to send verification link.";
+      const msg =
+        err?.response?.data?.message || "Failed to send verification link.";
       alert(msg);
     } finally {
       setVerifyingId(null);
@@ -171,6 +178,16 @@ export default function UserListPage() {
 
   const columns2 = useMemo(
     () => [
+      {
+        key: "memberId",
+        label: "USER ID",
+        render: (_value, row) => (
+          <span className="font-mono text-xs text-cyan-200">
+            {row.memberId || "—"}
+          </span>
+        ),
+      },
+
       {
         key: "type",
         label: "TYPE",
@@ -190,10 +207,18 @@ export default function UserListPage() {
         label: "MEMBER",
         render: (_value, row) => (
           <div className="flex flex-col">
-            <span className={row.isRebirth ? "font-bold text-cyan-300" : "font-semibold text-white"}>
+            <span
+              className={
+                row.isRebirth
+                  ? "font-bold text-cyan-300"
+                  : "font-semibold text-white"
+              }
+            >
               {row.displayLabel}
             </span>
-            <span className="font-mono text-xs text-slate-400">{row.id}</span>
+            <span className="font-mono text-xs text-slate-400">
+              {row.memberId || "—"}
+            </span>
           </div>
         ),
       },
@@ -203,18 +228,41 @@ export default function UserListPage() {
         render: (_value, row) => (
           <div className="flex flex-col gap-1 text-xs">
             {row.isRebirth ? (
-              <span className="text-cyan-300">RB Wallet: ${row.walletBalance}</span>
+              <span className="text-cyan-300">
+                RB Wallet: ${row.walletBalance}
+              </span>
             ) : (
-              <span className="text-emerald-300">Withdrawable: ${row.withdrawableFund}</span>
+              <span className="text-emerald-300">
+                Withdrawable: ${row.withdrawableFund}
+              </span>
             )}
           </div>
         ),
       },
-      { key: "sponsorId", label: "SPONSOR ID", render: (v, r) => r.isRebirth ? "—" : v },
+      {
+        key: "sponsorId",
+        label: "SPONSOR ID",
+        render: (v) => v || "System",
+      },
+      {
+        key: "sponsorName",
+        label: "SPONSORED BY",
+        render: (v) => v || "System",
+      },
+      {
+        key: "email",
+        label: "EMAIL ADDRESS",
+        render: (value) => value || "—",
+      },
       {
         key: "isEmailVerified",
-        label: "EMAIL",
-        render: (value, row) => row.isRebirth ? <span className="text-slate-500">—</span> : <EmailVerifiedBadge verified={value} />,
+        label: "EMAIL VERIFIED",
+        render: (value, row) =>
+          row.isRebirth ? (
+            <span className="text-slate-500">—</span>
+          ) : (
+            <EmailVerifiedBadge verified={value} />
+          ),
       },
       {
         key: "status",
@@ -232,14 +280,22 @@ export default function UserListPage() {
 
   const handleBanUser = async (row) => {
     if (row.status === "blocked") return;
-    if (!confirm(`Ban user ${row.name}? This is a soft ban and keeps data in database.`)) return;
+    if (
+      !confirm(
+        `Ban user ${row.name}? This is a soft ban and keeps data in database.`,
+      )
+    )
+      return;
     await updateUserStatus(row._id, "blocked");
     fetchUsersWithRebirths();
   };
 
   const handleResetTwoFactor = async (row) => {
     if (!row.twoFactorEnabled) return;
-    if (!confirm(`Reset 2FA for ${row.name}? They will need to set it up again.`)) return;
+    if (
+      !confirm(`Reset 2FA for ${row.name}? They will need to set it up again.`)
+    )
+      return;
     await resetUserTwoFactor(row._id);
     fetchUsersWithRebirths();
   };
@@ -256,13 +312,17 @@ export default function UserListPage() {
         <input
           type="text"
           value={filters.search}
-          onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, search: e.target.value }))
+          }
           placeholder="Search by name or email"
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white placeholder:text-blue-200/40 outline-none focus:border-blue-400/40"
         />
         <select
           value={filters.status}
-          onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, status: e.target.value }))
+          }
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
           <option value="">All Status</option>
@@ -275,12 +335,14 @@ export default function UserListPage() {
         </select>
         <select
           value={filters.type}
-          onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, type: e.target.value }))
+          }
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
           <option value="all">All Types</option>
-          <option value="user">Normal Users</option>
-          <option value="rebirth">Rebirth Accounts</option>
+          <option value="users">Normal Users</option>
+          <option value="rebirths">Rebirth Accounts</option>
         </select>
       </div>
 
@@ -334,7 +396,9 @@ export default function UserListPage() {
               </>
             )}
             {row.isRebirth && (
-               <span className="text-xs text-slate-500 italic">No actions for Rebirth IDs</span>
+              <span className="text-xs text-slate-500 italic">
+                No actions for Rebirth IDs
+              </span>
             )}
           </div>
         )}
