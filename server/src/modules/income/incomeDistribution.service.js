@@ -403,14 +403,24 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       });
     }
 
-    // ── 14. Persist all IncomeTransaction documents ──────────────────────────
-    // ordered:false lets duplicate-key docs (retry) be skipped without aborting
-    // the rest of the batch. Combined with the incomeDistributed guard above,
-    // this is the second line of defence against double-crediting.
-    await IncomeTransactionModel.insertMany(txnDocs, {
-      session,
-      ordered: false,
-    });
+    try {
+      await IncomeTransactionModel.insertMany(txnDocs, {
+        session,
+        ordered: false,
+      });
+    } catch (err) {
+      // If ordered: false, insertMany throws if ANY document fails.
+      // We ignore duplicate key errors (11000) because they mean the record
+      // was already created in a previous attempt that partially succeeded.
+      const isBulkWriteError = err.name === "BulkWriteError" || err.code === 11000;
+      if (isBulkWriteError) {
+        console.warn(
+          `[Income] Some transactions already exist for deposit ${depositId} — skipping duplicates`,
+        );
+      } else {
+        throw err;
+      }
+    }
 
     // ── 15. Mark deposit as distributed ──────────────────────────────────────
     await DepositModel.findByIdAndUpdate(
