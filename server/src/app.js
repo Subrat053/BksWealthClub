@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -24,6 +24,15 @@ export function createApp() {
   app.disable("x-powered-by");
 
   app.use(helmet());
+  
+  // Support for Private Network Access (PNA)
+  app.use((req, res, next) => {
+    if (req.headers["access-control-request-private-network"]) {
+      res.setHeader("Access-Control-Allow-Private-Network", "true");
+    }
+    next();
+  });
+
   app.use(corsMiddleware);
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true, limit: "1mb" }));
