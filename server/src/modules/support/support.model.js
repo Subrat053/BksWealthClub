@@ -18,7 +18,7 @@ const replySchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const supportTicketSchema = new mongoose.Schema(
@@ -74,7 +74,7 @@ const supportTicketSchema = new mongoose.Schema(
       default: "user",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 supportTicketSchema.pre("save", async function (next) {
@@ -86,4 +86,7 @@ supportTicketSchema.pre("save", async function (next) {
 });
 
 // module.exports = mongoose.model("SupportTicket", supportTicketSchema);
-export const SupportTicket = mongoose.model("SupportTicket", supportTicketSchema);
+export const SupportTicketModel =
+  mongoose.models.SupportTicket ||
+  mongoose.model("SupportTicket", supportTicketSchema);
+export const SupportTicket = SupportTicketModel;

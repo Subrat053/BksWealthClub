@@ -1,4 +1,6 @@
 ﻿import { buildReferralLink } from "../../utils/referral.js";
+import { adminRepository } from "../admin/admin.repository.js";
+import { auditService } from "../audit/audit.service.js";
 
 export const dashboardService = {
   getMemberSummary: async ({ user }) => ({
@@ -13,7 +15,10 @@ export const dashboardService = {
       representativeIncome: 0,
       totalIncome: 0,
     },
-    referralLink: buildReferralLink("https://bkswealthclub.com", user?.username || "USER"),
+    referralLink: buildReferralLink(
+      "https://bkswealthclub.com",
+      user?.username || "USER",
+    ),
     wallets: {
       mainWallet: 0,
       fundWallet: 0,
@@ -26,12 +31,12 @@ export const dashboardService = {
     },
   }),
 
-  getAdminSummary: async () => ({
-    users: 0,
-    activeUsers: 0,
-    pendingDeposits: 0,
-    pendingWithdrawals: 0,
-    openSupportTickets: 0,
-    totalIncomeProcessed: 0,
-  }),
+  getAdminSummary: async () => {
+    const summary = await adminRepository.getSummary();
+    const recentLogs = await auditService.list({}).limit(5);
+    return {
+      ...summary,
+      recentActivities: recentLogs || [],
+    };
+  },
 };

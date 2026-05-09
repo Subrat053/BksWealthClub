@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminLoginPage() {
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     identifier: "",
@@ -62,8 +64,7 @@ export default function AdminLoginPage() {
         throw new Error("Login failed. Token not received.");
       }
 
-      localStorage.setItem("adminToken", token);
-      localStorage.setItem("adminUser", JSON.stringify(admin || {}));
+      login(token, admin || {});
 
       navigate("/admin/dashboard", { replace: true });
     } catch (err) {

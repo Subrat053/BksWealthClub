@@ -12,6 +12,7 @@ import {
   resetUserPassword,
   getUserPassword,
   sendVerificationLink,
+  getAdminSummary,
 } from "./admin.controller.js";
 
 import { Router } from "express";
@@ -23,6 +24,8 @@ adminRouter.post("/login", adminLogin);
 
 // All routes below require admin authentication
 adminRouter.use(protect, adminOnly);
+
+adminRouter.get("/summary", getAdminSummary);
 
 adminRouter.post("/users/invite/request-code", requestUserInviteCode);
 adminRouter.post("/users/invite/verify-code", verifyUserInviteCode);

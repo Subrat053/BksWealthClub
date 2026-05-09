@@ -3,9 +3,12 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { adminRouter } from "./routes/AdminRouter";
 import "./index.css";
+import { AuthProvider } from "./context/AuthContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={adminRouter} />
+    <AuthProvider>
+      <RouterProvider router={adminRouter} />
+    </AuthProvider>
   </StrictMode>,
 );

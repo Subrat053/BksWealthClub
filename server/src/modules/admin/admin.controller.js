@@ -1,4 +1,6 @@
 import { getAllUsers as getAllUsersService } from "./admin.service.js";
+import { adminRepository } from "./admin.repository.js";
+import { ApiResponse } from "../../core/ApiResponse.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { User } from "../user/user.model.js";
@@ -8,11 +10,26 @@ import { comparePassword } from "../../common/helpers/password.helper.js";
 import { generateAccessToken } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
-import { sendWelcomeEmail, sendVerificationEmail } from "../../common/service/email.service.js";
+import {
+  sendWelcomeEmail,
+  sendVerificationEmail,
+} from "../../common/service/email.service.js";
 import { sendOtpEmail } from "../../common/service/email.service.js";
 import { twoFactorService } from "../twofactor/twofactor.service.js";
 
 // 👁️ Get All Users
+// 👁️ Get Admin Summary
+export const getAdminSummary = async (req, res) => {
+  try {
+    const summary = await adminRepository.getSummary();
+    res.json(
+      new ApiResponse({ message: "Admin summary fetched", data: summary }),
+    );
+  } catch (error) {
+    res.status(500).json(new ApiResponse({ message: error.message }, 500));
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   try {
     const users = await getAllUsersService({
@@ -519,7 +536,9 @@ export const getUserPassword = async (req, res) => {
     const user = await User.findById(userId).select("+plainPassword");
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     return res.status(200).json({
@@ -542,7 +561,9 @@ export const sendVerificationLink = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     if (user.isEmailVerified) {
@@ -554,7 +575,10 @@ export const sendVerificationLink = async (req, res) => {
 
     // Generate a secure random token
     const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
     const expiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
     await User.findByIdAndUpdate(userId, {
@@ -574,6 +598,8 @@ export const sendVerificationLink = async (req, res) => {
       message: `Verification email sent to ${user.email}.`,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message || "Server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
   }
 };
