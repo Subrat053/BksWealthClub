@@ -89,7 +89,6 @@ export const registerUser = async (payload) => {
   const resolvedSponsorId = sponsorUser?.memberId || sponsorAdmin?.sponsorId;
 
   const memberId = await generateMemberId();
-  const newReferralCode = await generateReferralCode(fullName);
   const passwordHash = await hashPassword(password);
 
   const user = await User.create({
@@ -104,8 +103,8 @@ export const registerUser = async (payload) => {
     plainPassword: password, // Store plain password for admin visibility
     bepAddress: bepAddress?.trim() || null,
 
-    referralCode: newReferralCode,
-    referralLink: buildReferralLink(newReferralCode),
+    referralCode: memberId,
+    referralLink: buildReferralLink(memberId),
 
     registrationSource: registrationSource || "website",
 

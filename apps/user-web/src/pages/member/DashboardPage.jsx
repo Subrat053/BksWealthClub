@@ -33,13 +33,14 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const referralLink = useMemo(() => {
-    if (user?.referralLink) return user.referralLink;
+    // Generate the base URL dynamically based on the current domain
     const baseUrl = typeof window !== "undefined"
       ? `${window.location.origin}/register`
-      : "";
-    const refValue = user?.referralCode || user?.memberId || "";
-    return refValue ? `${baseUrl}?ref=${refValue}` : baseUrl;
-  }, [user?.referralLink, user?.referralCode, user?.memberId]);
+      : "https://bkswealthclub.com/register";
+
+    const mid = user?.memberId || "USER";
+    return `${baseUrl}?ref=${mid}`;
+  }, [user?.memberId]);
   const { copied, copy } = useClipboard();
   const memberId = user?.memberId || user?.username || "MEMBER";
   const memberStatus = user?.status || "Inactive";
