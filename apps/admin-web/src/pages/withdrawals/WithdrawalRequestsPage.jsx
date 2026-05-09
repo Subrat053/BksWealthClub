@@ -3,6 +3,7 @@ import AdminTable from "../../components/common/AdminTable";
 
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import StatusBadge from "../../components/StatusBadge";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 const withdrawals = [
   {
@@ -47,7 +48,20 @@ export default function WithdrawalRequestsPage() {
         subtitle="Review, verify, and process payout requests."
         primaryActionText="Export"
         secondaryActionText="Filter"
-      />
+      >
+        <DownloadReportButton
+          data={withdrawals}
+          fileName="withdrawals-report"
+          sheetName="Withdrawals"
+          columns={[
+            { header: "Username", key: "username" },
+            { header: "Amount", key: "amount" },
+            { header: "Charges", key: "charges" },
+            { header: "Payable", key: "payable" },
+            { header: "Status", key: "status", format: "capitalize" },
+          ]}
+        />
+      </AdminPageHeader>
 
       <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
         <div className="overflow-x-auto">

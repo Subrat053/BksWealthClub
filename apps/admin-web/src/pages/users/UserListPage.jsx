@@ -13,6 +13,7 @@ import {
 } from "../../api/user.api";
 import { adminIncomeService } from "../../services/adminIncome.service";
 import CreateUserModal from "./CreateUserModal";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 // ─── Password Modal ────────────────────────────────────────────────────────────
 function PasswordModal({ user, onClose }) {
@@ -318,7 +319,27 @@ export default function UserListPage() {
         subtitle="Manage users, status, roles, and account access."
         primaryActionText="Add User"
         onPrimaryClick={() => setShowModal(true)}
-      />
+      >
+        <DownloadReportButton
+          data={mergedUsers}
+          fileName="users-report"
+          sheetName="Users"
+          label="Download User List"
+          columns={[
+            { header: "User ID", key: "memberId" },
+            { header: "Name", key: "fullName" },
+            { header: "Username", key: "username" },
+            { header: "Email", key: "email" },
+            { header: "Phone", key: "phone" },
+            { header: "Sponsor ID", key: "sponsorId" },
+            { header: "Sponsor Name", key: "sponsorName" },
+            { header: "Wallet Balance", key: "walletBalance" },
+            { header: "Withdrawable", key: "withdrawableFund" },
+            { header: "Status", key: "status", format: "capitalize" },
+            { header: "Created At", key: "createdAt", format: "date" },
+          ]}
+        />
+      </AdminPageHeader>
       <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
         <input
           type="text"

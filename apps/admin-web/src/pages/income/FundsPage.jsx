@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { adminIncomeService } from "../../services/adminIncome.service";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -229,6 +230,23 @@ export default function FundsPage() {
         >
           Apply Filters
         </button>
+        <div className="flex items-center justify-end">
+          <DownloadReportButton
+            data={transactions}
+            fileName={filters.fundType ? `${filters.fundType.toLowerCase()}-report` : "fund-transactions-report"}
+            sheetName="Transactions"
+            columns={[
+              { header: "Date", key: "createdAt", format: "date" },
+              { header: "From Member ID", key: "fromUserId.memberId" },
+              { header: "From Name", key: "fromUserId.fullName" },
+              { header: "Fund Type", key: "type" },
+              { header: "Amount", key: "amount" },
+              { header: "Deposit ID", key: "depositId" },
+              { header: "Remarks", key: "remarks" },
+              { header: "Status", key: "status" },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Transaction Table */}

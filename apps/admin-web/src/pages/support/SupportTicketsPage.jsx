@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 // import StatusBadge from "../../components/StatusBadge";
 
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
-
 import { supportService } from "../../services/support.service";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 
 const tickets = [
@@ -159,13 +159,28 @@ export default function SupportTicketsPage() {
         </div>
       </div> */}
 
-      <div className="min-h-screen bg-[#07122d] p-6 text-white">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Support Management</h1>
-          <p className="text-slate-300">
-            Manage member queries, replies and ticket status.
-          </p>
-        </div>
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="Support Management"
+          subtitle="Track and resolve member technical issues."
+        >
+          <DownloadReportButton
+            data={tickets}
+            fileName="support-tickets-report"
+            sheetName="Tickets"
+            columns={[
+              { header: "Ticket ID", key: "ticketId" },
+              { header: "User Member ID", key: "userId.memberId" },
+              { header: "User Name", key: "userId.name" },
+              { header: "User Username", key: "userId.username" },
+              { header: "Subject", key: "subject" },
+              { header: "Category", key: "category" },
+              { header: "Priority", key: "priority" },
+              { header: "Status", key: "status" },
+              { header: "Date", key: "createdAt", format: "date" },
+            ]}
+          />
+        </AdminPageHeader>
 
         <div className="mb-5 grid gap-3 md:grid-cols-3">
           <select
@@ -210,6 +225,7 @@ export default function SupportTicketsPage() {
             <option>Technical</option>
             <option>Other</option>
           </select>
+
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">

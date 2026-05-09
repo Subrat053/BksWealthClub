@@ -4,6 +4,7 @@ export default function AdminPageHeader({
   primaryActionText,
   secondaryActionText,
   onPrimaryClick,
+  children,
 }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] backdrop-blur-md md:p-7">
@@ -28,6 +29,8 @@ export default function AdminPageHeader({
               {primaryActionText}
             </button>
           )}
+
+          {children}
         </div>
       </div>
     </div>

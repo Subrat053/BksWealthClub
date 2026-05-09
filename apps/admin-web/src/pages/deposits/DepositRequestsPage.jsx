@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { depositService } from "../../services/deposit.service";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function shortHash(hash) {
@@ -400,22 +401,39 @@ export default function DepositRequestsPage() {
         subtitle="Review submitted deposits and trigger member activation on approval."
       />
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {["all", "pending", "approved", "rejected"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`rounded-xl border px-4 py-2 text-sm font-medium capitalize transition ${
-              filter === tab
-                ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300"
-                : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
-            }`}
-          >
-            {tab}{" "}
-            <span className="ml-1 text-xs opacity-60">({counts[tab]})</span>
-          </button>
-        ))}
+      {/* Filter tabs & Export */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          {["all", "pending", "approved", "rejected"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`rounded-xl border px-4 py-2 text-sm font-medium capitalize transition ${
+                filter === tab
+                  ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300"
+                  : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
+              }`}
+            >
+              {tab}{" "}
+              <span className="ml-1 text-xs opacity-60">({counts[tab]})</span>
+            </button>
+          ))}
+        </div>
+
+        <DownloadReportButton
+          data={filtered}
+          fileName="deposits-report"
+          sheetName="Deposits"
+          columns={[
+            { header: "Member ID", key: "userRef.memberId" },
+            { header: "Name", key: "userRef.fullName" },
+            { header: "Amount", key: "amount" },
+            { header: "Wallet", key: "walletType" },
+            { header: "Tx Hash", key: "txHash" },
+            { header: "Status", key: "status", format: "capitalize" },
+            { header: "Date", key: "createdAt", format: "date" },
+          ]}
+        />
       </div>
 
       {/* Table */}

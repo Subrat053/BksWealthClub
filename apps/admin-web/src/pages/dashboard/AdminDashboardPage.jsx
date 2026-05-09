@@ -4,6 +4,7 @@ import SectionCard from "../../components/SectionCard";
 import StatCard from "../../components/StatCard";
 import { adminIncomeService } from "../../services/adminIncome.service";
 import { adminService } from "../../services/admin.service";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 function FundMiniCard({ title, amount, emoji, color }) {
   return (
@@ -23,17 +24,20 @@ export default function AdminDashboardPage() {
   const [funds, setFunds] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [usersForExport, setUsersForExport] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [summaryRes, fundsRes] = await Promise.all([
+        const [summaryRes, fundsRes, usersRes] = await Promise.all([
           adminService.getDashboardSummary(),
           adminIncomeService.getFundsSummary(),
+          adminIncomeService.getUsersWithRebirths({ type: "all" }),
         ]);
         setSummary(summaryRes || {});
         setFunds(fundsRes?.data || null);
+        setUsersForExport(usersRes?.data?.users || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -50,8 +54,27 @@ export default function AdminDashboardPage() {
         title="Dashboard"
         subtitle="Monitor business growth, users, activity, and overall performance."
         primaryActionText="Add Service"
-        secondaryActionText="Export Report"
-      />
+      >
+        <DownloadReportButton
+          data={usersForExport}
+          fileName="all-users-report"
+          sheetName="All Users"
+          label="Download User List"
+          columns={[
+            { header: "User ID", key: "memberId" },
+            { header: "Name", key: "fullName" },
+            { header: "Username", key: "username" },
+            { header: "Email", key: "email" },
+            { header: "Phone", key: "phone" },
+            { header: "Sponsor ID", key: "sponsorId" },
+            { header: "Sponsor Name", key: "sponsorName" },
+            { header: "Wallet Balance", key: "walletBalance" },
+            { header: "Withdrawable", key: "withdrawableFund" },
+            { header: "Status", key: "status", format: "capitalize" },
+            { header: "Created At", key: "createdAt", format: "date" },
+          ]}
+        />
+      </AdminPageHeader>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {loading ? (
@@ -187,6 +210,13 @@ export default function AdminDashboardPage() {
                 {item}
               </button>
             ))}
+            <DownloadReportButton
+              data={usersForExport}
+              fileName="all-users-report"
+              sheetName="All Users"
+              label="Quick Export: User List"
+              className="w-full !justify-start !p-4 !rounded-[18px] !bg-[#0c1f57]/70 !border-white/10 hover:!bg-[#102767]"
+            />
           </div>
         </div>
       </div>

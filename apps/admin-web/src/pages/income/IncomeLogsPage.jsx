@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { adminIncomeService } from "../../services/adminIncome.service";
+import DownloadReportButton from "../../components/common/DownloadReportButton";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -96,8 +97,27 @@ export default function IncomeLogsPage() {
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <div className="flex items-center text-xs text-slate-400 lg:col-span-4">
-          Total: <span className="ml-1 font-semibold text-white">{total}</span> transactions
+        <div className="flex items-center justify-end lg:col-span-4">
+          <DownloadReportButton
+            data={logs}
+            fileName={filters.type ? `${filters.type.toLowerCase()}-report` : "income-logs-report"}
+            sheetName="Income Logs"
+            columns={[
+              { header: "Date", key: "createdAt", format: "date" },
+              { header: "From Member ID", key: "fromUserId.memberId" },
+              { header: "From Name", key: "fromUserId.fullName" },
+              { header: "Receiver Member ID", key: "userId.memberId" },
+              { header: "Receiver Name", key: "userId.fullName" },
+              { header: "Type", key: "type" },
+              { header: "Level", key: "level" },
+              { header: "Amount", key: "amount" },
+              { header: "Remarks", key: "remarks" },
+              { header: "Status", key: "status" },
+            ]}
+          />
+          <div className="ml-4 text-xs text-slate-400">
+            Total: <span className="font-semibold text-white">{total}</span> transactions
+          </div>
         </div>
       </div>
 
