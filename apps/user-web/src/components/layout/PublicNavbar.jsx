@@ -15,7 +15,7 @@ export default function PublicNavbar() {
         <header className="sticky top-0 z-30 border-b border-white/10 bg-[#03071f]/88 backdrop-blur">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-6">
                 <div>
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-200">Autopool Network</p>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-amber-200">Autopool Network</p>
                     <Link to="/" className="text-2xl font-bold text-white">
                         BksWealthClub
                     </Link>
@@ -36,7 +36,7 @@ export default function PublicNavbar() {
                 <div className="hidden items-center gap-2 md:flex">
                     <Link
                         to="/login"
-                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-cyan-400 hover:text-slate-950"
+                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950"
                     >
                         Login
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-slate-900 group-hover:text-white">
@@ -45,7 +45,7 @@ export default function PublicNavbar() {
                     </Link>
                     <Link
                         to="/register"
-                        className="group inline-flex items-center gap-2 rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-medium text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:scale-105"
+                        className="group inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-2.5 text-sm font-medium text-slate-950 shadow-lg shadow-amber-500/20 transition hover:scale-105"
                     >
                         Register
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900">

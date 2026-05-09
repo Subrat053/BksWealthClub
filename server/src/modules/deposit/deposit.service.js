@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { ApiError } from "../../core/ApiError.js";
 import { depositRepository } from "./deposit.repository.js";
 import { DepositModel } from "./deposit.model.js";
-import { autopoolService } from "../autopool/autopool.service.js";
+import { autoPoolNewService } from "../autopool/autopool-new.service.js";
 import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { ACTIVATION_AMOUNT_USD } from "../autopool/autopool.engine.js";
@@ -124,8 +124,9 @@ export const depositService = {
         if (!user.isActivated) {
           try {
             // Pass session so autopool runs INSIDE this transaction (no nested session)
-            activationResult = await autopoolService.activateMemberInAutopool(
-              { userId: user._id, memberId: user.memberId },
+            activationResult = await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+              user._id,
+              deposit._id,
               session,
             );
             user.isActivated = true;
@@ -170,13 +171,20 @@ export const depositService = {
         }
       }
 
-      return {
+      const result = {
         deposit,
         activated: deposit.amount >= ACTIVATION_AMOUNT_USD && user.isActivated,
         autopool: activationResult,
         incomeDistribution: distributionResult,
         credited: deposit.amount,
       };
+
+      // Trigger queue processing AFTER transaction commits
+      setImmediate(() => {
+        autoPoolNewService.processAutoPoolQueue().catch(err => console.error("[AutoPool] Queue processing error:", err));
+      });
+
+      return result;
     });
   },
 

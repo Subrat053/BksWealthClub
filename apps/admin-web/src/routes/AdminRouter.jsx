@@ -7,7 +7,9 @@ import UserListPage from "../pages/users/UserListPage";
 import AddUserPage from "../pages/users/AddUserPage";
 import UserDetailsPage from "../pages/users/UserDetailsPage";
 import TeamTreePage from "../pages/team/TeamTreePage";
-import AutopoolManagerPage from "../pages/team/AutopoolManagerPage";
+import AutoPoolQueuePage from "../pages/autopool/AutoPoolQueuePage";
+import AutoPoolTreePage from "../pages/autopool/AutoPoolTreePage";
+import AutoPoolStatsPage from "../pages/autopool/AutoPoolStatsPage";
 import DepositRequestsPage from "../pages/deposits/DepositRequestsPage";
 import WithdrawalRequestsPage from "../pages/withdrawals/WithdrawalRequestsPage";
 import IncomeLogsPage from "../pages/income/IncomeLogsPage";
@@ -38,7 +40,9 @@ export const adminRouter = createBrowserRouter([
           { path: "users/add", element: <AddUserPage /> },
           { path: "users/:id", element: <UserDetailsPage /> },
           { path: "team/referrals", element: <TeamTreePage /> },
-          { path: "team/autopool", element: <AutopoolManagerPage /> },
+          { path: "autopool/stats", element: <AutoPoolStatsPage /> },
+          { path: "autopool/queue", element: <AutoPoolQueuePage /> },
+          { path: "autopool/tree", element: <AutoPoolTreePage /> },
           { path: "deposits", element: <DepositRequestsPage /> },
           { path: "withdrawals", element: <WithdrawalRequestsPage /> },
           { path: "income/logs", element: <IncomeLogsPage /> },
