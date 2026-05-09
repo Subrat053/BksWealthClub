@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { depositService } from "../../services/deposit.service";
 
@@ -91,7 +91,8 @@ function ApproveConfirmModal({ deposit, onConfirm, onCancel, loading }) {
           <span className="text-white font-medium">
             {deposit?.userRef?.memberId || deposit?.userRef?.fullName || "user"}
           </span>{" "}
-          — <span className="text-emerald-300 font-bold">${deposit?.amount}</span>
+          —{" "}
+          <span className="text-emerald-300 font-bold">${deposit?.amount}</span>
         </p>
         <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
           ⚠️ This will trigger income distribution: rebirth IDs, sponsor income,
@@ -123,13 +124,41 @@ function DistributionSummaryModal({ summary, onClose }) {
 
   const dist = summary.incomeDistribution || summary;
   const rows = [
-    { label: "RB1 Wallet Credit", value: dist?.rebirths?.rb1?.walletCredit ?? 20, color: "text-cyan-300" },
-    { label: "RB2 Wallet Credit", value: dist?.rebirths?.rb2?.walletCredit ?? 20, color: "text-cyan-300" },
-    { label: "Sponsor Income", value: dist?.sponsorIncome?.amount ?? 5, color: "text-emerald-300" },
-    { label: "Company Fund", value: dist?.superAdminFunds?.companyFund ?? 5, color: "text-blue-300" },
-    { label: "Achiever Fund", value: dist?.superAdminFunds?.achieverFund ?? 4, color: "text-purple-300" },
-    { label: "Admin Fund", value: dist?.superAdminFunds?.adminFund ?? 5, color: "text-amber-300" },
-    { label: "Level Income (9 levels)", value: 16 - (dist?.levelIncome?.leftover ?? 0), color: "text-teal-300" },
+    {
+      label: "RB1 Wallet Credit",
+      value: dist?.rebirths?.rb1?.walletCredit ?? 20,
+      color: "text-cyan-300",
+    },
+    {
+      label: "RB2 Wallet Credit",
+      value: dist?.rebirths?.rb2?.walletCredit ?? 20,
+      color: "text-cyan-300",
+    },
+    {
+      label: "Sponsor Income",
+      value: dist?.sponsorIncome?.amount ?? 5,
+      color: "text-emerald-300",
+    },
+    {
+      label: "Company Fund",
+      value: dist?.superAdminFunds?.companyFund ?? 5,
+      color: "text-blue-300",
+    },
+    {
+      label: "Achiever Fund",
+      value: dist?.superAdminFunds?.achieverFund ?? 4,
+      color: "text-purple-300",
+    },
+    {
+      label: "Admin Fund",
+      value: dist?.superAdminFunds?.adminFund ?? 5,
+      color: "text-amber-300",
+    },
+    {
+      label: "Level Income (9 levels)",
+      value: 16 - (dist?.levelIncome?.leftover ?? 0),
+      color: "text-teal-300",
+    },
   ];
 
   if (dist?.levelIncome?.leftover > 0) {
@@ -167,7 +196,8 @@ function DistributionSummaryModal({ summary, onClose }) {
 
         {dist?.memberId && (
           <p className="mb-3 text-sm text-slate-400">
-            Member: <span className="font-mono text-cyan-300">{dist.memberId}</span>
+            Member:{" "}
+            <span className="font-mono text-cyan-300">{dist.memberId}</span>
           </p>
         )}
 
@@ -178,15 +208,15 @@ function DistributionSummaryModal({ summary, onClose }) {
               className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-4 py-2.5"
             >
               <span className="text-sm text-slate-300">{r.label}</span>
-              <span className={`text-sm font-bold ${r.color}`}>
-                ${r.value}
-              </span>
+              <span className={`text-sm font-bold ${r.color}`}>${r.value}</span>
             </div>
           ))}
         </div>
 
         <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
-          <span className="text-sm font-semibold text-emerald-200">Total Distributed</span>
+          <span className="text-sm font-semibold text-emerald-200">
+            Total Distributed
+          </span>
           <span className="text-lg font-bold text-emerald-300">${total}</span>
         </div>
 
@@ -217,9 +247,20 @@ export default function DepositRequestsPage() {
   const [distributionSummary, setDistributionSummary] = useState(null);
   const [filter, setFilter] = useState("all");
   const [toast, setToast] = useState(null);
+  const [recentlyApprovedDepositId, setRecentlyApprovedDepositId] =
+    useState(null);
+  const approvalHighlightTimerRef = useRef(null);
 
   useEffect(() => {
     fetchDeposits();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (approvalHighlightTimerRef.current) {
+        clearTimeout(approvalHighlightTimerRef.current);
+      }
+    };
   }, []);
 
   const showToast = (message, type = "success") => {
@@ -230,7 +271,7 @@ export default function DepositRequestsPage() {
   const fetchDeposits = async () => {
     setLoading(true);
     try {
-      const res = await depositService.getPendingDeposits();
+      const res = await depositService.getAllDeposits();
       setDeposits(res?.data || []);
     } catch (err) {
       showToast(err.message || "Failed to fetch deposits", "error");
@@ -255,6 +296,13 @@ export default function DepositRequestsPage() {
           d._id === depositId ? { ...d, status: "approved" } : d,
         ),
       );
+      setRecentlyApprovedDepositId(depositId);
+      if (approvalHighlightTimerRef.current) {
+        clearTimeout(approvalHighlightTimerRef.current);
+      }
+      approvalHighlightTimerRef.current = setTimeout(() => {
+        setRecentlyApprovedDepositId(null);
+      }, 3500);
       showToast("Deposit approved and income distributed successfully.");
       // Show distribution summary if available
       const distData = res?.data?.incomeDistribution || res?.data;
@@ -290,7 +338,14 @@ export default function DepositRequestsPage() {
   };
 
   const filtered =
-    filter === "all" ? deposits : deposits.filter((d) => d.status === filter);
+    filter === "all"
+      ? deposits
+      : filter === "pending"
+        ? deposits.filter(
+            (d) =>
+              d.status === "pending" || d._id === recentlyApprovedDepositId,
+          )
+        : deposits.filter((d) => d.status === filter);
 
   const counts = {
     all: deposits.length,
@@ -408,63 +463,78 @@ export default function DepositRequestsPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((item) => (
-                  <tr key={item._id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-sm font-mono text-cyan-300">
-                      {item.userRef?.memberId || "—"}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-200">
-                      {item.userRef?.fullName || "—"}
-                    </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-white">
-                      ${item.amount}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">
-                      {item.walletType || "USDT"}
-                    </td>
-                    <td
-                      className="px-5 py-4 font-mono text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition"
-                      title={item.txHash}
-                      onClick={() =>
-                        navigator.clipboard.writeText(item.txHash || "")
-                      }
+                filtered.map((item) => {
+                  const justApproved = item._id === recentlyApprovedDepositId;
+
+                  return (
+                    <tr
+                      key={item._id}
+                      className={`transition hover:bg-white/5 ${
+                        justApproved ? "bg-emerald-500/10" : ""
+                      }`}
                     >
-                      {shortHash(item.txHash)}
-                    </td>
-                    <td className="px-5 py-4 text-xs text-slate-500">
-                      {formatDate(item.createdAt)}
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-5 py-4">
-                      {item.status === "pending" ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleApproveClick(item)}
-                            disabled={actionLoading === item._id}
-                            className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition disabled:opacity-50"
-                          >
-                            {actionLoading === item._id ? "..." : "Approve"}
-                          </button>
-                          <button
-                            onClick={() => setRejectTarget(item)}
-                            disabled={actionLoading === item._id}
-                            className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-400/20 transition disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-600 italic">
-                          {item.status === "approved"
-                            ? "Activated ✓"
-                            : "Rejected"}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-5 py-4 text-sm font-mono text-cyan-300">
+                        {item.userRef?.memberId || "—"}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-200">
+                        {item.userRef?.fullName || "—"}
+                      </td>
+                      <td className="px-5 py-4 text-sm font-semibold text-white">
+                        ${item.amount}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-400">
+                        {item.walletType || "USDT"}
+                      </td>
+                      <td
+                        className="px-5 py-4 font-mono text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition"
+                        title={item.txHash}
+                        onClick={() =>
+                          navigator.clipboard.writeText(item.txHash || "")
+                        }
+                      >
+                        {shortHash(item.txHash)}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-500">
+                        {formatDate(item.createdAt)}
+                      </td>
+                      <td className="px-5 py-4">
+                        {justApproved ? (
+                          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-200 shadow-inner shadow-emerald-500/10">
+                            Approved successfully
+                          </div>
+                        ) : (
+                          <StatusBadge status={item.status} />
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {item.status === "pending" ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApproveClick(item)}
+                              disabled={actionLoading === item._id}
+                              className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition disabled:opacity-50"
+                            >
+                              {actionLoading === item._id ? "..." : "Approve"}
+                            </button>
+                            <button
+                              onClick={() => setRejectTarget(item)}
+                              disabled={actionLoading === item._id}
+                              className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-400/20 transition disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-600 italic">
+                            {item.status === "approved"
+                              ? "Activated ✓"
+                              : "Rejected"}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

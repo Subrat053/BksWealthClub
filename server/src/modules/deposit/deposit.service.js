@@ -29,7 +29,9 @@ async function withTransactionRetry(fn) {
 
       const isTransient =
         err?.errorLabels?.includes("TransientTransactionError") ||
-        err?.errorResponse?.errorLabels?.includes("TransientTransactionError") ||
+        err?.errorResponse?.errorLabels?.includes(
+          "TransientTransactionError",
+        ) ||
         err?.code === 112; // WriteConflict
 
       if (isTransient && attempt < MAX_RETRIES) {
@@ -62,6 +64,8 @@ export const depositService = {
 
   getPendingRequests: async () => depositRepository.getPending(),
 
+  getAllRequestsForAdmin: async () => depositRepository.getAllForAdmin(),
+
   approveRequest: async ({ depositId, adminId }) => {
     return withTransactionRetry(async (session) => {
       // ── 1. Atomic status lock ────────────────────────────────────────────────
@@ -75,7 +79,8 @@ export const depositService = {
 
       if (!deposit) {
         // Either doesn't exist OR was already approved/rejected by a concurrent request
-        const existing = await DepositModel.findById(depositId).session(session);
+        const existing =
+          await DepositModel.findById(depositId).session(session);
         if (!existing) throw new ApiError(404, "Deposit request not found");
         if (existing.status === "approved" && existing.incomeDistributed) {
           // Fully processed already — return a safe response instead of 500
@@ -85,7 +90,10 @@ export const depositService = {
             message: "Deposit was already approved and income distributed.",
           };
         }
-        throw new ApiError(400, "Deposit already processed or locked by another request");
+        throw new ApiError(
+          400,
+          "Deposit already processed or locked by another request",
+        );
       }
 
       // ── 2. Guard: income already distributed? ────────────────────────────────

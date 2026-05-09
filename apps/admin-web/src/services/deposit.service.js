@@ -9,8 +9,8 @@ export async function adminApiClient(url, options = {}) {
 }
 
 export const depositService = {
-  getPendingDeposits: () => {
-    return adminApiClient("/deposits/pending");
+  getAllDeposits: () => {
+    return adminApiClient("/deposits/all");
   },
 
   approveDeposit: (depositId) => {

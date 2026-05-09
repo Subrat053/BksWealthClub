@@ -14,6 +14,12 @@ export const depositRepository = {
       .sort({ createdAt: 1 })
       .lean(),
 
+  getAllForAdmin: async () =>
+    DepositModel.find({})
+      .populate("userRef", "memberId fullName email")
+      .sort({ createdAt: -1 })
+      .lean(),
+
   updateStatus: async (id, payload) =>
     DepositModel.findByIdAndUpdate(id, payload, { new: true }).lean(),
 };

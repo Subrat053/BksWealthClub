@@ -4,6 +4,7 @@ import {
   createDepositController,
   getMyDepositsController,
   getPendingDepositsController,
+  getAllDepositsController,
   approveDepositController,
   rejectDepositController,
 } from "./deposit.controller.js";
@@ -21,6 +22,7 @@ depositRouter.get(
   adminOnly,
   getPendingDepositsController,
 );
+depositRouter.get("/all", authMiddleware, adminOnly, getAllDepositsController);
 depositRouter.patch(
   "/:id/approve",
   authMiddleware,
