@@ -200,7 +200,7 @@ export default function FundsPage() {
       )}
 
       {/* Filters */}
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
+      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-5">
         <select
           value={filters.fundType}
           onChange={(e) => setFilters((p) => ({ ...p, fundType: e.target.value }))}
