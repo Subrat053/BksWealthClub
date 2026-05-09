@@ -19,7 +19,7 @@ export const memberRouteMeta = [
   { path: "team/generation", title: "Generation Team" },
   { path: "team/autopool", title: "Autopool Community" },
   { path: "income/sponsor", title: "Sponsor Income" },
-  { path: "income/representative", title: "Representative Income" },
+  { path: "income/level", title: "Level Income" },
   { path: "withdrawal/make", title: "Make Withdrawal" },
   { path: "withdrawal/history", title: "Withdrawal History" },
   { path: "support", title: "Support" },

@@ -17,6 +17,7 @@ import {
   getMyWalletController,
   getMyIncomeLogsController,
   getMyRebirthIdsController,
+  getMyIncomeStatsController,
 } from "./income.controller.js";
 
 export const incomeRouter = Router();
@@ -30,6 +31,7 @@ incomeRouter.get("/history", getIncomeHistoryController);
 incomeRouter.get("/my-wallet", getMyWalletController);
 incomeRouter.get("/my-logs", getMyIncomeLogsController);
 incomeRouter.get("/my-rebirth-ids", getMyRebirthIdsController);
+incomeRouter.get("/my-stats", getMyIncomeStatsController);
 
 // ─── Admin Routes ────────────────────────────────────────────────────────────
 incomeRouter.post(

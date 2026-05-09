@@ -40,7 +40,7 @@ export const memberNav = [
     children: [
       { label: "Wallet & Income", path: "/member/income/wallet" },
       { label: "Sponsor Income", path: "/member/income/sponsor" },
-      { label: "Representative Income", path: "/member/income/representative" },
+      { label: "Level Income", path: "/member/income/level" },
     ],
   },
   { label: "Support", icon: LifeBuoy, path: "/member/support" },

@@ -21,7 +21,7 @@ import DirectTeamPage from "../pages/member/DirectTeamPage";
 import GenerationTeamPage from "../pages/member/GenerationTeamPage";
 import AutopoolTreePage from "../pages/member/AutopoolTreePage";
 import SponsorIncomePage from "../pages/member/SponsorIncomePage";
-import RepresentativeIncomePage from "../pages/member/RepresentativeIncomePage";
+import LevelIncomePage from "../pages/member/LevelIncomePage";
 import MakeWithdrawalPage from "../pages/member/MakeWithdrawalPage";
 import WithdrawalHistoryPage from "../pages/member/WithdrawalHistoryPage";
 import SupportPage from "../pages/member/SupportPage";
@@ -74,8 +74,8 @@ export const router = createBrowserRouter([
           { path: "income/sponsor", element: <SponsorIncomePage /> },
           { path: "team/report", element: <MyTeamReportPage /> },
           {
-            path: "income/representative",
-            element: <RepresentativeIncomePage />,
+            path: "income/level",
+            element: <LevelIncomePage />,
           },
           { path: "income/wallet", element: <WalletIncomePage /> },
           { path: "withdrawal/make", element: <MakeWithdrawalPage /> },

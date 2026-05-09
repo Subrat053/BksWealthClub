@@ -12,6 +12,7 @@ import {
   getUserRebirthIds,
   getAdminUsersWithRebirths,
   getUserIncomeSummary,
+  getUserIncomeStats,
 } from "./incomeDistribution.service.js";
 
 // ─── Existing Controllers (preserved) ────────────────────────────────────────
@@ -133,8 +134,9 @@ export const getMyWalletController = asyncHandler(async (req, res) => {
 export const getMyIncomeLogsController = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
+  const type = req.query.type || null;
 
-  const data = await getUserIncomeLogs(req.auth.sub, { page, limit });
+  const data = await getUserIncomeLogs(req.auth.sub, { page, limit, type });
   res.json(new ApiResponse({ message: "My income logs fetched", data }));
 });
 
@@ -143,4 +145,11 @@ export const getMyIncomeLogsController = asyncHandler(async (req, res) => {
 export const getMyRebirthIdsController = asyncHandler(async (req, res) => {
   const data = await getUserRebirthIds(req.auth.sub);
   res.json(new ApiResponse({ message: "Rebirth IDs fetched", data }));
+});
+
+// ─── User: My Income Stats ───────────────────────────────────────────────────
+
+export const getMyIncomeStatsController = asyncHandler(async (req, res) => {
+  const data = await getUserIncomeStats(req.auth.sub);
+  res.json(new ApiResponse({ message: "My income stats fetched", data }));
 });

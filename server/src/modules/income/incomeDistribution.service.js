@@ -518,9 +518,12 @@ export async function getAllIncomeLogs({ page = 1, limit = 50, type = null }) {
  */
 export async function getUserIncomeLogs(
   targetUserId,
-  { page = 1, limit = 50 } = {},
+  { page = 1, limit = 50, type = null } = {},
 ) {
   const filter = { userId: targetUserId };
+  if (type) {
+    filter.type = type;
+  }
   const skip = (page - 1) * limit;
 
   const [docs, total] = await Promise.all([
@@ -934,4 +937,49 @@ export async function getUserIncomeSummary(userId) {
     incomeByType,
     recentLogs,
   };
+}
+
+/**
+ * Get user income statistics (today, this week, all time) by type.
+ */
+export async function getUserIncomeStats(userId) {
+  const now = new Date();
+  
+  // Start of today
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // Start of week (Sunday as start)
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+  const agg = await IncomeTransactionModel.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    {
+      $group: {
+        _id: "$type",
+        allTime: { $sum: "$amount" },
+        today: {
+          $sum: {
+            $cond: [{ $gte: ["$createdAt", startOfToday] }, "$amount", 0]
+          }
+        },
+        thisWeek: {
+          $sum: {
+            $cond: [{ $gte: ["$createdAt", startOfWeek] }, "$amount", 0]
+          }
+        }
+      }
+    }
+  ]);
+
+  const stats = {};
+  agg.forEach(r => {
+    stats[r._id] = {
+      allTime: r.allTime,
+      today: r.today,
+      thisWeek: r.thisWeek
+    };
+  });
+  
+  return stats;
 }
