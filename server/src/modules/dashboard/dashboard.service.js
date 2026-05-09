@@ -1,4 +1,4 @@
-﻿import { buildReferralLink } from "../../utils/referral.js";
+import { buildReferralLink } from "../../utils/referral.js";
 import { adminRepository } from "../admin/admin.repository.js";
 import { auditService } from "../audit/audit.service.js";
 
@@ -16,8 +16,8 @@ export const dashboardService = {
       totalIncome: 0,
     },
     referralLink: buildReferralLink(
-      "https://bkswealthclub.com",
-      user?.username || "USER",
+      process.env.BASE_URL || process.env.CLIENT_URL || "https://bkswealthclub.com",
+      user?.memberId || "USER",
     ),
     wallets: {
       mainWallet: 0,

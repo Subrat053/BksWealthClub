@@ -19,11 +19,13 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
 
   const sidebarContent = (
     <>
-      <div className="px-6 py-6">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">
+      <div className="px-6 py-2">
+        {/* <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">
           Member Panel
         </p>
-        <p className="mt-2 text-2xl font-bold">BksWealthClub</p>
+        <p className="mt-2 text-2xl font-bold">BksWealthClub</p> */}
+        <img src="/bks_logo.png" alt="logo" className="" />
+        {/* <img src="/bks_logo.png" alt="" /> */}
       </div>
 
       <div className="px-6 pb-4">

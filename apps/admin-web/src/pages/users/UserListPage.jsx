@@ -272,7 +272,18 @@ export default function UserListPage() {
       {
         key: "joinedAt",
         label: "CREATED",
-        render: (_value, row) => new Date(row.createdAt).toLocaleDateString(),
+        render: (_value, row) => {
+          if (!row.createdAt) return "—";
+          const date = new Date(row.createdAt);
+          const d = String(date.getDate()).padStart(2, "0");
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const y = String(date.getFullYear()).slice(-2);
+          const hh = String(date.getHours()).padStart(2, "0");
+          const mm = String(date.getMinutes()).padStart(2, "0");
+          const ss = String(date.getSeconds()).padStart(2, "0");
+          const ms = String(date.getMilliseconds()).padStart(3, "0");
+          return `${d}-${m}-${y} ${hh}:${mm}:${ss}.${ms}`;
+        },
       },
     ],
     [],
