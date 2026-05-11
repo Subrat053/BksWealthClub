@@ -1,4 +1,4 @@
-﻿import { createApp } from "./app.js";
+import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { connectDatabase } from "./config/db.js";
 import { logger } from "./common/logger/logger.js";
@@ -6,10 +6,12 @@ import { registerAutopoolJob } from "./jobs/autopool.job.js";
 import { registerIncomeJob } from "./jobs/income.job.js";
 import { registerNotificationJob } from "./jobs/notification.job.js";
 import { seedSuperAdmin } from "./modules/admin/seedSuperAdmin.js";
+import { seedOperationalAdmin } from "./modules/admin/seedOperationalAdmin.js";
 
 async function bootstrap() {
   await connectDatabase();
   await seedSuperAdmin();
+  await seedOperationalAdmin();
 
   registerAutopoolJob();
   registerIncomeJob();
@@ -17,7 +19,7 @@ async function bootstrap() {
 
   const app = createApp();
 
-  app.listen(env.PORT, () => {
+  app.listen(env.PORT, "0.0.0.0", () => {
     logger.info(`Server running on http://localhost:${env.PORT}`);
   });
 }

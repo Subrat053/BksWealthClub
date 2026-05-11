@@ -36,7 +36,7 @@ export default function PublicNavbar() {
                 <div className="hidden items-center gap-2 md:flex">
                     <Link
                         to="/login"
-                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-amber-400 hover:text-slate-950"
+                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-blue-500 hover:text-white"
                     >
                         Login
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-slate-900 group-hover:text-white">
@@ -45,10 +45,10 @@ export default function PublicNavbar() {
                     </Link>
                     <Link
                         to="/register"
-                        className="group inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-2.5 text-sm font-medium text-slate-950 shadow-lg shadow-amber-500/20 transition hover:scale-105"
+                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-blue-500 hover:text-white"
                     >
                         Register
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-slate-900 group-hover:text-white">
                             <ChevronRight size={14} />
                         </span>
                     </Link>

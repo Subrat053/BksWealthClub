@@ -1,8 +1,6 @@
-﻿import { ApiError } from "../../core/ApiError.js";
+import { ApiError } from "../../core/ApiError.js";
 import { referralRepository } from "./referral.repository.js";
-import { AdminModel } from "../admin/admin.model.js";
 import { USER_ROLES } from "../../common/enums/index.js";
-import { seedSuperAdmin } from "../admin/seedSuperAdmin.js";
 
 export const referralService = {
   findSponsorById: async (sponsorId) =>
@@ -43,40 +41,11 @@ export const referralService = {
         sponsorId: sponsor.memberId,
         sponsorName: sponsor.fullName,
         sponsorStatus: sponsor.status,
-        active: sponsor.status === "active",
+        active: sponsor.status === "active" || sponsor.status === "pending",
         sponsorType: "user",
       };
     }
 
-    let superAdmin = await AdminModel.findOne({
-      sponsorId: normalizedSponsorId,
-      role: USER_ROLES.SUPERADMIN,
-      isActive: true,
-    }).lean();
-
-    if (
-      !superAdmin &&
-      sponsorIdPattern.test(normalizedSponsorId) &&
-      normalizedSponsorId === "BKS000000"
-    ) {
-      await seedSuperAdmin();
-      superAdmin = await AdminModel.findOne({
-        sponsorId: normalizedSponsorId,
-        role: USER_ROLES.SUPERADMIN,
-        isActive: true,
-      }).lean();
-    }
-
-    if (!superAdmin) {
-      throw new ApiError(404, "Sponsor not found");
-    }
-
-    return {
-      sponsorId: superAdmin.sponsorId,
-      sponsorName: superAdmin.username,
-      sponsorStatus: superAdmin.isActive ? "active" : "inactive",
-      active: superAdmin.isActive,
-      sponsorType: "superadmin",
-    };
+    throw new ApiError(404, "Sponsor not found");
   },
 };

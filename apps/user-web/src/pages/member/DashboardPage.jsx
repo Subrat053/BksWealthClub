@@ -88,12 +88,19 @@ export default function DashboardPage() {
                 Profile Snapshot
               </p>
               <h2 className="mt-2 text-4xl font-bold text-white">{memberId}</h2>
-              <p className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white ${
-                memberStatus === "active" ? "bg-emerald-500/90" : "bg-red-500/90"
+              <p className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white uppercase ${
+                memberStatus === "active" ? "bg-emerald-500/90" : "bg-amber-500/90"
               }`}>
-                {memberStatus}
+                {user?.activationStatus ? user.activationStatus.replace("_", " ") : memberStatus}
               </p>
-              <div className="mt-5 flex gap-2">
+              
+              {user?.activationStatus === "PENDING_DEPOSIT" && (
+                <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 shadow-inner">
+                  <span className="font-bold">Notice:</span> Email verified. Please complete your deposit to activate your account and start earning.
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap gap-2">
                 <Button onClick={() => navigate("/member/account")}>
                   Edit Profile
                 </Button>

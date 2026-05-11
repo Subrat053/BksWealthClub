@@ -13,6 +13,13 @@ const depositSchema = new mongoose.Schema(
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
     reviewReason: { type: String, default: "" },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+    
+    /** Processing state for atomic tracking */
+    processingStatus: { type: String, enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"], default: "PENDING" },
+    activationProcessed: { type: Boolean, default: false },
+    rebirthProcessed: { type: Boolean, default: false },
+    autoPoolProcessed: { type: Boolean, default: false },
+
     /** Whether the $75 income distribution has been executed for this deposit */
     incomeDistributed: { type: Boolean, default: false, index: true },
     /** When the income distribution was completed */

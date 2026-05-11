@@ -1,10 +1,23 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import { env } from "./env.js";
 import { logger } from "../common/logger/logger.js";
 
 async function ensureUserSponsorIndex() {
   const { User } = await import("../modules/user/user.model.js");
-  const indexes = await User.collection.indexes();
+  
+  try {
+    await User.createCollection();
+  } catch (err) {
+    // Ignore if collection already exists
+  }
+  
+  let indexes = [];
+  try {
+    indexes = await User.collection.indexes();
+  } catch (err) {
+    // If it still fails, skip index modifications
+    return;
+  }
 
   const dropLegacyUniqueIndex = async (keyName) => {
     const uniqueIndex = indexes.find(

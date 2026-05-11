@@ -50,7 +50,10 @@ const rebirthSchema = new mongoose.Schema(
 );
 
 // Compound index: one user can have at most 2 rebirths per deposit
-rebirthSchema.index({ userId: 1, sourceDepositId: 1, sequenceNo: 1 }, { unique: true });
+rebirthSchema.index(
+  { userId: 1, sourceDepositId: 1, sequenceNo: 1 },
+  { unique: true },
+);
 
 export const RebirthModel =
   mongoose.models.Rebirth || mongoose.model("Rebirth", rebirthSchema);

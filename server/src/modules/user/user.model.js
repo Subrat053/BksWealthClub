@@ -108,6 +108,30 @@ const userSchema = new mongoose.Schema(
       default: "pending",
       index: true,
     },
+    activationStatus: {
+      type: String,
+      enum: ["PENDING_EMAIL", "PENDING_DEPOSIT", "ACTIVE"],
+      default: "PENDING_EMAIL",
+      index: true,
+    },
+    activatedAt: {
+      type: Date,
+      default: null,
+    },
+    activatedByDepositId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Deposit",
+      default: null,
+    },
+    isOperationalAdmin: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isSystemRoot: {
+      type: Boolean,
+      default: false,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,

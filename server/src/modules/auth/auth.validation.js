@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const validateRegisterInput = (body) => {
   const errors = [];
@@ -8,16 +8,17 @@ export const validateRegisterInput = (body) => {
   if (!body.fullName?.trim()) errors.push("Full name is required.");
   if (!body.email?.trim()) errors.push("Email is required.");
   if (!body.password?.trim()) errors.push("Password is required.");
-  if (!body.sponsorId?.trim()) errors.push("Sponsor ID is required.");
-  if (!body.registrationSource?.trim())
-    errors.push("Registration source is required.");
-
-  if (
-    body.sponsorId &&
+  if (!body.sponsorId?.trim()) {
+    errors.push("Sponsor ID is required.");
+  } else if (
     !sponsorIdPattern.test(body.sponsorId.trim()) &&
     !referralCodePattern.test(body.sponsorId.trim())
   ) {
     errors.push("Sponsor ID or referral code must look like BKS12345 or ABCD123456.");
+  }
+
+  if (!body.registrationSource?.trim()) {
+    errors.push("Registration source is required.");
   }
 
   if (body.password && body.password.length < 6) {

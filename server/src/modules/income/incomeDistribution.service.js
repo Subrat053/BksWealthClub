@@ -140,6 +140,12 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     // ── 3. Ensure the SuperAdminFund singleton exists ────────────────────────
     await getOrCreateFund(session);
 
+    // ── 3.5. Fetch the Operational Admin ─────────────────────────────────────
+    const opAdmin = await User.findOne({ isOperationalAdmin: true })
+      .session(session)
+      .lean();
+    if (!opAdmin) throw new Error("Operational Admin not found");
+
     // ── 4. Track all transactions and total distributed ──────────────────────
     const txnDocs = [];
     let totalDistributed = 0;
@@ -258,7 +264,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       }
     }
 
-    // If no sponsor → leftover goes to leftoverFund only (not companyFund)
+    // If no sponsor → leftover goes to leftoverFund
     let pendingLeftoverAmount = 0;
     if (!sponsorCredited) {
       await SuperAdminFundModel.findOneAndUpdate(
@@ -347,9 +353,7 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
 
         totalDistributed = round2(totalDistributed + rule.total);
       } else {
-        // No upline at this level → leftover. 
-        // We push a record per level to maintain uniqueness in the index 
-        // (depositId, type, level, userId, rebirthId)
+        // No upline at this level → leftover
         txnDocs.push({
           fromUserId: userId,
           depositId,
@@ -365,15 +369,13 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
       }
     }
 
-    // Send any level leftover to leftoverFund only (not companyFund)
+    // Send any level leftover to leftoverFund
     if (levelLeftover > 0) {
       await SuperAdminFundModel.findOneAndUpdate(
         {},
         { $inc: { leftoverFund: levelLeftover } },
         { session },
       );
-
-      // (Transactions were pushed individually inside the loop for uniqueness)
     }
 
     // ── 13. Final remainder check ────────────────────────────────────────────
@@ -797,6 +799,7 @@ export async function getAdminUsersWithRebirths({
         sponsorName:
           u.sponsorUserId?.fullName || u.referredByUserId?.fullName || "System",
         status: u.status,
+        activationStatus: u.activationStatus || "PENDING_EMAIL",
         isRebirth: false,
         isActivated: u.isActivated,
         isEmailVerified: u.isEmailVerified,

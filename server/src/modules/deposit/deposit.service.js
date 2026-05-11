@@ -71,9 +71,10 @@ export const depositService = {
       // ── 1. Atomic status lock ────────────────────────────────────────────────
       // Use findOneAndUpdate with { status: "pending" } as filter so only ONE
       // concurrent request wins. Any duplicate call sees a null result → 400.
+      // Use findOneAndUpdate with { status: "pending", processingStatus: "PENDING" } as filter
       const deposit = await DepositModel.findOneAndUpdate(
-        { _id: depositId, status: "pending" },
-        { status: "approved", reviewedBy: adminId, reviewReason: "" },
+        { _id: depositId, status: "pending", processingStatus: "PENDING" },
+        { status: "approved", processingStatus: "PROCESSING", reviewedBy: adminId, reviewReason: "" },
         { new: true, session },
       );
 
@@ -121,34 +122,30 @@ export const depositService = {
 
       if (deposit.amount >= ACTIVATION_AMOUNT_USD) {
         // ── 5. Autopool activation (ONLY if not already activated) ─────────────
-        if (!user.isActivated) {
+        if (!user.isActivated || !deposit.activationProcessed) {
+          user.isActivated = true;
+          user.isActive = true;
+          user.status = "active";
+          user.activationStatus = "ACTIVE";
+          user.activatedAt = new Date();
+          user.activatedByDepositId = deposit._id;
+          await user.save({ session });
+          deposit.activationProcessed = true;
+        }
+
+        if (!deposit.autoPoolProcessed) {
           try {
-            // Pass session so autopool runs INSIDE this transaction (no nested session)
             activationResult = await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
               user._id,
               deposit._id,
               session,
             );
-            user.isActivated = true;
-            user.status = "active";
-            await user.save({ session });
+            deposit.autoPoolProcessed = true;
           } catch (err) {
-            // Duplicate-key = already activated by a prior attempt; safe to continue
             if (err?.code === 11000) {
-              console.warn(
-                `[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`,
-              );
-              // Ensure user flags are set
-              await User.findByIdAndUpdate(
-                user._id,
-                { isActivated: true, status: "active" },
-                { session },
-              );
+              console.warn(`[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`);
+              deposit.autoPoolProcessed = true;
             } else {
-              console.error(
-                `[Deposit] Autopool activation failed for ${user.memberId}:`,
-                err.message,
-              );
               throw err;
             }
           }
@@ -167,9 +164,14 @@ export const depositService = {
           );
         } catch (err) {
           console.error(`[Deposit] Approval failed for ${user.memberId}:`, err);
+          deposit.processingStatus = "FAILED";
+          await deposit.save({ session });
           throw new ApiError(500, `Income distribution failed: ${err.message}`);
         }
       }
+
+      deposit.processingStatus = "COMPLETED";
+      await deposit.save({ session });
 
       const result = {
         deposit,

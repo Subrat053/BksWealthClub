@@ -45,38 +45,7 @@ const buildReferralTree = async (parentId, level = 1) => {
   return result;
 };
 
-const buildAdminRootChildren = async (adminSponsorId, level = 1) => {
-  const children = await User.find({
-    sponsorId: adminSponsorId,
-  })
-    .select(
-      "_id memberId fullName email phone status isActivated referredByUserId createdAt",
-    )
-    .sort({ createdAt: -1 })
-    .lean();
-
-  const result = [];
-
-  for (const child of children) {
-    const downlines = await buildReferralTree(child._id, level + 1);
-
-    result.push({
-      _id: child._id,
-      memberId: child.memberId,
-      fullName: child.fullName,
-      email: child.email,
-      phone: child.phone,
-      status: child.status,
-      isActivated: child.isActivated,
-      referredByUserId: child.referredByUserId,
-      joinedAt: child.createdAt,
-      level,
-      children: downlines,
-    });
-  }
-
-  return result;
-};
+// Removed buildAdminRootChildren as we exclusively use buildReferralTree starting from User.
 
 // USER SIDE: logged-in user's referrals
 export const getMyReferrals = async (req, res) => {
@@ -169,75 +138,37 @@ export const getMyReferralTree = async (req, res) => {
 // /api/v1/referrals/admin/tree?memberId=BWC145598
 export const getAdminReferralTree = async (req, res) => {
   try {
-    const queryReferralId =
-      req.query.referralId ||
-      req.query.referredByUserId ||
-      req.query.adminId ||
-      req.query.userId ||
-      null;
-
     const queryMemberId = req.query.memberId || req.query.sponsorId || null;
 
-    let rootId =
-      queryReferralId ||
-      req.auth?.adminId ||
-      req.admin?._id ||
-      req.admin?.id ||
-      null;
-
-    const adminId = req.auth?.adminId;
-    const admin = adminId
-      ? await AdminModel.findById(adminId)
-          .select("_id username email sponsorId role")
-          .lean()
-      : null;
-
     let root = null;
+    let targetMemberId = queryMemberId ? queryMemberId.trim().toUpperCase() : "BKS000000";
 
-    if (queryMemberId) {
-      root = await User.findOne({
-        memberId: queryMemberId.trim().toUpperCase(),
-      })
-        .select("_id memberId fullName email status isActivated")
-        .lean();
+    root = await User.findOne({
+      memberId: targetMemberId,
+    })
+      .select("_id memberId fullName email status isActivated isOperationalAdmin")
+      .lean();
 
-      if (!root) {
-        return res.status(404).json({
-          success: false,
-          message: "No user found with this memberId.",
-        });
-      }
-
-      rootId = root._id;
-    }
-
-    if (!rootId) {
-      return res.status(400).json({
+    if (!root) {
+      return res.status(404).json({
         success: false,
-        message: "referralId, memberId, or admin token is required.",
+        message: "No user or Operational Admin found with this memberId.",
       });
     }
 
-    if (!root && !admin?.sponsorId) {
-      return res.status(400).json({
-        success: false,
-        message: "Admin sponsorId is missing. Unable to build admin root tree.",
-      });
-    }
-
-    const children = root
-      ? await buildReferralTree(rootId, 1)
-      : await buildAdminRootChildren(admin?.sponsorId, 1);
+    const children = await buildReferralTree(root._id, 1);
 
     return res.status(200).json({
       success: true,
       data: {
         root: {
-          _id: root?._id || admin?._id || rootId,
-          memberId: root?.memberId || admin?.sponsorId || req.auth?.memberId || "ADMIN001",
-          fullName: root?.fullName || admin?.username || req.auth?.fullName || "Admin",
-          email: root?.email || admin?.email || req.auth?.email || null,
-          role: root ? "user" : admin?.role || "admin",
+          _id: root._id,
+          memberId: root.memberId,
+          fullName: root.fullName,
+          email: root.email,
+          status: root.status,
+          isActivated: root.isActivated,
+          role: root.isOperationalAdmin ? "admin" : "user",
           children,
         },
       },

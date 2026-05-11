@@ -266,6 +266,22 @@ export default function UserListPage() {
           ),
       },
       {
+        key: "activationStatus",
+        label: "ACTIVATION",
+        render: (value, row) =>
+          row.isRebirth ? (
+            <span className="text-slate-500">—</span>
+          ) : (
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium uppercase ${
+              value === "ACTIVE" ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-300" :
+              value === "PENDING_DEPOSIT" ? "border border-amber-400/30 bg-amber-400/15 text-amber-300" :
+              "border border-slate-400/30 bg-slate-400/15 text-slate-300"
+            }`}>
+              {value ? value.replace("_", " ") : "PENDING"}
+            </span>
+          ),
+      },
+      {
         key: "status",
         label: "STATUS",
         render: (value) => <StatusBadge status={value} />,

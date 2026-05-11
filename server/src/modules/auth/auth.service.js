@@ -14,7 +14,6 @@ import {
 } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
-import { seedSuperAdmin } from "../admin/seedSuperAdmin.js";
 
 const buildReferralLink = (referralCode) => {
   const baseUrl = process.env.BASE_URL || process.env.CLIENT_URL;
@@ -62,31 +61,12 @@ export const registerUser = async (payload) => {
       { referralCode: normalizedSponsorInput },
     ],
   });
-  let sponsorAdmin = sponsorUser
-    ? null
-    : await AdminModel.findOne({
-        sponsorId: normalizedSponsorInput,
-        isActive: true,
-      });
 
-  if (
-    !sponsorUser &&
-    !sponsorAdmin &&
-    sponsorIdPattern.test(normalizedSponsorInput) &&
-    normalizedSponsorInput === "BKS000000"
-  ) {
-    await seedSuperAdmin();
-    sponsorAdmin = await AdminModel.findOne({
-      sponsorId: normalizedSponsorInput,
-      isActive: true,
-    });
+  if (!sponsorUser) {
+    throw new Error("Sponsor not found.");
   }
 
-  if (!sponsorUser && !sponsorAdmin) {
-    throw new Error("Sponsor ID not found.");
-  }
-
-  const resolvedSponsorId = sponsorUser?.memberId || sponsorAdmin?.sponsorId;
+  const resolvedSponsorId = sponsorUser.memberId;
 
   const memberId = await generateMemberId();
   const passwordHash = await hashPassword(password);
@@ -109,6 +89,7 @@ export const registerUser = async (payload) => {
     registrationSource: registrationSource || "website",
 
     status: "pending",
+    activationStatus: "PENDING_EMAIL",
     isEmailVerified: false,
     isActivated: false,
   });
@@ -182,7 +163,8 @@ export const verifyUserEmail = async (token) => {
     verification.userId,
     {
       isEmailVerified: true,
-      status: "active",
+      activationStatus: "PENDING_DEPOSIT",
+      status: "pending", // remains pending/inactive until deposit
     },
     { new: true },
   ).select("fullName email");

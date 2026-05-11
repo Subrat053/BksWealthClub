@@ -143,6 +143,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (sponsorValidation?.error || !sponsorValidation?.data?.active) {
+      setError("Please provide a valid and active sponsor ID.");
+      return;
+    }
+
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
