@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { ApiError } from "../../core/ApiError.js";
 import { depositRepository } from "./deposit.repository.js";
 import { DepositModel } from "./deposit.model.js";
+import { autopoolV2Service } from "../autopool/autopool-v2.service.js";
 import { autoPoolNewService } from "../autopool/autopool-new.service.js";
 import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
@@ -67,14 +68,19 @@ export const depositService = {
   getAllRequestsForAdmin: async () => depositRepository.getAllForAdmin(),
 
   approveRequest: async ({ depositId, adminId }) => {
-    return withTransactionRetry(async (session) => {
+    let shouldProcessAutoPoolQueue = false;
+
+    const result = await withTransactionRetry(async (session) => {
       // ── 1. Atomic status lock ────────────────────────────────────────────────
-      // Use findOneAndUpdate with { status: "pending" } as filter so only ONE
-      // concurrent request wins. Any duplicate call sees a null result → 400.
       // Use findOneAndUpdate with { status: "pending", processingStatus: "PENDING" } as filter
       const deposit = await DepositModel.findOneAndUpdate(
         { _id: depositId, status: "pending", processingStatus: "PENDING" },
-        { status: "approved", processingStatus: "PROCESSING", reviewedBy: adminId, reviewReason: "" },
+        {
+          status: "approved",
+          processingStatus: "PROCESSING",
+          reviewedBy: adminId,
+          reviewReason: "",
+        },
         { new: true, session },
       );
 
@@ -135,16 +141,39 @@ export const depositService = {
 
         if (!deposit.autoPoolProcessed) {
           try {
-            activationResult = await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+            activationResult = await autopoolV2Service.registerUserInAutopool(
               user._id,
-              deposit._id,
               session,
             );
             deposit.autoPoolProcessed = true;
           } catch (err) {
             if (err?.code === 11000) {
-              console.warn(`[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`);
+              console.warn(
+                `[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`,
+              );
               deposit.autoPoolProcessed = true;
+            } else {
+              throw err;
+            }
+          }
+        }
+
+        if (!deposit.rebirthProcessed) {
+          try {
+            await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+              user._id,
+              deposit._id,
+              session,
+            );
+            deposit.rebirthProcessed = true;
+            shouldProcessAutoPoolQueue = true;
+          } catch (err) {
+            if (err?.code === 11000) {
+              console.warn(
+                `[Deposit] AutoPool rebirth nodes already exist for ${user.memberId} — skipping creation`,
+              );
+              deposit.rebirthProcessed = true;
+              shouldProcessAutoPoolQueue = true;
             } else {
               throw err;
             }
@@ -181,13 +210,14 @@ export const depositService = {
         credited: deposit.amount,
       };
 
-      // Trigger queue processing AFTER transaction commits
-      setImmediate(() => {
-        autoPoolNewService.processAutoPoolQueue().catch(err => console.error("[AutoPool] Queue processing error:", err));
-      });
-
       return result;
     });
+
+    if (shouldProcessAutoPoolQueue) {
+      setImmediate(() => autoPoolNewService.processAutoPoolQueue());
+    }
+
+    return result;
   },
 
   rejectRequest: async ({ depositId, adminId, reason }) => {

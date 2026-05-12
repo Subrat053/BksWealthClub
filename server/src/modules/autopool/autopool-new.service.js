@@ -1,15 +1,34 @@
 import mongoose from "mongoose";
 import { AutoPoolEntry } from "./autopool-entry.model.js";
+import { AutoPoolQueue } from "./autopool-queue.model.js";
+import { AutoPoolCounter } from "./autopool-counter.model.js";
 import { RebirthId } from "./rebirth.model.js";
 import { AutoPoolLog } from "./autopool-log.model.js";
 import { User } from "../user/user.model.js";
 
 let isQueueProcessing = false;
 
+const QUEUE_COUNTER_KEY = "autopool_queue";
+
+const getNextQueuePosition = async (session) => {
+  const counter = await AutoPoolCounter.findOneAndUpdate(
+    { key: QUEUE_COUNTER_KEY },
+    { $inc: { seq: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true, session },
+  );
+  return counter.seq;
+};
+
+const normalizeRebirthCode = (code) => code.trim();
+
 export const autoPoolNewService = {
+  // ──────────────────────────────────────────────────────────────────────────
+  // Deposit Integration
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Create initial Auto Pool entries after a successful deposit.
-   * 1 Main ID + 2 Rebirth IDs.
+   * Initialize AutoPool after a successful deposit.
+   * NOTE: Main user never enters the pool. Only 2 rebirth nodes are created.
    */
   createInitialAutoPoolEntriesAfterDeposit: async (
     userId,
@@ -19,98 +38,524 @@ export const autoPoolNewService = {
     const user = await User.findById(userId).session(session);
     if (!user) throw new Error("User not found");
 
-    // Check if entries already exist for this deposit to prevent duplicates
-    const existingMain = await AutoPoolEntry.findOne({
+    const existingRebirth = await AutoPoolEntry.findOne({
       ownerUserId: userId,
       "metadata.depositId": depositId.toString(),
-      sourceType: "MAIN",
+      sourceType: "REBIRTH",
     }).session(session);
 
-    if (existingMain) {
-      console.log(`[AutoPool] Entries already exist for deposit ${depositId}`);
-      return;
+    if (existingRebirth) {
+      console.log(`[AutoPool] Rebirths already exist for deposit ${depositId}`);
+      return { skipped: true };
+    }
+
+    const rebirthEntries = [];
+
+    for (let i = 1; i <= 2; i++) {
+      const rebirthCode = normalizeRebirthCode(
+        `${user.memberId}-RB0-${i}-${depositId.toString().slice(-6)}`,
+      );
+
+      const rebirthEntry = await autoPoolNewService.createRebirthNode(
+        {
+          ownerUserId: user._id,
+          sourceUserId: user._id,
+          rebirthCode,
+          rebirthLevel: 0,
+          createdFromEntryId: null,
+          rebirthIndex: i,
+          metadata: { depositId: depositId.toString() },
+        },
+        session,
+      );
+
+      await autoPoolNewService.enqueueNode(rebirthEntry._id, session, {
+        queueTimestamp: rebirthEntry.queueTimestamp,
+      });
+      rebirthEntries.push(rebirthEntry);
+    }
+
+    await autoPoolNewService.logAction(
+      "INITIAL_REBIRTHS",
+      null,
+      userId,
+      `Created 2 rebirth nodes for deposit ${depositId}`,
+      null,
+      { rebirthEntryIds: rebirthEntries.map((e) => e._id) },
+      session,
+    );
+
+    if (!session) {
+      setImmediate(() => autoPoolNewService.processAutoPoolQueue());
+    }
+
+    return { rebirthEntries };
+  },
+
+  createInitialRebirths: async (userId, depositId, session = null) => {
+    return autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+      userId,
+      depositId,
+      session,
+    );
+  },
+
+  initializeAutoPool: async (userId, depositId, session = null) => {
+    return autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+      userId,
+      depositId,
+      session,
+    );
+  },
+
+  processDepositSuccess: async (userId, depositId, session = null) => {
+    const result =
+      await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
+        userId,
+        depositId,
+        session,
+      );
+
+    if (!session) {
+      setImmediate(() => autoPoolNewService.processAutoPoolQueue());
+    }
+
+    return result;
+  },
+
+  activateUser: async (userId, session = null) => {
+    const update = {
+      isActivated: true,
+      isActive: true,
+      status: "active",
+      activationStatus: "ACTIVE",
+      activatedAt: new Date(),
+    };
+
+    const opts = { new: true };
+    if (session) opts.session = session;
+
+    return User.findByIdAndUpdate(userId, update, opts);
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Queue Service
+  // ──────────────────────────────────────────────────────────────────────────
+
+  enqueueNode: async (nodeId, session = null, options = {}) => {
+    const existingQueue = await AutoPoolQueue.findOne({ nodeId }).session(
+      session,
+    );
+
+    if (existingQueue) return existingQueue;
+
+    const queuePosition = await getNextQueuePosition(session);
+    const now = new Date();
+
+    const entry = await AutoPoolEntry.findById(nodeId).session(session);
+    if (!entry) throw new Error("AutoPool node not found for enqueue");
+
+    const queueTimestamp =
+      options.queueTimestamp || entry.queueTimestamp || now;
+    entry.queuePosition = queuePosition;
+    entry.queueTimestamp = queueTimestamp;
+    await entry.save({ session });
+
+    return AutoPoolQueue.findOneAndUpdate(
+      { nodeId },
+      {
+        $setOnInsert: {
+          nodeId,
+          queuePosition,
+          queueTimestamp,
+          status: "WAITING",
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, session },
+    );
+  },
+
+  reserveQueueNode: async (session) => {
+    const lockId = new mongoose.Types.ObjectId().toString();
+    const now = new Date();
+    return AutoPoolQueue.findOneAndUpdate(
+      { status: "WAITING" },
+      {
+        $set: {
+          status: "PROCESSING",
+          processingLockId: lockId,
+          processingStartedAt: now,
+        },
+      },
+      { sort: { queuePosition: 1 }, new: true, session },
+    );
+  },
+
+  dequeueNode: async (session = null) => {
+    return autoPoolNewService.reserveQueueNode(session);
+  },
+
+  releaseQueueNode: async (queueId, session = null) => {
+    return AutoPoolQueue.findByIdAndUpdate(
+      queueId,
+      {
+        $set: {
+          status: "WAITING",
+          processingLockId: null,
+          processingStartedAt: null,
+        },
+      },
+      { new: true, session },
+    );
+  },
+
+  backfillQueueFromPendingEntries: async (limit = 200) => {
+    const pendingEntries = await AutoPoolEntry.find({
+      status: "PENDING",
+      sourceType: "REBIRTH",
+    })
+      .sort({ queueTimestamp: 1 })
+      .limit(limit)
+      .lean();
+
+    if (!pendingEntries.length) {
+      return { added: 0 };
+    }
+
+    const pendingIds = pendingEntries.map((entry) => entry._id);
+    const queued = await AutoPoolQueue.find({ nodeId: { $in: pendingIds } })
+      .select("nodeId")
+      .lean();
+
+    const queuedIds = new Set(queued.map((item) => String(item.nodeId)));
+    let added = 0;
+
+    for (const entry of pendingEntries) {
+      if (queuedIds.has(String(entry._id))) continue;
+      await autoPoolNewService.enqueueNode(entry._id, null, {
+        queueTimestamp: entry.queueTimestamp,
+      });
+      added += 1;
+    }
+
+    return { added };
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Matrix Service
+  // ──────────────────────────────────────────────────────────────────────────
+
+  findAvailableParent: async (session = null) => {
+    return autoPoolNewService.findNextAvailableParent(session);
+  },
+
+  validateParentCapacity: (parent) => {
+    return !!parent && parent.directChildrenCount < 3;
+  },
+
+  attachChild: async (parentId, childId, session = null) => {
+    return AutoPoolEntry.findOneAndUpdate(
+      { _id: parentId, status: "PLACED", directChildrenCount: { $lt: 3 } },
+      {
+        $push: { childrenEntryIds: childId },
+        $inc: { directChildrenCount: 1 },
+      },
+      { new: true, session },
+    );
+  },
+
+  placeNode: async (entryId, parentEntryId, session = null) => {
+    return autoPoolNewService.placeEntryInMatrix(
+      entryId,
+      parentEntryId,
+      session,
+    );
+  },
+
+  findNextAvailableParent: async (session = null) => {
+    return AutoPoolEntry.findOne({
+      status: "PLACED",
+      directChildrenCount: { $lt: 3 },
+    })
+      .sort({ placedAt: 1, queueTimestamp: 1 })
+      .session(session);
+  },
+
+  placeEntryInMatrix: async (entryId, parentEntryId, session = null) => {
+    const entry = await AutoPoolEntry.findById(entryId).session(session);
+    if (!entry) throw new Error("Entry not found");
+    if (entry.status !== "PENDING") return entry;
+
+    const parent = await AutoPoolEntry.findById(parentEntryId).session(session);
+    if (!parent) throw new Error("Parent not found");
+
+    if (parent.directChildrenCount >= 3) {
+      throw new Error("Parent is already full");
     }
 
     const now = new Date();
 
-    // 1. Create Main Pool Entry
-    const mainEntry = new AutoPoolEntry({
-      ownerUserId: userId,
-      displayId: `${user.memberId}.1`,
-      sourceType: "MAIN",
-      queueTimestamp: now,
-      status: "PENDING",
-      metadata: { depositId: depositId.toString() },
-    });
-    await mainEntry.save({ session });
-
-    // 2. Create 2 Rebirth IDs and their entries
-    for (let i = 1; i <= 2; i++) {
-      const rebirthCode = `${user.memberId}.R0-${i}`;
-
-      const rebirthRecord = await RebirthId.findOneAndUpdate(
-        { rebirthCode },
-        {
-          $setOnInsert: {
-            ownerUserId: userId,
-            rebirthCode,
-            generation: 0,
-            sourceEntryId: mainEntry._id,
-          },
+    const updatedEntry = await AutoPoolEntry.findOneAndUpdate(
+      { _id: entryId, status: "PENDING" },
+      {
+        $set: {
+          status: "PLACED",
+          matrixParentEntryId: parent._id,
+          depth: (parent.depth || 0) + 1,
+          placedAt: now,
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true, session },
-      );
+      },
+      { new: true, session },
+    );
 
-      const rebirthEntry = await AutoPoolEntry.findOneAndUpdate(
-        { displayId: rebirthCode },
-        {
-          $setOnInsert: {
-            ownerUserId: userId,
-            displayId: rebirthCode,
-            sourceType: "REBIRTH",
-            rebirthLevel: 0,
-            sourceEntryId: mainEntry._id,
-            queueTimestamp: new Date(now.getTime() + i),
-            status: "PENDING",
-            metadata: {
-              depositId: depositId.toString(),
-              rebirthId: rebirthRecord._id.toString(),
-            },
-          },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true, session },
-      );
+    if (!updatedEntry) return entry;
 
-      if (
-        !rebirthRecord.autoPoolEntryId ||
-        String(rebirthRecord.autoPoolEntryId) !== String(rebirthEntry._id)
-      ) {
-        rebirthRecord.autoPoolEntryId = rebirthEntry._id;
-        await rebirthRecord.save({ session });
-      }
-    }
-
-    await autoPoolNewService.logAction(
-      "INITIAL_CREATION",
-      null,
-      userId,
-      `Created Main + 2 Rebirth IDs for deposit ${depositId}`,
-      null,
-      { mainEntryId: mainEntry._id },
+    const updatedParent = await autoPoolNewService.attachChild(
+      parent._id,
+      updatedEntry._id,
       session,
     );
 
-    // Trigger queue processing
-    // Note: We might want to trigger this AFTER the transaction commits if we're in one.
-    // If session is provided, we'll let the caller decide when to process.
-    if (!session) {
-      setImmediate(() => autoPoolNewService.processAutoPoolQueue());
+    if (!updatedParent) {
+      throw new Error("Parent slot unavailable during placement");
     }
+
+    await autoPoolNewService.logAction(
+      "PLACE_ENTRY",
+      updatedEntry._id,
+      updatedEntry.ownerUserId,
+      `Placed under parent ${updatedParent.displayId}`,
+      null,
+      { parentId: updatedParent._id },
+      session,
+    );
+
+    if (updatedParent.directChildrenCount === 3) {
+      await autoPoolNewService.completeNode(updatedParent._id, session);
+    }
+
+    return updatedEntry;
   },
 
-  /**
-   * Process the pending Auto Pool queue based on FIFO.
-   */
+  placeRootEntry: async (entryId, session = null) => {
+    const now = new Date();
+    const updatedEntry = await AutoPoolEntry.findOneAndUpdate(
+      { _id: entryId, status: "PENDING" },
+      {
+        $set: {
+          status: "PLACED",
+          matrixParentEntryId: null,
+          depth: 0,
+          placedAt: now,
+        },
+      },
+      { new: true, session },
+    );
+
+    if (!updatedEntry) return null;
+
+    await autoPoolNewService.logAction(
+      "PLACE_ROOT",
+      updatedEntry._id,
+      updatedEntry.ownerUserId,
+      "Placed as root node",
+      null,
+      null,
+      session,
+    );
+
+    return updatedEntry;
+  },
+
+  completeNode: async (parentEntryId, session = null) => {
+    const parent = await AutoPoolEntry.findOneAndUpdate(
+      {
+        _id: parentEntryId,
+        status: "PLACED",
+        directChildrenCount: 3,
+        completionProcessed: { $ne: true },
+      },
+      {
+        $set: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+          completionProcessed: true,
+        },
+      },
+      { new: true, session },
+    );
+
+    if (!parent) return null;
+
+    const childIds = parent.childrenEntryIds || [];
+    const children = await AutoPoolEntry.find({ _id: { $in: childIds } })
+      .session(session)
+      .lean();
+
+    const orderedChildren = childIds
+      .map((id) => children.find((child) => String(child._id) === String(id)))
+      .filter(Boolean);
+
+    const [firstChild, secondChild] = orderedChildren;
+
+    if (firstChild) {
+      await autoPoolNewService.generateChildRebirths(firstChild, session);
+    }
+
+    if (secondChild) {
+      await autoPoolNewService.generateChildRebirths(secondChild, session);
+    }
+
+    await autoPoolNewService.logAction(
+      "NODE_COMPLETED",
+      parent._id,
+      parent.ownerUserId,
+      `Node ${parent.displayId} completed with 3 children`,
+      null,
+      { childIds },
+      session,
+    );
+
+    return parent;
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Rebirth Service
+  // ──────────────────────────────────────────────────────────────────────────
+
+  generateRebirthCode: async (ownerUserId, baseRef, index, session = null) => {
+    const userQuery = User.findById(ownerUserId);
+    if (session) userQuery.session(session);
+    const user = await userQuery.lean();
+    const memberId = user?.memberId || "RB";
+    const suffix = baseRef
+      ? String(baseRef).slice(-6)
+      : Date.now().toString(36);
+    return normalizeRebirthCode(`${memberId}-RB${index}-${suffix}`);
+  },
+
+  createRebirthNode: async (payload, session = null) => {
+    const {
+      ownerUserId,
+      sourceUserId,
+      rebirthCode,
+      rebirthLevel,
+      createdFromEntryId,
+      rebirthIndex,
+      metadata,
+    } = payload;
+
+    const nodePayload = {
+      ownerUserId,
+      sourceUserId: sourceUserId || ownerUserId,
+      displayId: rebirthCode,
+      rebirthCode,
+      sourceType: "REBIRTH",
+      rebirthLevel: rebirthLevel || 0,
+      rebirthIndex: rebirthIndex || null,
+      sourceEntryId: createdFromEntryId || null,
+      createdFromEntryId: createdFromEntryId || null,
+      status: "PENDING",
+      metadata: metadata || {},
+    };
+
+    const rebirthEntry = await AutoPoolEntry.findOneAndUpdate(
+      {
+        createdFromEntryId: createdFromEntryId || null,
+        rebirthIndex: rebirthIndex || null,
+        sourceType: "REBIRTH",
+        ...(createdFromEntryId
+          ? {}
+          : { ownerUserId, "metadata.depositId": metadata?.depositId }),
+      },
+      { $setOnInsert: nodePayload },
+      { upsert: true, new: true, setDefaultsOnInsert: true, session },
+    );
+
+    const rebirthRecord = await RebirthId.findOneAndUpdate(
+      { rebirthCode },
+      {
+        $setOnInsert: {
+          ownerUserId,
+          rebirthCode,
+          generation: rebirthLevel || 0,
+          sourceEntryId: createdFromEntryId,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, session },
+    );
+
+    if (
+      !rebirthRecord.autoPoolEntryId ||
+      String(rebirthRecord.autoPoolEntryId) !== String(rebirthEntry._id)
+    ) {
+      rebirthRecord.autoPoolEntryId = rebirthEntry._id;
+      await rebirthRecord.save({ session });
+    }
+
+    return rebirthEntry;
+  },
+
+  generateChildRebirths: async (childEntry, session = null) => {
+    const updatedChild = await AutoPoolEntry.findOneAndUpdate(
+      { _id: childEntry._id, rebirthGenerated: { $ne: true } },
+      { $set: { rebirthGenerated: true } },
+      { new: true, session },
+    );
+
+    if (!updatedChild) {
+      return { skipped: true };
+    }
+
+    const rebirthLevel = (updatedChild.rebirthLevel || 0) + 1;
+    const rebirthEntries = [];
+
+    for (let i = 1; i <= 2; i++) {
+      const rebirthCode = await autoPoolNewService.generateRebirthCode(
+        updatedChild.ownerUserId,
+        updatedChild._id,
+        i,
+        session,
+      );
+
+      const rebirthEntry = await autoPoolNewService.createRebirthNode(
+        {
+          ownerUserId: updatedChild.ownerUserId,
+          sourceUserId: updatedChild.ownerUserId,
+          rebirthCode,
+          rebirthLevel,
+          createdFromEntryId: updatedChild._id,
+          rebirthIndex: i,
+          metadata: {
+            fromEntryId: updatedChild._id.toString(),
+          },
+        },
+        session,
+      );
+
+      await autoPoolNewService.enqueueNode(rebirthEntry._id, session, {
+        queueTimestamp: rebirthEntry.queueTimestamp,
+      });
+      rebirthEntries.push(rebirthEntry);
+    }
+
+    await autoPoolNewService.logAction(
+      "REBIRTH_CREATED",
+      updatedChild._id,
+      updatedChild.ownerUserId,
+      `Created 2 rebirths for child ${updatedChild.displayId}`,
+      null,
+      { rebirthEntryIds: rebirthEntries.map((e) => e._id) },
+      session,
+    );
+
+    return { rebirthEntries };
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Queue Processing
+  // ──────────────────────────────────────────────────────────────────────────
+
   processAutoPoolQueue: async () => {
     if (isQueueProcessing) {
       return { processedCount: 0, skipped: true };
@@ -118,71 +563,71 @@ export const autoPoolNewService = {
 
     isQueueProcessing = true;
 
-    // We use a simplified loop. For a real production system, this might be a worker.
     let processedCount = 0;
-    const MAX_PROCESS = 50; // Safety limit per run
+    const MAX_PROCESS = 75;
 
     try {
+      await autoPoolNewService.backfillQueueFromPendingEntries();
+
       while (processedCount < MAX_PROCESS) {
         const session = await mongoose.startSession();
         try {
           session.startTransaction();
 
-          // Get the oldest pending entry
-          const pendingEntry = await AutoPoolEntry.findOne({
-            status: "PENDING",
-          })
-            .sort({ queueTimestamp: 1 })
-            .session(session);
-
-          if (!pendingEntry) {
+          const queueItem = await autoPoolNewService.reserveQueueNode(session);
+          if (!queueItem) {
             await session.commitTransaction();
-            break; // Queue empty
+            break;
           }
 
-          // Find available parent
+          const entry = await AutoPoolEntry.findById(queueItem.nodeId).session(
+            session,
+          );
+
+          if (!entry || entry.status !== "PENDING") {
+            await AutoPoolQueue.findByIdAndUpdate(
+              queueItem._id,
+              { $set: { status: "PLACED" } },
+              { session },
+            );
+            await session.commitTransaction();
+            processedCount++;
+            continue;
+          }
+
           const parent =
             await autoPoolNewService.findNextAvailableParent(session);
 
-          if (parent) {
+          if (!parent) {
+            const existingPlaced = await AutoPoolEntry.countDocuments({
+              status: { $in: ["PLACED", "COMPLETED"] },
+            }).session(session);
+
+            if (existingPlaced > 0) {
+              throw new Error("No available parent for placement");
+            }
+
+            const placedRoot = await autoPoolNewService.placeRootEntry(
+              entry._id,
+              session,
+            );
+
+            if (!placedRoot) {
+              throw new Error("Failed to place root entry");
+            }
+          } else {
             await autoPoolNewService.placeEntryInMatrix(
-              pendingEntry._id,
+              entry._id,
               parent._id,
               session,
             );
-          } else {
-            // If no parent found, it means this is the first entry (root)
-            // or something is wrong. In a global pool, the very first entry is root.
-            const totalEntries = await AutoPoolEntry.countDocuments({
-              status: { $ne: "PENDING" },
-            }).session(session);
-            if (totalEntries === 0) {
-              // This is the root node
-              pendingEntry.status = "PLACED";
-              pendingEntry.depth = 0;
-              pendingEntry.matrixParentEntryId = null;
-              await pendingEntry.save({ session });
-
-              await autoPoolNewService.logAction(
-                "PLACE_ROOT",
-                pendingEntry._id,
-                pendingEntry.ownerUserId,
-                "Placed as root node",
-                null,
-                null,
-                session,
-              );
-            } else {
-              // This shouldn't happen if there are placed nodes but none available.
-              // In a 3x3 matrix, there's always a parent unless we hit some limit.
-              console.error(
-                "[AutoPool] No available parent found for pending entry",
-                pendingEntry._id,
-              );
-              await session.abortTransaction();
-              break;
-            }
           }
+
+          await AutoPoolQueue.findByIdAndUpdate(
+            queueItem._id,
+            { $set: { status: "PLACED" } },
+            { session },
+          );
 
           await session.commitTransaction();
           processedCount++;
@@ -201,163 +646,10 @@ export const autoPoolNewService = {
     return { processedCount, skipped: false };
   },
 
-  /**
-   * Find the oldest placed entry that has less than 3 children.
-   */
-  findNextAvailableParent: async (session = null) => {
-    return await AutoPoolEntry.findOne({
-      status: "PLACED",
-      directChildrenCount: { $lt: 3 },
-    })
-      .sort({ queueTimestamp: 1 })
-      .session(session);
-  },
+  // ──────────────────────────────────────────────────────────────────────────
+  // Logging
+  // ──────────────────────────────────────────────────────────────────────────
 
-  /**
-   * Place an entry under a parent in the matrix.
-   */
-  placeEntryInMatrix: async (entryId, parentEntryId, session = null) => {
-    const entry = await AutoPoolEntry.findById(entryId).session(session);
-    const parent = await AutoPoolEntry.findById(parentEntryId).session(session);
-
-    if (!entry || !parent) throw new Error("Entry or Parent not found");
-    if (entry.status !== "PENDING") throw new Error("Entry is not PENDING");
-    if (parent.directChildrenCount >= 3)
-      throw new Error("Parent is already full");
-
-    // Update entry
-    entry.status = "PLACED";
-    entry.matrixParentEntryId = parent._id;
-    entry.depth = parent.depth + 1;
-    await entry.save({ session });
-
-    // Update parent
-    parent.childrenEntryIds.push(entry._id);
-    parent.directChildrenCount = parent.childrenEntryIds.length;
-
-    if (parent.directChildrenCount === 3) {
-      parent.status = "COMPLETED";
-      parent.completedAt = new Date();
-    }
-    await parent.save({ session });
-
-    await autoPoolNewService.logAction(
-      "PLACE_ENTRY",
-      entry._id,
-      entry.ownerUserId,
-      `Placed under parent ${parent.displayId}`,
-      null,
-      { parentId: parent._id },
-      session,
-    );
-
-    if (parent.status === "COMPLETED") {
-      await autoPoolNewService.logAction(
-        "NODE_COMPLETED",
-        parent._id,
-        parent.ownerUserId,
-        `Node ${parent.displayId} completed with 3 children`,
-        null,
-        null,
-        session,
-      );
-      await autoPoolNewService.createRebirthsAfterCompletion(
-        parent._id,
-        session,
-      );
-    }
-
-    return entry;
-  },
-
-  /**
-   * Create 2 new rebirth IDs for a completed entry's owner.
-   */
-  createRebirthsAfterCompletion: async (completedEntryId, session = null) => {
-    const completedEntry =
-      await AutoPoolEntry.findById(completedEntryId).session(session);
-    if (!completedEntry) throw new Error("Completed entry not found");
-
-    // Check if rebirths already created for this completion
-    const existingRebirths = await AutoPoolEntry.findOne({
-      createdFromEntryId: completedEntryId,
-      sourceType: "REBIRTH",
-    }).session(session);
-
-    if (existingRebirths) {
-      console.log(
-        `[AutoPool] Rebirths already exist for completed entry ${completedEntryId}`,
-      );
-      return;
-    }
-
-    const user = await User.findById(completedEntry.ownerUserId).session(
-      session,
-    );
-    const now = new Date();
-    const nextRebirthLevel = (completedEntry.rebirthLevel || 0) + 1;
-
-    for (let i = 1; i <= 2; i++) {
-      const rebirthCode = `${user.memberId}.R${nextRebirthLevel}-${i}`;
-
-      const rebirthRecord = await RebirthId.findOneAndUpdate(
-        { rebirthCode },
-        {
-          $setOnInsert: {
-            ownerUserId: user._id,
-            rebirthCode,
-            generation: nextRebirthLevel,
-            sourceEntryId: completedEntry.sourceEntryId || completedEntry._id,
-            parentRebirthId: completedEntry.metadata?.rebirthId || null,
-          },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true, session },
-      );
-
-      const rebirthEntry = await AutoPoolEntry.findOneAndUpdate(
-        { displayId: rebirthCode },
-        {
-          $setOnInsert: {
-            ownerUserId: user._id,
-            displayId: rebirthCode,
-            sourceType: "REBIRTH",
-            rebirthLevel: nextRebirthLevel,
-            sourceEntryId: completedEntry.sourceEntryId || completedEntry._id,
-            createdFromEntryId: completedEntry._id,
-            queueTimestamp: new Date(now.getTime() + i),
-            status: "PENDING",
-            metadata: {
-              rebirthId: rebirthRecord._id.toString(),
-              fromCompletedEntry: completedEntryId.toString(),
-            },
-          },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true, session },
-      );
-
-      if (
-        !rebirthRecord.autoPoolEntryId ||
-        String(rebirthRecord.autoPoolEntryId) !== String(rebirthEntry._id)
-      ) {
-        rebirthRecord.autoPoolEntryId = rebirthEntry._id;
-        await rebirthRecord.save({ session });
-      }
-    }
-
-    await autoPoolNewService.logAction(
-      "REBIRTH_CREATED",
-      completedEntryId,
-      completedEntry.ownerUserId,
-      `Created 2 rebirths for completion of ${completedEntry.displayId}`,
-      null,
-      null,
-      session,
-    );
-  },
-
-  /**
-   * Log an action in the Auto Pool system.
-   */
   logAction: async (
     actionType,
     entryId,
