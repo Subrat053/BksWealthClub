@@ -3,18 +3,30 @@ import { asyncHandler } from "../../core/asyncHandler.js";
 import { autopoolService } from "./autopool.service.js";
 
 export const getAutopoolQueueController = asyncHandler(async (_req, res) => {
-  const data = await autopoolService.getAutopoolQueue();
-  res.json(new ApiResponse({ message: "Autopool queue fetched", data }));
+  // DEPRECATED: Use new 3x3 system endpoints
+  res.json(new ApiResponse({ 
+    message: "Use /api/v1/autopool/3x3/admin/queue instead",
+    deprecated: true,
+    data: { pending: 0, placed: 0, completed: 0 }
+  }));
 });
 
 export const processAutopoolQueueController = asyncHandler(async (_req, res) => {
-  const data = await autopoolService.processAutopoolQueue();
-  res.json(new ApiResponse({ message: "Autopool queue processed", data }));
+  // DEPRECATED: Queue processing is automatic with new 3x3 system
+  res.json(new ApiResponse({ 
+    message: "Automatic queue processing is handled by new 3x3 system. Use /api/v1/autopool/3x3/admin/process-queue for manual processing.",
+    deprecated: true,
+    processed: 0
+  }));
 });
 
 export const getAutopoolMatrixController = asyncHandler(async (_req, res) => {
-  const data = await autopoolService.getAutopoolMatrix();
-  res.json(new ApiResponse({ message: "Autopool matrix fetched", data }));
+  // DEPRECATED: Use new 3x3 system endpoints
+  res.json(new ApiResponse({ 
+    message: "Use /api/v1/autopool/3x3/admin/tree instead",
+    deprecated: true,
+    data: []
+  }));
 });
 
 export const getAutopoolNodeController = asyncHandler(async (req, res) => {

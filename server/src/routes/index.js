@@ -5,6 +5,7 @@ import { userRouter } from "../modules/user/user.routes.js";
 import { referralRouter } from "../modules/referral/referral.routes.js";
 import { teamRouter } from "../modules/team/team.routes.js";
 import { autopoolRouter } from "../modules/autopool/autopool.routes.js";
+import autopool3x3Router from "../modules/autopool/autopool-3x3.routes.js";
 import { incomeRouter } from "../modules/income/income.routes.js";
 import { depositRouter } from "../modules/deposit/deposit.routes.js";
 import { activationRouter } from "../modules/activation/activation.routes.js";
@@ -35,6 +36,7 @@ apiRouter.use("/users", userRouter);
 apiRouter.use("/referrals", referralRouter);
 apiRouter.use("/team", teamRouter);
 apiRouter.use("/autopool", autopoolRouter);
+apiRouter.use("/autopool/3x3", autopool3x3Router);
 apiRouter.use("/income", incomeRouter);
 
 /*

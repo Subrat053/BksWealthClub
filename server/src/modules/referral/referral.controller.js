@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "../user/user.model.js";
 import { AdminModel } from "../admin/admin.model.js";
-import { referralService } from "./referral.service.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
@@ -45,7 +44,38 @@ const buildReferralTree = async (parentId, level = 1) => {
   return result;
 };
 
-// Removed buildAdminRootChildren as we exclusively use buildReferralTree starting from User.
+const buildAdminRootChildren = async (adminSponsorId, level = 1) => {
+  const children = await User.find({
+    sponsorId: adminSponsorId,
+  })
+    .select(
+      "_id memberId fullName email phone status isActivated referredByUserId createdAt",
+    )
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const result = [];
+
+  for (const child of children) {
+    const downlines = await buildReferralTree(child._id, level + 1);
+
+    result.push({
+      _id: child._id,
+      memberId: child.memberId,
+      fullName: child.fullName,
+      email: child.email,
+      phone: child.phone,
+      status: child.status,
+      isActivated: child.isActivated,
+      referredByUserId: child.referredByUserId,
+      joinedAt: child.createdAt,
+      level,
+      children: downlines,
+    });
+  }
+
+  return result;
+};
 
 // USER SIDE: logged-in user's referrals
 export const getMyReferrals = async (req, res) => {
@@ -138,37 +168,75 @@ export const getMyReferralTree = async (req, res) => {
 // /api/v1/referrals/admin/tree?memberId=BWC145598
 export const getAdminReferralTree = async (req, res) => {
   try {
+    const queryReferralId =
+      req.query.referralId ||
+      req.query.referredByUserId ||
+      req.query.adminId ||
+      req.query.userId ||
+      null;
+
     const queryMemberId = req.query.memberId || req.query.sponsorId || null;
 
+    let rootId =
+      queryReferralId ||
+      req.auth?.adminId ||
+      req.admin?._id ||
+      req.admin?.id ||
+      null;
+
+    const adminId = req.auth?.adminId;
+    const admin = adminId
+      ? await AdminModel.findById(adminId)
+          .select("_id username email sponsorId role")
+          .lean()
+      : null;
+
     let root = null;
-    let targetMemberId = queryMemberId ? queryMemberId.trim().toUpperCase() : "BKS000000";
 
-    root = await User.findOne({
-      memberId: targetMemberId,
-    })
-      .select("_id memberId fullName email status isActivated isOperationalAdmin")
-      .lean();
+    if (queryMemberId) {
+      root = await User.findOne({
+        memberId: queryMemberId.trim().toUpperCase(),
+      })
+        .select("_id memberId fullName email status isActivated")
+        .lean();
 
-    if (!root) {
-      return res.status(404).json({
+      if (!root) {
+        return res.status(404).json({
+          success: false,
+          message: "No user found with this memberId.",
+        });
+      }
+
+      rootId = root._id;
+    }
+
+    if (!rootId) {
+      return res.status(400).json({
         success: false,
-        message: "No user or Operational Admin found with this memberId.",
+        message: "referralId, memberId, or admin token is required.",
       });
     }
 
-    const children = await buildReferralTree(root._id, 1);
+    if (!root && !admin?.sponsorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin sponsorId is missing. Unable to build admin root tree.",
+      });
+    }
+
+    const children = root
+      ? await buildReferralTree(rootId, 1)
+      : await buildAdminRootChildren(admin?.sponsorId, 1);
 
     return res.status(200).json({
       success: true,
       data: {
         root: {
-          _id: root._id,
-          memberId: root.memberId,
-          fullName: root.fullName,
-          email: root.email,
-          status: root.status,
-          isActivated: root.isActivated,
-          role: root.isOperationalAdmin ? "admin" : "user",
+          _id: root?._id || admin?._id || rootId,
+          memberId: root?.memberId || admin?.sponsorId || req.auth?.memberId || "ADMIN001",
+          fullName: root?.fullName || admin?.username || req.auth?.fullName || "Admin",
+          email: root?.email || admin?.email || req.auth?.email || null,
+          role: root ? "user" : admin?.role || "admin",
           children,
         },
       },
@@ -211,9 +279,11 @@ export const getAdminReferralReport = async (req, res) => {
   }
 };
 
-export const validateSponsor = async (req, res) => {
+// PUBLIC: Validate sponsor ID during registration
+export const validateSponsorId = async (req, res) => {
   try {
-    const sponsorId = String(req.body?.sponsorId || "").trim();
+    const sponsorId = (req.body.sponsorId || req.query.sponsorId || "").trim();
+
     if (!sponsorId) {
       return res.status(400).json({
         success: false,
@@ -221,16 +291,57 @@ export const validateSponsor = async (req, res) => {
       });
     }
 
-    const result = await referralService.validateSponsor(sponsorId);
+    // Look for user with matching memberId or admin with matching sponsorId
+    const sponsor = await User.findOne({
+      memberId: sponsorId.toUpperCase(),
+    })
+      .select("_id memberId fullName email status isActivated")
+      .lean();
 
-    return res.status(200).json({
-      success: true,
-      data: result,
+    if (sponsor) {
+      return res.status(200).json({
+        success: true,
+        message: "Sponsor found.",
+        data: {
+          sponsorId: sponsor.memberId,
+          sponsorName: sponsor.fullName,
+          sponsorEmail: sponsor.email,
+          isActivated: sponsor.isActivated,
+          active: sponsor.status === "active" || sponsor.isActivated, // Add active for frontend
+        },
+      });
+    }
+
+    // If not a user, check if it's a valid admin sponsor ID
+    const admin = await AdminModel.findOne({
+      sponsorId: sponsorId.toUpperCase(),
+    })
+      .select("sponsorId username email")
+      .lean();
+
+    if (admin) {
+      return res.status(200).json({
+        success: true,
+        message: "Sponsor (Admin) found.",
+        data: {
+          sponsorId: admin.sponsorId,
+          sponsorName: admin.username,
+          sponsorEmail: admin.email,
+          isActivated: true,
+          active: true, // Admin is always active
+        },
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: "Sponsor not found. Please check the sponsor ID.",
     });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({
+    return res.status(500).json({
       success: false,
-      message: error.message || "Sponsor validation failed.",
+      message: "Failed to validate sponsor ID.",
+      error: error.message,
     });
   }
 };

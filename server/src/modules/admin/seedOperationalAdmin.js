@@ -48,10 +48,11 @@ export async function seedOperationalAdmin() {
   if (!existingAdmin) {
     const passwordHash = await hashPassword(password);
 
+    // Admin is self-sponsored (root of the tree)
     adminUser = await User.create({
       memberId,
-      sponsorId: "SYSTEM", // No sponsor for root
-      sponsorUserId: null,
+      sponsorId: memberId, // Self-sponsor - root user
+      sponsorUserId: null, // No parent user
       referredByUserId: null,
       fullName: "Operational Admin",
       email,
@@ -67,7 +68,7 @@ export async function seedOperationalAdmin() {
       isOperationalAdmin: true,
       isSystemRoot: true,
     });
-    logger.info("Operational Admin seeded successfully");
+    logger.info("Operational Admin seeded successfully", { memberId });
   } else {
     adminUser = existingAdmin;
   }
@@ -84,26 +85,81 @@ export async function seedOperationalAdmin() {
     logger.error("Failed to seed referral tree for Operational Admin:", err);
   }
 
-  // Seed Autopool + rebirth nodes for Operational Admin if missing
+  // Seed Autopool + rebirth nodes for Operational Admin in the new 3x3 system
   try {
-    const { RebirthId } = await import("../autopool/rebirth.model.js");
-    const { autopoolService } = await import(
-      "../autopool/autopool.service.js",
+    const { default: autopool3x3Service } = await import(
+      "../autopool/autopool-3x3.service.js"
     );
 
-    const existingRoot = await RebirthId.findOne({
-      ownerUserId: adminUser._id,
-      rebirthCode: adminUser.memberId,
-    });
+    // This will create the ROOT node if it doesn't exist
+    await autopool3x3Service.processAutoPoolQueue();
+    
+    // --- MATRIX REPAIR LOGIC ---
+    // Ensure the admin is the ONLY root node. If others were placed as roots previously,
+    // we reset them to PENDING so they can be placed under the Admin correctly.
+    const { AutoPoolNode } = await import("../autopool/autopool-matrix.model.js");
+    
+    // 1. Force Admin to be root if it somehow got a parent or wrong type
+    const adminNode = await AutoPoolNode.findOne({ nodeCode: memberId });
+    if (adminNode) {
+      let repairNeeded = false;
+      
+      if (adminNode.matrixParentId !== null || adminNode.parentNodeId !== null) {
+        logger.info(`[Repair] Admin ${memberId} has a parent. Fixing root status...`);
+        
+        // Remove from current parent to maintain count integrity
+        const parentId = adminNode.matrixParentId || adminNode.parentNodeId;
+        await AutoPoolNode.updateOne(
+          { _id: parentId },
+          { $pull: { directChildren: adminNode._id }, $inc: { directChildrenCount: -1 } }
+        );
+        
+        adminNode.matrixParentId = null;
+        adminNode.parentNodeId = null;
+        repairNeeded = true;
+      }
+      
+      if (adminNode.nodeType !== "ROOT") {
+        adminNode.nodeType = "ROOT";
+        adminNode.isRoot = true;
+        adminNode.isOperationalRoot = true;
+        repairNeeded = true;
+      }
+      
+      if (adminNode.status !== "PLACED") {
+        adminNode.status = "PLACED";
+        repairNeeded = true;
+      }
 
-    if (!existingRoot) {
-      await autopoolService.activateMemberInAutopool({
-        userId: adminUser._id,
-        memberId: adminUser.memberId,
-      });
-      logger.info("Operational Admin rebirth nodes created successfully");
+      if (repairNeeded) {
+        await adminNode.save();
+      }
     }
+    
+    // 2. Reset any accidental roots (nodes with no parent that are NOT the admin)
+    const accidentalRoots = await AutoPoolNode.find({ 
+      matrixParentId: null, 
+      parentNodeId: null,
+      nodeCode: { $ne: memberId },
+      status: "PLACED",
+      nodeType: { $ne: "ROOT" }
+    });
+    
+    if (accidentalRoots.length > 0) {
+      logger.info(`[Repair] Resetting ${accidentalRoots.length} accidental root nodes to PENDING...`);
+      for (const rootNode of accidentalRoots) {
+        rootNode.status = "PENDING";
+        rootNode.matrixParentId = null;
+        rootNode.parentNodeId = null;
+        await rootNode.save();
+      }
+    }
+    
+    // 3. Immediate placement to ensure everything is re-linked under the Admin root
+    await autopool3x3Service.processAutoPoolQueue();
+    
+    logger.info("Operational Admin 3x3 AutoPool nodes verified and matrix structure repaired");
   } catch (err) {
-    logger.error("Failed to seed autopool for Operational Admin:", err);
+    logger.warn("Failed to seed/repair 3x3 AutoPool for Operational Admin:", err.message);
   }
 }

@@ -109,14 +109,20 @@ async function getUplineChain(userId, maxLevels = 9, session = null) {
  * @param {string|ObjectId} params.depositId - The approved deposit's _id
  * @returns {Object} Full distribution summary
  */
-export async function distributeDepositIncome({ userId, depositId, session }) {
+export async function distributeDepositIncome({ userId, depositId, depositDoc = null, session }) {
   if (!session)
     throw new Error("A MongoDB session is required to distribute income");
 
   try {
     // ── 1. Fetch and validate deposit ────────────────────────────────────────
-    const deposit = await DepositModel.findById(depositId).session(session);
+    let deposit = depositDoc;
+    if (!deposit) {
+        deposit = await DepositModel.findById(depositId).session(session);
+    }
+    
     if (!deposit) throw new Error("Deposit not found");
+    
+    // Check status (if it's a doc, it might have been just approved in the same transaction)
     if (deposit.status !== "approved") {
       throw new Error(
         `Deposit status is "${deposit.status}", expected "approved"`,
@@ -425,14 +431,14 @@ export async function distributeDepositIncome({ userId, depositId, session }) {
     }
 
     // ── 15. Mark deposit as distributed ──────────────────────────────────────
-    await DepositModel.findByIdAndUpdate(
-      depositId,
-      {
-        incomeDistributed: true,
-        distributedAt: new Date(),
-      },
-      { session },
-    );
+    deposit.incomeDistributed = true;
+    deposit.distributedAt = new Date();
+
+    // If we didn't get a document passed in, we should save it here.
+    // If we DID get a document, the caller will save it once at the end of their transaction.
+    if (!depositDoc) {
+        await deposit.save({ session });
+    }
 
     // Transaction is committed by the caller (deposit service)
 

@@ -2,7 +2,7 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { connectDatabase } from "./config/db.js";
 import { logger } from "./common/logger/logger.js";
-import { registerAutopoolJob } from "./jobs/autopool.job.js";
+import { registerAutopoolJob, registerAutopool3x3Job } from "./jobs/autopool.job.js";
 import { registerIncomeJob } from "./jobs/income.job.js";
 import { registerNotificationJob } from "./jobs/notification.job.js";
 import { seedSuperAdmin } from "./modules/admin/seedSuperAdmin.js";
@@ -14,6 +14,7 @@ async function bootstrap() {
   await seedOperationalAdmin();
 
   registerAutopoolJob();
+  registerAutopool3x3Job();
   registerIncomeJob();
   registerNotificationJob();
 

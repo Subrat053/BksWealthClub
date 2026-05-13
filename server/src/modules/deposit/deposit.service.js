@@ -3,13 +3,14 @@ import { ApiError } from "../../core/ApiError.js";
 import { depositRepository } from "./deposit.repository.js";
 import { DepositModel } from "./deposit.model.js";
 import { autopoolService } from "../autopool/autopool.service.js";
+import autopool3x3Service from "../autopool/autopool-3x3.service.js";
 import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { ACTIVATION_AMOUNT_USD } from "../autopool/autopool.engine.js";
 import { distributeDepositIncome } from "../income/incomeDistribution.service.js";
 
 // ─── Retry helper for TransientTransactionError ────────────────────────────────
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 async function withTransactionRetry(fn) {
   let lastErr;
@@ -140,23 +141,23 @@ export const depositService = {
 
         if (!deposit.autoPoolProcessed || !deposit.rebirthProcessed) {
           try {
-            activationResult = await autopoolService.activateMemberInAutopool(
-              { userId: user._id, memberId: user.memberId },
+            // Process deposit for 3x3 AutoPool
+            activationResult = await autopool3x3Service.processDepositSuccessForAutoPool(
+              deposit,
               session,
             );
-            deposit.autoPoolProcessed = true;
-            deposit.rebirthProcessed = true;
+            // Fields are updated on the 'deposit' object inside the service
             shouldProcessAutoPoolQueue = true;
           } catch (err) {
             if (err?.code === 11000) {
-              console.warn("[Deposit] Autopool duplicate error details:", {
+              console.warn("[Deposit] AutoPool duplicate error details:", {
                 code: err?.code,
                 keyPattern: err?.keyPattern,
                 keyValue: err?.keyValue,
                 message: err?.message,
               });
               console.warn(
-                `[Deposit] Autopool rebirth nodes already exist for ${user.memberId} — skipping creation`,
+                `[Deposit] AutoPool already processed for ${user.memberId} — skipping`,
               );
               deposit.autoPoolProcessed = true;
               deposit.rebirthProcessed = true;
@@ -171,7 +172,8 @@ export const depositService = {
         try {
           distributionResult = await distributeDepositIncome({
             userId: user._id,
-            depositId,
+            depositId: deposit._id,
+            depositDoc: deposit,
             session,
           });
           console.log(
@@ -201,7 +203,7 @@ export const depositService = {
     });
 
     if (shouldProcessAutoPoolQueue) {
-      setImmediate(() => autopoolService.processAutopoolQueue());
+      setImmediate(() => autopool3x3Service.processAutoPoolQueue());
     }
 
     return result;
