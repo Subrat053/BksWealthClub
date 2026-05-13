@@ -202,7 +202,15 @@ export const autopool3x3Service = {
         );
       }
 
-      // Create rebirth AutoPool nodes (REBIRTH nodes)
+      // 5. Create main user AutoPool node (MAIN node)
+      const mainNode = await autopool3x3Service.createAutoPoolNodeForMainUser(
+        user._id,
+        deposit._id,
+        user.memberId,
+        s,
+      );
+
+      // 6. Create rebirth AutoPool nodes (REBIRTH nodes)
       for (const rebirth of rebirths) {
         const rebirthNode = await autopool3x3Service.createAutoPoolNodeForRebirth(
           rebirth._id,
@@ -211,7 +219,8 @@ export const autopool3x3Service = {
         rebirthNodes.push(rebirthNode);
       }
 
-      // Enqueue rebirth nodes
+      // 7. Enqueue all nodes
+      await autopool3x3Service.enqueueAutoPoolNode(mainNode._id, s);
       for (const node of rebirthNodes) {
         await autopool3x3Service.enqueueAutoPoolNode(node._id, s);
       }
@@ -227,6 +236,7 @@ export const autopool3x3Service = {
       return {
         depositId: deposit._id,
         userId: user._id,
+        mainNodeId: mainNode._id,
         rebirthNodeIds: rebirthNodes.map((n) => n._id),
         rebirthIds: rebirths.map((r) => r.rebirthCode),
       };
@@ -343,15 +353,16 @@ export const autopool3x3Service = {
    */
   createAutoPoolNodeForMainUser: async (userId, depositId, memberId, session = null) => {
     const fn = async (s) => {
-      // Check for duplicate
+      // Check for duplicate by userId/type OR by nodeCode (unique index)
       const existing = await AutoPoolNode.findOne({
-        userId,
-        nodeType: "MAIN",
-        depositId,
+        $or: [
+          { userId, nodeType: "MAIN", depositId },
+          { nodeCode: memberId }
+        ]
       }).session(s);
 
       if (existing) {
-        console.log(`[AutoPool] Main node already exists for ${memberId}, reusing`);
+        console.log(`[AutoPool] Node with code ${memberId} already exists, reusing`);
         return existing;
       }
 
@@ -580,8 +591,11 @@ export const autopool3x3Service = {
 
       console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
 
-      // Generate new rebirth IDs ONLY for REBIRTH nodes
+      // ─── REGENERATION LOGIC ───
+      // Rule: If the node is a "deposited money" account (MAIN or ROOT), no rebirth is generated.
+      // If it's a "rebirth" account (REBIRTH), it generates 2 new rebirths.
       if (node.nodeType === "REBIRTH") {
+        console.log(`[AutoPool] REBIRTH node ${node.nodeCode} completed. Generating next cycle rebirths.`);
         const newRebirths = await autopool3x3Service.generateNextRebirthsFromCompletedNode(
           node._id,
           s,
@@ -595,15 +609,15 @@ export const autopool3x3Service = {
           );
           await autopool3x3Service.enqueueAutoPoolNode(rebirthNode._id, s);
         }
+        
+        node.rebirthGenerated = true;
+        node.rebirthGeneratedAt = new Date();
       } else {
-        console.log(`[AutoPool] ${node.nodeType} node ${node.nodeCode} completed. No additional rebirths generated.`);
+        console.log(`[AutoPool] ${node.nodeType} node ${node.nodeCode} (Deposited Money Account) completed. No additional rebirths generated.`);
+        node.rebirthGenerated = false;
       }
 
-      // Mark rebirths as generated
-      node.rebirthGenerated = true;
-      node.rebirthGeneratedAt = new Date();
       await node.save({ session: s });
-
       return node;
     };
 

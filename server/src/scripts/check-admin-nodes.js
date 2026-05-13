@@ -1,17 +1,16 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import path from 'path';
 
 dotenv.config({ path: './.env' });
 
 const schema = new mongoose.Schema({}, { strict: false });
 const Node = mongoose.model('AutoPoolNode', schema, 'autopoolnodes');
 
-async function checkNodes() {
+async function check() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/test');
+    await mongoose.connect(process.env.MONGODB_URI);
     const nodes = await Node.find({ 
-      nodeCode: { $in: ['BKS000000', 'BKS849093'] } 
+      nodeCode: { $in: ['BKS000000', 'BKS000000-R1', 'BKS000000-R2'] } 
     }).lean();
     console.log(JSON.stringify(nodes, null, 2));
     process.exit(0);
@@ -21,4 +20,4 @@ async function checkNodes() {
   }
 }
 
-checkNodes();
+check();
