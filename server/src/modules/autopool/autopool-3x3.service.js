@@ -114,7 +114,7 @@ async function ensureAutoPoolRoot(session = null) {
       status: "PLACED", // Root is always placed
       isRoot: true,
       isOperationalRoot: true,
-      queueTimestamp: new Date(0),
+      queueTimestamp: new Date("2000-01-01T00:00:00Z"),
     }], { session });
     
     rootNode = Array.isArray(results) ? results[0] : results;
@@ -128,6 +128,7 @@ async function ensureAutoPoolRoot(session = null) {
       rootNode.isOperationalRoot = true;
       rootNode.matrixParentId = null;
       rootNode.parentNodeId = null;
+      rootNode.queueTimestamp = new Date("2000-01-01T00:00:00Z");
       await rootNode.save({ session });
     }
   }

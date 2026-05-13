@@ -141,7 +141,7 @@ export async function seedOperationalAdmin() {
       matrixParentId: null, 
       parentNodeId: null,
       nodeCode: { $ne: memberId },
-      status: "PLACED",
+      status: { $in: ["PLACED", "COMPLETED"] },
       nodeType: { $ne: "ROOT" }
     });
     
