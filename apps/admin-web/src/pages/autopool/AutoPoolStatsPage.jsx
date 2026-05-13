@@ -8,7 +8,9 @@ const AutoPoolStatsPage = () => {
     pendingEntries: 0,
     placedEntries: 0,
     completedEntries: 0,
-    totalRebirths: 0
+    totalRebirths: 0,
+    queueWaiting: 0,
+    queueProcessing: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +31,8 @@ const AutoPoolStatsPage = () => {
     { title: "Placed Nodes", value: stats.placedEntries, icon: "🏗️", color: "indigo" },
     { title: "Completed Nodes", value: stats.completedEntries, icon: "✅", color: "emerald" },
     { title: "Total Rebirths", value: stats.totalRebirths, icon: "♻️", color: "purple" },
+    { title: "Queue Waiting", value: stats.queueWaiting, icon: "🕒", color: "slate" },
+    { title: "Queue Processing", value: stats.queueProcessing, icon: "⚙️", color: "slate" },
   ];
 
   return (
@@ -38,7 +42,7 @@ const AutoPoolStatsPage = () => {
         subtitle="Global overview of the Auto Pool system performance"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-6">
         {statCards.map((card, index) => (
           <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">

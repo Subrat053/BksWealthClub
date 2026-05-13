@@ -2,33 +2,23 @@ import mongoose from "mongoose";
 
 const autoPoolQueueSchema = new mongoose.Schema(
   {
-    nodeId: {
+    rebirthNodeId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "AutoPoolEntry",
+      ref: "RebirthId",
       required: true,
       unique: true,
       index: true,
     },
-    queueTimestamp: { type: Date, default: Date.now, index: true },
     queuePosition: { type: Number, required: true, index: true },
-    status: {
-      type: String,
-      enum: ["WAITING", "PROCESSING", "PLACED"],
-      default: "WAITING",
-      index: true,
-    },
-    processingLockId: { type: String, default: null },
+    processed: { type: Boolean, default: false, index: true },
+    processedAt: { type: Date, default: null },
+    processingLockId: { type: String, default: null, index: true },
     processingStartedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
 
-autoPoolQueueSchema.index({ status: 1, queuePosition: 1 });
-
-autoPoolQueueSchema.index(
-  { status: 1, queueTimestamp: 1, queuePosition: 1 },
-  { name: "fifo_queue" },
-);
+autoPoolQueueSchema.index({ processed: 1, queuePosition: 1 });
 
 export const AutoPoolQueue =
   mongoose.models.AutoPoolQueue ||

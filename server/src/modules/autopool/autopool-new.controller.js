@@ -3,40 +3,45 @@ import { asyncHandler } from "../../core/asyncHandler.js";
 import { AutoPoolEntry } from "./autopool-entry.model.js";
 import { AutoPoolQueue } from "./autopool-queue.model.js";
 import { RebirthId } from "./rebirth.model.js";
+import { AutopoolMatrix } from "./autopool-matrix.model.js";
 
 export const getQueue = asyncHandler(async (req, res) => {
-  const queue = await AutoPoolQueue.find({ status: { $ne: "PLACED" } })
-    .sort({ queuePosition: 1 })
-    .populate({
-      path: "nodeId",
-      match: { sourceType: "REBIRTH" },
-      populate: [
-        { path: "ownerUserId", select: "fullName memberId" },
-        { path: "matrixParentEntryId", select: "displayId" },
-      ],
-    })
-    .lean();
+  // Support both legacy (nodeId) and new (rebirthNodeId) queue documents.
+  // Only populate `nodeId` when the schema defines it to avoid strictPopulate errors.
+    const queue = await AutoPoolQueue.find({ processed: false })
+      .sort({ queuePosition: 1 })
+      .populate({
+        path: "rebirthNodeId",
+        populate: [{ path: "ownerUserId", select: "fullName memberId" }],
+      })
+      .lean();
 
-  const filtered = queue.filter((item) => item.nodeId);
-  const data = filtered.map((item) => ({
-    ...item.nodeId,
-    queueId: item._id,
-    queueStatus: item.status,
-    queuePosition: item.queuePosition,
-    queueTimestamp: item.queueTimestamp,
-  }));
+    const data = queue
+      .map((item) => {
+        const node = item.rebirthNodeId;
+        if (!node) return null;
+        return {
+          ...node,
+          queueId: item._id,
+          queueStatus: item.processed ? "PROCESSED" : "WAITING",
+          queuePosition: item.queuePosition,
+          queueTimestamp: item.createdAt,
+        };
+      })
+      .filter(Boolean);
 
-  res.json(new ApiResponse({ message: "Queue fetched", data }));
+    res.json(new ApiResponse({ message: "Queue fetched", data }));
 });
 
 export const getTree = asyncHandler(async (req, res) => {
-  const nodes = await AutoPoolEntry.find({
-    status: { $ne: "PENDING" },
-    sourceType: "REBIRTH",
-  })
-    .populate("ownerUserId", "fullName memberId")
-    .populate("matrixParentEntryId", "displayId")
-    .sort({ placedAt: 1, queueTimestamp: 1 })
+  // Return the autopool matrix view instead of legacy AutoPoolEntry
+  const nodes = await AutopoolMatrix.find({})
+    .populate({
+      path: "linkedRebirthNodeId",
+      populate: { path: "ownerUserId", select: "fullName memberId" },
+    })
+    .populate("parentPoolNodeId", "poolNodeId")
+    .sort({ createdAt: 1 })
     .lean();
 
   res.json(new ApiResponse({ message: "Tree fetched", data: nodes }));
@@ -44,31 +49,29 @@ export const getTree = asyncHandler(async (req, res) => {
 
 export const getStats = asyncHandler(async (req, res) => {
   const [
-    totalEntries,
-    pendingEntries,
-    placedEntries,
-    completedEntries,
+    totalMatrixNodes,
+    placedNodes,
+    completedNodes,
     totalRebirths,
     queueWaiting,
     queueProcessing,
   ] = await Promise.all([
-    AutoPoolEntry.countDocuments(),
-    AutoPoolEntry.countDocuments({ status: "PENDING" }),
-    AutoPoolEntry.countDocuments({ status: "PLACED" }),
-    AutoPoolEntry.countDocuments({ status: "COMPLETED" }),
+    AutopoolMatrix.countDocuments(),
+    AutopoolMatrix.countDocuments({ status: "PLACED" }),
+    AutopoolMatrix.countDocuments({ status: "COMPLETED" }),
     RebirthId.countDocuments(),
-    AutoPoolQueue.countDocuments({ status: "WAITING" }),
-    AutoPoolQueue.countDocuments({ status: "PROCESSING" }),
+    AutoPoolQueue.countDocuments({ processed: false }),
+    AutoPoolQueue.countDocuments({ processingLockId: { $ne: null } }),
   ]);
 
   res.json(
     new ApiResponse({
       message: "Stats fetched",
       data: {
-        totalEntries,
-        pendingEntries,
-        placedEntries,
-        completedEntries,
+        totalEntries: totalMatrixNodes,
+        pendingEntries: totalMatrixNodes - placedNodes,
+        placedEntries: placedNodes,
+        completedEntries: completedNodes,
         totalRebirths,
         queueWaiting,
         queueProcessing,

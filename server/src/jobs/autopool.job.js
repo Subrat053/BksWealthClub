@@ -4,8 +4,10 @@
 
   const runQueue = async () => {
     try {
-      const { autoPoolNewService } = await import("../modules/autopool/autopool-new.service.js");
-      await autoPoolNewService.processAutoPoolQueue();
+      const { autopoolService } = await import(
+        "../modules/autopool/autopool.service.js",
+      );
+      await autopoolService.processAutopoolQueue();
     } catch (error) {
       console.error("[AutoPool] Scheduled queue processing failed:", error);
     }

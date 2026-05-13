@@ -1,59 +1,61 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../../middleware/auth.middleware.js";
 import {
-  getMemberTreeController,
-  getCommunityTreeController,
-  getPoolStatsController,
+  getAutopoolQueueController,
+  processAutopoolQueueController,
+  getAutopoolMatrixController,
+  getAutopoolNodeController,
+  getMyRebirthTreeController,
+  getRebirthTreeByUserController,
 } from "./autopool.controller.js";
 import {
-  getQueue,
-  getTree,
-  getStats,
-  getUserDetail,
-  getMyAutoPool,
-  getNodeById,
-  processQueue,
+  getQueue as getQueueV2,
+  getTree as getTreeV2,
+  getStats as getStatsV2,
+  getUserDetail as getUserDetailV2,
+  processQueue as processQueueV2,
 } from "./autopool-new.controller.js";
-import autopoolV2Routes from "./autopool-v2.routes.js";
 
 export const autopoolRouter = Router();
 
-// AUTOPOOL HOOK — added by autopool module
-autopoolRouter.use("/", autopoolV2Routes);
-
 // Member routes
-autopoolRouter.get("/my-tree", authMiddleware, getMemberTreeController);
-autopoolRouter.get("/my", authMiddleware, getMyAutoPool);
-autopoolRouter.get("/my-nodes", authMiddleware, getMyAutoPool);
+autopoolRouter.get("/rebirth-tree/my", authMiddleware, getMyRebirthTreeController);
 
-// Admin routes
-autopoolRouter.get("/admin/queue", authMiddleware, adminOnly, getQueue);
-autopoolRouter.get("/admin/tree", authMiddleware, adminOnly, getTree);
-autopoolRouter.get("/admin/stats", authMiddleware, adminOnly, getStats);
+// Legacy admin-compatible routes (used by admin frontend)
+autopoolRouter.get("/admin/queue", authMiddleware, adminOnly, getQueueV2);
+autopoolRouter.get("/admin/tree", authMiddleware, adminOnly, getTreeV2);
+autopoolRouter.get("/admin/stats", authMiddleware, adminOnly, getStatsV2);
 autopoolRouter.get(
   "/admin/user/:userId",
   authMiddleware,
   adminOnly,
-  getUserDetail,
+  getUserDetailV2,
 );
 autopoolRouter.post(
   "/admin/process-queue",
   authMiddleware,
   adminOnly,
-  processQueue,
+  processQueueV2,
 );
 
-// New API routes (per spec)
-autopoolRouter.post("/process", authMiddleware, adminOnly, processQueue);
-autopoolRouter.get("/tree", authMiddleware, adminOnly, getTree);
-autopoolRouter.get("/queue", authMiddleware, adminOnly, getQueue);
-autopoolRouter.get("/node/:id", authMiddleware, adminOnly, getNodeById);
-
-// Old routes
+// Admin routes
 autopoolRouter.get(
-  "/community-tree",
+  "/rebirth-tree/:userId",
   authMiddleware,
   adminOnly,
-  getCommunityTreeController,
+  getRebirthTreeByUserController,
 );
-autopoolRouter.get("/stats", authMiddleware, adminOnly, getPoolStatsController);
+autopoolRouter.get("/queue", authMiddleware, adminOnly, getAutopoolQueueController);
+autopoolRouter.post(
+  "/process",
+  authMiddleware,
+  adminOnly,
+  processAutopoolQueueController,
+);
+autopoolRouter.get("/matrix", authMiddleware, adminOnly, getAutopoolMatrixController);
+autopoolRouter.get(
+  "/matrix/:id",
+  authMiddleware,
+  adminOnly,
+  getAutopoolNodeController,
+);

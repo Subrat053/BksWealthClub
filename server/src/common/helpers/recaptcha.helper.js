@@ -1,4 +1,7 @@
 ﻿export const verifyRecaptchaToken = async (captchaToken, remoteIp) => {
+  // Dev-only bypass controlled explicitly via RECAPTCHA_BYPASS env flag.
+  if (process.env.RECAPTCHA_BYPASS === "true") return true;
+
   if (!captchaToken) {
     throw new Error("Captcha verification is required.");
   }

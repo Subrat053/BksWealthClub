@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 import { ApiError } from "../../core/ApiError.js";
 import { depositRepository } from "./deposit.repository.js";
 import { DepositModel } from "./deposit.model.js";
-import { autopoolV2Service } from "../autopool/autopool-v2.service.js";
-import { autoPoolNewService } from "../autopool/autopool-new.service.js";
+import { autopoolService } from "../autopool/autopool.service.js";
 import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { ACTIVATION_AMOUNT_USD } from "../autopool/autopool.engine.js";
@@ -139,39 +138,27 @@ export const depositService = {
           deposit.activationProcessed = true;
         }
 
-        if (!deposit.autoPoolProcessed) {
+        if (!deposit.autoPoolProcessed || !deposit.rebirthProcessed) {
           try {
-            activationResult = await autopoolV2Service.registerUserInAutopool(
-              user._id,
+            activationResult = await autopoolService.activateMemberInAutopool(
+              { userId: user._id, memberId: user.memberId },
               session,
             );
             deposit.autoPoolProcessed = true;
-          } catch (err) {
-            if (err?.code === 11000) {
-              console.warn(
-                `[Deposit] Autopool nodes already exist for ${user.memberId} — skipping creation`,
-              );
-              deposit.autoPoolProcessed = true;
-            } else {
-              throw err;
-            }
-          }
-        }
-
-        if (!deposit.rebirthProcessed) {
-          try {
-            await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
-              user._id,
-              deposit._id,
-              session,
-            );
             deposit.rebirthProcessed = true;
             shouldProcessAutoPoolQueue = true;
           } catch (err) {
             if (err?.code === 11000) {
+              console.warn("[Deposit] Autopool duplicate error details:", {
+                code: err?.code,
+                keyPattern: err?.keyPattern,
+                keyValue: err?.keyValue,
+                message: err?.message,
+              });
               console.warn(
-                `[Deposit] AutoPool rebirth nodes already exist for ${user.memberId} — skipping creation`,
+                `[Deposit] Autopool rebirth nodes already exist for ${user.memberId} — skipping creation`,
               );
+              deposit.autoPoolProcessed = true;
               deposit.rebirthProcessed = true;
               shouldProcessAutoPoolQueue = true;
             } else {
@@ -214,7 +201,7 @@ export const depositService = {
     });
 
     if (shouldProcessAutoPoolQueue) {
-      setImmediate(() => autoPoolNewService.processAutoPoolQueue());
+      setImmediate(() => autopoolService.processAutopoolQueue());
     }
 
     return result;

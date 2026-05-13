@@ -16,6 +16,7 @@ import {
 } from "../../common/service/email.service.js";
 import { sendOtpEmail } from "../../common/service/email.service.js";
 import { twoFactorService } from "../twofactor/twofactor.service.js";
+import { referralService } from "../referral/referral.service.js";
 
 // 👁️ Get All Users
 // 👁️ Get Admin Summary
@@ -322,6 +323,11 @@ export const completeUserInvite = async (req, res) => {
       isEmailVerified: true,
     });
 
+    await referralService.createReferralTreeNode({
+      userId: user._id,
+      sponsorUserId: sponsor.sponsorUser?._id || null,
+    });
+
     await AdminUserInvite.deleteOne({ _id: invite._id });
     await sendWelcomeEmail(
       user.email,
@@ -397,6 +403,11 @@ export const createUserByAdmin = async (req, res) => {
       status: "active",
       isActivated: true,
       isEmailVerified: true,
+    });
+
+    await referralService.createReferralTreeNode({
+      userId: newUser._id,
+      sponsorUserId: sponsorUser?._id || null,
     });
     await sendWelcomeEmail(
       newUser.email,

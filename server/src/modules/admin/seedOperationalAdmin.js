@@ -72,26 +72,38 @@ export async function seedOperationalAdmin() {
     adminUser = existingAdmin;
   }
 
-  // Seed Auto Pool entries for Operational Admin if missing
   try {
-    const { AutoPoolEntry } = await import("../autopool/autopool-entry.model.js");
-    const { autoPoolNewService } = await import("../autopool/autopool-new.service.js");
-    
-    const existingMain = await AutoPoolEntry.findOne({ 
-      ownerUserId: adminUser._id, 
-      sourceType: "MAIN"
+    const { referralService } = await import(
+      "../referral/referral.service.js",
+    );
+    await referralService.createReferralTreeNode({
+      userId: adminUser._id,
+      sponsorUserId: null,
+    });
+  } catch (err) {
+    logger.error("Failed to seed referral tree for Operational Admin:", err);
+  }
+
+  // Seed Autopool + rebirth nodes for Operational Admin if missing
+  try {
+    const { RebirthId } = await import("../autopool/rebirth.model.js");
+    const { autopoolService } = await import(
+      "../autopool/autopool.service.js",
+    );
+
+    const existingRoot = await RebirthId.findOne({
+      ownerUserId: adminUser._id,
+      rebirthCode: adminUser.memberId,
     });
 
-    if (!existingMain) {
-      // Create a dummy deposit ID just to satisfy the metadata requirement
-      const dummyDepositId = new (await import("mongoose")).default.Types.ObjectId();
-      await autoPoolNewService.createInitialAutoPoolEntriesAfterDeposit(
-        adminUser._id,
-        dummyDepositId
-      );
-      logger.info("Operational Admin Auto Pool entries created successfully");
+    if (!existingRoot) {
+      await autopoolService.activateMemberInAutopool({
+        userId: adminUser._id,
+        memberId: adminUser.memberId,
+      });
+      logger.info("Operational Admin rebirth nodes created successfully");
     }
   } catch (err) {
-    logger.error("Failed to seed Auto Pool for Operational Admin:", err);
+    logger.error("Failed to seed autopool for Operational Admin:", err);
   }
 }

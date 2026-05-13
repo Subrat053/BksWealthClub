@@ -87,17 +87,17 @@ const AutoPoolQueuePage = () => {
                 queue.map((entry, index) => (
                   <tr key={entry._id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-slate-600">{index + 1}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{entry.displayId}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{entry.rebirthCode}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       <div>{entry.ownerUserId?.fullName || "N/A"}</div>
                       <div className="text-xs text-slate-400">{entry.ownerUserId?.memberId}</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${entry.sourceType === "MAIN" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
-                        {entry.sourceType}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${entry.generation === 0 ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                        {entry.generation === 0 ? "ROOT" : `GEN ${entry.generation}`}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{entry.rebirthLevel}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{entry.generation}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {formatDate(entry.queueTimestamp)}
                     </td>
@@ -109,8 +109,8 @@ const AutoPoolQueuePage = () => {
                         {entry.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{entry.matrixParentEntryId?.displayId || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{entry.directChildrenCount} / 3</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{entry.parentPoolNodeId?.poolNodeId || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{entry.rebirthChildrenCount ?? 0} / 2</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {entry.completedAt ? formatDate(entry.completedAt).split(",")[0] : "-"}
                     </td>

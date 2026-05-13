@@ -4,29 +4,29 @@ import AdminPageHeader from "../../components/layout/AdminPageHeader";
 
 const TreeNode = ({ node, allNodes, depth = 0 }) => {
   const children = allNodes.filter(n => 
-    (n.matrixParentEntryId?._id === node._id) || (n.matrixParentEntryId === node._id)
+    (n.parentPoolNodeId?._id === node._id) || (n.parentPoolNodeId === node._id)
   );
   
   return (
     <div className="flex flex-col items-center">
       <div className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
         node.status === 'COMPLETED' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-indigo-200'
-      } shadow-lg min-w-[180px] text-center relative z-10`}>
+      } shadow-lg min-w-45 text-center relative z-10`}>
         <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-          node.sourceType === 'MAIN' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'
+          node.parentPoolNodeId ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'
         }`}>
-          {node.sourceType}
+          {node.parentPoolNodeId ? 'CHILD' : 'ROOT'}
         </div>
-        <p className="font-extrabold text-slate-900 text-sm mt-1">{node.displayId}</p>
-        <p className="text-[10px] text-slate-500 font-medium">{node.ownerUserId?.fullName || "Owner"}</p>
-        <p className="text-[9px] text-slate-400 font-mono mt-0.5">{node.ownerUserId?.memberId || "N/A"}</p>
+        <p className="font-extrabold text-slate-900 text-sm mt-1">{node.poolNodeId}</p>
+        <p className="text-[10px] text-slate-500 font-medium">{node.linkedRebirthNodeId?.ownerUserId?.fullName || "Owner"}</p>
+        <p className="text-[9px] text-slate-400 font-mono mt-0.5">{node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}</p>
         
         <div className="mt-3 flex justify-center gap-1.5">
           {[1, 2, 3].map(i => (
             <div 
               key={i} 
               className={`w-2.5 h-2.5 rounded-full border border-slate-200 shadow-inner ${
-                i <= node.directChildrenCount ? 'bg-gradient-to-tr from-emerald-400 to-emerald-600' : 'bg-slate-100'
+                i <= node.autopoolChildrenCount ? 'bg-linear-to-tr from-emerald-400 to-emerald-600' : 'bg-slate-100'
               }`} 
               title={`Child ${i}`}
             />
@@ -78,7 +78,7 @@ const AutoPoolTreePage = () => {
       setNodes(data);
       
       // Find the root (node with no parent in the current data set)
-      const root = data.find(n => !n.matrixParentEntryId);
+      const root = data.find(n => !n.parentPoolNodeId);
       setRootNode(root);
     } catch (err) {
       console.error("Failed to fetch tree:", err);
@@ -102,7 +102,7 @@ const AutoPoolTreePage = () => {
         </button>
       </div>
 
-      <div className="bg-slate-50 p-12 rounded-[2rem] shadow-inner border border-slate-200 overflow-auto min-h-[700px] flex justify-center items-start">
+      <div className="bg-slate-50 p-12 rounded-4xl shadow-inner border border-slate-200 overflow-auto min-h-175 flex justify-center items-start">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
@@ -112,7 +112,7 @@ const AutoPoolTreePage = () => {
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center max-w-md">
             <div className="text-4xl mb-4">🌳</div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">No Placed Nodes Yet</h3>
-            <p className="text-sm">The matrix tree is currently empty because no entries have been moved from the pending queue to the matrix.</p>
+            <p className="text-sm">The matrix tree is currently empty because no rebirth nodes have been placed into the matrix.</p>
             <p className="text-xs mt-4 text-indigo-600 font-semibold px-4 py-2 bg-indigo-50 rounded-lg">
               Go to the "Pool Queue" page and click "Process Queue Now" to start placement.
             </p>

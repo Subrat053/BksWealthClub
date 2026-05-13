@@ -14,6 +14,7 @@ import {
 } from "../../common/helpers/token.helper.js";
 import { generateMemberId } from "../../utils/generateMemberId.js";
 import { generateReferralCode } from "../../utils/generateReferralCode.js";
+import { referralService } from "../referral/referral.service.js";
 
 const buildReferralLink = (referralCode) => {
   const baseUrl = process.env.BASE_URL || process.env.CLIENT_URL;
@@ -92,6 +93,11 @@ export const registerUser = async (payload) => {
     activationStatus: "PENDING_EMAIL",
     isEmailVerified: false,
     isActivated: false,
+  });
+
+  await referralService.createReferralTreeNode({
+    userId: user._id,
+    sponsorUserId: sponsorUser?._id || null,
   });
 
   const verificationToken = generateRandomToken();

@@ -34,6 +34,7 @@ export const activationService = {
   adminExecuteActivation: async ({ userId }) => {
     const session = await mongoose.startSession();
     session.startTransaction();
+    let shouldProcessQueue = false;
 
     try {
       const user = await User.findById(userId).session(session);
@@ -57,12 +58,17 @@ export const activationService = {
       await user.save({ session });
 
       // Fire the autopool workflow (pass the session)
-      const result = await autopoolService.activateMemberInAutopool({
-        userId: user._id,
-        memberId: user.memberId,
-      }, session);
+      const result = await autopoolService.activateMemberInAutopool(
+        { userId: user._id, memberId: user.memberId },
+        session,
+      );
+      shouldProcessQueue = true;
 
       await session.commitTransaction();
+
+      if (shouldProcessQueue) {
+        setImmediate(() => autopoolService.processAutopoolQueue());
+      }
       return { activated: true, ...result };
     } catch (err) {
       await session.abortTransaction();

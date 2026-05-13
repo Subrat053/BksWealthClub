@@ -9,6 +9,27 @@ export const referralService = {
   createReferralRelation: async (payload) =>
     referralRepository.createRelation(payload),
 
+  createReferralTreeNode: async ({ userId, sponsorUserId }, session = null) => {
+    const sponsorNode = sponsorUserId
+      ? await referralRepository.findReferralTreeNode(sponsorUserId, session)
+      : null;
+
+    const referralLevel = sponsorNode ? sponsorNode.referralLevel + 1 : 0;
+    const referralPath = sponsorNode
+      ? [...(sponsorNode.referralPath || []), sponsorUserId]
+      : [];
+
+    return referralRepository.createReferralTreeNode(
+      {
+        userId,
+        sponsorUserId: sponsorUserId || null,
+        referralLevel,
+        referralPath,
+      },
+      session,
+    );
+  },
+
   getDirectReferralStats: async (sponsorUserRef) => {
     const directs =
       await referralRepository.getDirectsBySponsor(sponsorUserRef);
