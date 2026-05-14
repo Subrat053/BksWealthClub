@@ -15,6 +15,8 @@ export const env = {
   PORT: Number(process.env.PORT || 5000),
   API_PREFIX: process.env.API_PREFIX || "/api/v1",
   MONGODB_URI: process.env.MONGODB_URI || "",
+  OPERATIONAL_ADMIN_MEMBER_ID:
+    process.env.OPERATIONAL_ADMIN_MEMBER_ID || "BKS000000",
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
   ADMIN_URL: process.env.ADMIN_URL || "http://localhost:5174",
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || "access-dev-secret",

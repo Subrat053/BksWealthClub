@@ -3,31 +3,48 @@ import { autopoolService } from "../../services/autopool.service";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 
 const TreeNode = ({ node, allNodes, depth = 0 }) => {
-  const children = allNodes.filter(n => 
-    (n.parentPoolNodeId?._id === node._id) || (n.parentPoolNodeId === node._id)
+  const children = allNodes.filter(
+    (n) =>
+      n.parentPoolNodeId?._id === node._id || n.parentPoolNodeId === node._id,
   );
-  
+
   return (
     <div className="flex flex-col items-center">
-      <div className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
-        node.status === 'COMPLETED' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-indigo-200'
-      } shadow-lg min-w-45 text-center relative z-10`}>
-        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-          node.parentPoolNodeId ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'
-        }`}>
-          {node.parentPoolNodeId ? 'CHILD' : 'ROOT'}
+      <div
+        className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
+          node.status === "COMPLETED"
+            ? "bg-emerald-50 border-emerald-400"
+            : "bg-white border-indigo-200"
+        } shadow-lg min-w-45 text-center relative z-10`}
+      >
+        <div
+          className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+            node.parentPoolNodeId
+              ? "bg-purple-600 text-white"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          {node.parentPoolNodeId ? "CHILD" : "ROOT"}
         </div>
-        <p className="font-extrabold text-slate-900 text-sm mt-1">{node.poolNodeId}</p>
-        <p className="text-[10px] text-slate-500 font-medium">{node.linkedRebirthNodeId?.ownerUserId?.fullName || "Owner"}</p>
-        <p className="text-[9px] text-slate-400 font-mono mt-0.5">{node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}</p>
-        
+        <p className="font-extrabold text-slate-900 text-sm mt-1">
+          {node.poolNodeId}
+        </p>
+        <p className="text-[10px] text-slate-500 font-medium">
+          {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Owner"}
+        </p>
+        <p className="text-[9px] text-slate-400 font-mono mt-0.5">
+          {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
+        </p>
+
         <div className="mt-3 flex justify-center gap-1.5">
-          {[1, 2, 3].map(i => (
-            <div 
-              key={i} 
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
               className={`w-2.5 h-2.5 rounded-full border border-slate-200 shadow-inner ${
-                i <= node.autopoolChildrenCount ? 'bg-linear-to-tr from-emerald-400 to-emerald-600' : 'bg-slate-100'
-              }`} 
+                i <= node.autopoolChildrenCount
+                  ? "bg-linear-to-tr from-emerald-400 to-emerald-600"
+                  : "bg-slate-100"
+              }`}
               title={`Child ${i}`}
             />
           ))}
@@ -37,18 +54,19 @@ const TreeNode = ({ node, allNodes, depth = 0 }) => {
       {children.length > 0 && (
         <div className="flex flex-col items-center w-full mt-8 relative">
           <div className="w-0.5 h-8 bg-slate-300 absolute -top-8" />
-          
+
           <div className="flex justify-center gap-12 relative w-full pt-4">
             {/* Horizontal connection line */}
             {children.length > 1 && (
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-slate-300 mx-auto" 
-                style={{ 
-                  width: `calc(100% - ${100/children.length}%)`,
-                  left: `${50/children.length}%`
-                }} 
+              <div
+                className="absolute top-0 left-0 right-0 h-0.5 bg-slate-300 mx-auto"
+                style={{
+                  width: `calc(100% - ${100 / children.length}%)`,
+                  left: `${50 / children.length}%`,
+                }}
               />
             )}
-            
+
             {children.map((child, idx) => (
               <div key={child._id} className="relative pt-4">
                 <div className="w-0.5 h-4 bg-slate-300 absolute -top-4 left-1/2 -translate-x-1/2" />
@@ -76,9 +94,9 @@ const AutoPoolTreePage = () => {
     try {
       const data = await autopoolService.getTree();
       setNodes(data);
-      
+
       // Find the root (node with no parent in the current data set)
-      const root = data.find(n => !n.parentPoolNodeId);
+      const root = data.find((n) => !n.parentPoolNodeId);
       setRootNode(root);
     } catch (err) {
       console.error("Failed to fetch tree:", err);
@@ -90,11 +108,11 @@ const AutoPoolTreePage = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <AdminPageHeader 
-          title="Auto Pool Matrix Tree" 
+        <AdminPageHeader
+          title="Auto Pool Matrix Tree"
           subtitle="Real-time visual hierarchy of the 3x3 global matrix"
         />
-        <button 
+        <button
           onClick={fetchTree}
           className="px-5 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm font-medium text-sm"
         >
@@ -111,10 +129,16 @@ const AutoPoolTreePage = () => {
         ) : !rootNode ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center max-w-md">
             <div className="text-4xl mb-4">🌳</div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">No Placed Nodes Yet</h3>
-            <p className="text-sm">The matrix tree is currently empty because no rebirth nodes have been placed into the matrix.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
+              No Placed Nodes Yet
+            </h3>
+            <p className="text-sm">
+              The matrix tree is currently empty because no rebirth nodes have
+              been placed into the matrix.
+            </p>
             <p className="text-xs mt-4 text-indigo-600 font-semibold px-4 py-2 bg-indigo-50 rounded-lg">
-              Go to the "Pool Queue" page and click "Process Queue Now" to start placement.
+              Go to the "Pool Queue" page and click "Process Queue Now" to start
+              placement.
             </p>
           </div>
         ) : (

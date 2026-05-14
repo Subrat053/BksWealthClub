@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "../user/user.model.js";
 import { AdminModel } from "../admin/admin.model.js";
+import { env } from "../../config/env.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
@@ -179,12 +180,10 @@ export const getAdminReferralTree = async (req, res) => {
 
     const queryMemberId = req.query.memberId || req.query.sponsorId || null;
 
-    let rootId =
-      queryReferralId ||
-      req.auth?.adminId ||
-      req.admin?._id ||
-      req.admin?.id ||
-      null;
+    const operationalAdminMemberId =
+      env.OPERATIONAL_ADMIN_MEMBER_ID ||
+      process.env.OPERATIONAL_ADMIN_MEMBER_ID ||
+      "BK000000";
 
     const adminId = req.auth?.adminId;
     const admin = adminId
@@ -208,37 +207,55 @@ export const getAdminReferralTree = async (req, res) => {
           message: "No user found with this memberId.",
         });
       }
+    } else if (queryReferralId) {
+      root = await User.findById(queryReferralId)
+        .select("_id memberId fullName email status isActivated")
+        .lean();
 
-      rootId = root._id;
+      if (!root) {
+        root = await User.findOne({
+          $or: [
+            { referralCode: queryReferralId },
+            { memberId: queryReferralId },
+          ],
+        })
+          .select("_id memberId fullName email status isActivated")
+          .lean();
+      }
+
+      if (!root) {
+        return res.status(404).json({
+          success: false,
+          message: "No user found for the requested referral root.",
+        });
+      }
     }
 
-    if (!rootId) {
+    if (!root && !queryMemberId && !queryReferralId) {
+      root = await User.findOne({ memberId: operationalAdminMemberId })
+        .select("_id memberId fullName email status isActivated")
+        .lean();
+    }
+
+    if (!root) {
       return res.status(400).json({
         success: false,
         message: "referralId, memberId, or admin token is required.",
       });
     }
 
-    if (!root && !admin?.sponsorId) {
-      return res.status(400).json({
-        success: false,
-        message: "Admin sponsorId is missing. Unable to build admin root tree.",
-      });
-    }
-
-    const children = root
-      ? await buildReferralTree(rootId, 1)
-      : await buildAdminRootChildren(admin?.sponsorId, 1);
+    const children = await buildReferralTree(root._id, 1);
 
     return res.status(200).json({
       success: true,
       data: {
         root: {
-          _id: root?._id || admin?._id || rootId,
-          memberId: root?.memberId || admin?.sponsorId || req.auth?.memberId || "ADMIN001",
-          fullName: root?.fullName || admin?.username || req.auth?.fullName || "Admin",
-          email: root?.email || admin?.email || req.auth?.email || null,
-          role: root ? "user" : admin?.role || "admin",
+          _id: root._id,
+          memberId: root.memberId || operationalAdminMemberId,
+          fullName:
+            root.fullName || admin?.username || req.auth?.fullName || "Admin",
+          email: root.email || admin?.email || req.auth?.email || null,
+          role: root.memberId === operationalAdminMemberId ? "admin" : "user",
           children,
         },
       },
@@ -293,9 +310,11 @@ export const validateSponsorId = async (req, res) => {
       });
     }
 
+    const normalizedSponsorId = sponsorId.toUpperCase();
+
     // Look for user with matching memberId or admin with matching sponsorId
     const sponsor = await User.findOne({
-      memberId: sponsorId.toUpperCase(),
+      memberId: normalizedSponsorId,
     })
       .select("_id memberId fullName email status isActivated")
       .lean();
@@ -316,7 +335,7 @@ export const validateSponsorId = async (req, res) => {
 
     // If not a user, check if it's a valid admin sponsor ID
     const admin = await AdminModel.findOne({
-      sponsorId: sponsorId.toUpperCase(),
+      sponsorId: normalizedSponsorId,
     })
       .select("sponsorId username email")
       .lean();
