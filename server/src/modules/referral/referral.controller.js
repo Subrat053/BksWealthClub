@@ -14,6 +14,7 @@ const buildReferralTree = async (parentId, level = 1) => {
 
   const children = await User.find({
     referredByUserId: queryId,
+    _id: { $ne: queryId }, // Prevent self-referral duplication/loops
   })
     .select(
       "_id memberId fullName email phone status isActivated referredByUserId createdAt",
@@ -47,6 +48,7 @@ const buildReferralTree = async (parentId, level = 1) => {
 const buildAdminRootChildren = async (adminSponsorId, level = 1) => {
   const children = await User.find({
     sponsorId: adminSponsorId,
+    memberId: { $ne: adminSponsorId }, // Prevent root admin from being its own child
   })
     .select(
       "_id memberId fullName email phone status isActivated referredByUserId createdAt",

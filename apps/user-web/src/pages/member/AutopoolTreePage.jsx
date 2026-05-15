@@ -14,7 +14,7 @@ const formatDate = (dateStr) => {
 };
 
 export default function AutopoolTreePage() {
-  const [data, setData] = useState({ entries: [], rebirths: [] });
+  const [data, setData] = useState({ entries: [], completions: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,20 +34,20 @@ export default function AutopoolTreePage() {
         <div className="h-1 w-24 rounded-full bg-linear-to-r from-amber-300 via-amber-500 to-yellow-200" />
         <h1 className="text-3xl font-bold leading-none text-white md:text-4xl">My Auto Pool</h1>
         <p className="max-w-2xl text-sm text-amber-100/70 md:text-base">
-          Track your main and rebirth IDs in the 3x3 global matrix.
+          Track your rebirth nodes and level completions in the 3x3 global matrix.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-4">
-          <h3 className="px-2 text-lg font-bold text-amber-100">Pool Entries</h3>
+          <h3 className="px-2 text-lg font-bold text-amber-100">Active Rebirth Nodes</h3>
           {loading ? (
             <Card className="border-amber-500/20! bg-[#081730]/95! flex justify-center py-10 text-amber-100!">
               Loading...
             </Card>
           ) : data.entries.length === 0 ? (
             <Card className="border-amber-500/20! bg-[#081730]/95! text-center py-10 text-amber-200/70! italic">
-              No pool entries found.
+              No active rebirth nodes found.
             </Card>
           ) : (
             data.entries.map((entry) => (
@@ -71,18 +71,14 @@ export default function AutopoolTreePage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-lg border border-amber-500/10 bg-white/5 p-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase text-amber-200/50">Type</p>
-                    <p className="text-sm font-bold text-white">{entry.sourceType}</p>
-                  </div>
-                  <div className="rounded-lg border border-amber-500/10 bg-white/5 p-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase text-amber-200/50">Children</p>
-                    <p className="text-sm font-bold text-white">{entry.directChildrenCount} / 3</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-amber-500/10 bg-white/5 p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase text-amber-200/50">Level</p>
-                    <p className="text-sm font-bold text-white">{entry.rebirthLevel}</p>
+                    <p className="text-sm font-bold text-white">AutoPool {entry.levelNumber + 1}</p>
+                  </div>
+                  <div className="rounded-lg border border-amber-500/10 bg-white/5 p-3 text-center">
+                    <p className="text-[10px] font-semibold uppercase text-amber-200/50">Sequence</p>
+                    <p className="text-sm font-bold text-white">{entry.levelSequence}</p>
                   </div>
                 </div>
 
@@ -98,16 +94,16 @@ export default function AutopoolTreePage() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="px-2 text-lg font-bold text-amber-100">Rebirth History</h3>
+          <h3 className="px-2 text-lg font-bold text-amber-100">Level Completion Status</h3>
           <Card className="border-amber-500/20! bg-[#081730]/95!">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-amber-500/10">
-                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Rebirth Code</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Gen</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Created</th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Auto Pool</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Level</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Progress</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase text-amber-300">Completed On</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-amber-500/10">
@@ -115,20 +111,24 @@ export default function AutopoolTreePage() {
                     <tr>
                       <td colSpan="4" className="px-4 py-10 text-center text-amber-200/40">Loading...</td>
                     </tr>
-                  ) : data.rebirths.length === 0 ? (
+                  ) : data.completions.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-4 py-10 text-center italic text-amber-200/40">No rebirths yet.</td>
+                      <td colSpan="4" className="px-4 py-10 text-center italic text-amber-200/40">No completions recorded yet.</td>
                     </tr>
                   ) : (
-                    data.rebirths.map((rebirth) => (
-                      <tr key={rebirth._id} className="transition-colors hover:bg-white/5">
-                        <td className="px-4 py-3 text-sm font-mono text-white">{rebirth.rebirthCode}</td>
-                        <td className="px-4 py-3 text-sm text-amber-100">{rebirth.generation}</td>
-                        <td className="px-4 py-3 text-sm text-amber-100/70">{formatDate(rebirth.createdAt).split(",")[0]}</td>
+                    data.completions.map((comp) => (
+                      <tr key={comp._id} className="transition-colors hover:bg-white/5">
+                        <td className="px-4 py-3 text-sm font-bold text-white">AutoPool {comp.autoPoolNumber}</td>
+                        <td className="px-4 py-3 text-sm text-amber-100">
+                          {comp.completedNodeCount} / {comp.expectedNodeCount}
+                        </td>
                         <td className="px-4 py-3">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${rebirth.autoPoolEntryId ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/15 text-amber-200/70"}`}>
-                            {rebirth.autoPoolEntryId ? "ENTERED" : "PENDING"}
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${comp.isCompleted ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/15 text-amber-300"}`}>
+                            {comp.isCompleted ? "COMPLETED" : "IN PROGRESS"}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-amber-100/70">
+                          {comp.completedAt ? formatDate(comp.completedAt).split(",")[0] : "---"}
                         </td>
                       </tr>
                     ))

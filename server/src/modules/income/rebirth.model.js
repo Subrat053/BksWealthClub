@@ -38,11 +38,11 @@ const rebirthSchema = new mongoose.Schema(
       min: 0,
     },
 
-    /** The deposit that created this rebirth */
+    /** The deposit that created this rebirth (null for system seeds) */
     sourceDepositId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Deposit",
-      required: true,
+      required: false,
       index: true,
     },
   },

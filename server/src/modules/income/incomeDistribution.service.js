@@ -22,6 +22,7 @@ import {
   LEVEL_INCOME_RULES,
   INCOME_TYPES,
 } from "./income.constants.js";
+import { generateInitialRebirthCodes } from "../autopool/autopool-3x3.service.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -157,8 +158,7 @@ export async function distributeDepositIncome({ userId, depositId, depositDoc = 
     let totalDistributed = 0;
 
     // ── 5. Create 2 Rebirth IDs (upsert-safe for retries) ───────────────────
-    const rb1Code = `${user.memberId}-RB1`;
-    const rb2Code = `${user.memberId}-RB2`;
+    const [rb1Code, rb2Code] = generateInitialRebirthCodes(user.memberId);
 
     // Use findOneAndUpdate with $setOnInsert so a retry won't create duplicates.
     // The compound unique index (userId, sourceDepositId, sequenceNo) enforces
@@ -199,7 +199,7 @@ export async function distributeDepositIncome({ userId, depositId, depositDoc = 
       type: INCOME_TYPES.RB_INCOME,
       amount: RB1_AMOUNT,
       status: "CREDITED",
-      remarks: `Rebirth RB1 (${rb1Code}) wallet credit of $${RB1_AMOUNT}`,
+      remarks: `Rebirth ID ${rb1Code} wallet credit of $${RB1_AMOUNT}`,
     });
     totalDistributed = round2(totalDistributed + RB1_AMOUNT);
 
@@ -217,7 +217,7 @@ export async function distributeDepositIncome({ userId, depositId, depositDoc = 
       type: INCOME_TYPES.RB_INCOME,
       amount: RB2_AMOUNT,
       status: "CREDITED",
-      remarks: `Rebirth RB2 (${rb2Code}) wallet credit of $${RB2_AMOUNT}`,
+      remarks: `Rebirth ID ${rb2Code} wallet credit of $${RB2_AMOUNT}`,
     });
     totalDistributed = round2(totalDistributed + RB2_AMOUNT);
 
@@ -763,10 +763,12 @@ export async function getAdminUsersWithRebirths({
   status = "",
   type = "all", // "all" | "users" | "rebirths"
 } = {}) {
+  // Normalize type for internal logic
+  const actualType = type === "actual" ? "users" : type;
   const result = [];
 
-  // Normal users
-  if (type === "all" || type === "users") {
+  // Normal users (Main Accounts)
+  if (actualType === "all" || actualType === "users") {
     const userFilter = {};
     if (status) userFilter.status = status;
     if (search) {
@@ -820,7 +822,7 @@ export async function getAdminUsersWithRebirths({
   }
 
   // Rebirth IDs
-  if (type === "all" || type === "rebirths") {
+  if (actualType === "all" || actualType === "rebirths") {
     const rbFilter = {};
     if (search) {
       rbFilter.$or = [{ rebirthCode: { $regex: search, $options: "i" } }];

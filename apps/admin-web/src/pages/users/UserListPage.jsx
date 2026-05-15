@@ -388,9 +388,9 @@ export default function UserListPage() {
           }
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
-          <option value="all">All Types</option>
-          <option value="users">Normal Users</option>
-          <option value="rebirths">Rebirth Accounts</option>
+          <option value="all">All Accounts (Mixed)</option>
+          <option value="users">Actual IDs (Main Accounts)</option>
+          <option value="rebirths">Rebirth IDs (0.1, 0.2, etc.)</option>
         </select>
       </div>
 

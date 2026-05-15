@@ -63,6 +63,37 @@ const autopoolNodeSchema = new mongoose.Schema(
       index: true,
     },
 
+    // User member ID (denormalized for faster querying/rendering)
+    ownerMemberId: {
+      type: String,
+      index: true,
+    },
+
+    // Display code for the tree (alias for nodeCode)
+    displayCode: {
+      type: String,
+      index: true,
+    },
+
+    // Level number (0, 1, 2...)
+    levelNumber: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+
+    // Sequence within the level (1, 2, 3...)
+    levelSequence: {
+      type: Number,
+      default: 0,
+    },
+
+    // Flag for main user nodes (though new rules say they don't enter AutoPool)
+    isMainUserNode: {
+      type: Boolean,
+      default: false,
+    },
+
     // Reference to the AutoPool node that generated this node (for rebirth nodes)
     generatedFromNodeId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -162,8 +193,8 @@ autopoolNodeSchema.index({ status: 1, directChildrenCount: 1, queueTimestamp: 1 
 // Index for finding nodes by owner
 autopoolNodeSchema.index({ ownerUserId: 1, nodeType: 1 });
 
-// Compound index for duplicate prevention
-autopoolNodeSchema.index({ depositId: 1, ownerUserId: 1, nodeType: 1 }, { sparse: true });
+// Compound index for duplicate prevention of rebirths within a level
+autopoolNodeSchema.index({ ownerUserId: 1, levelNumber: 1, levelSequence: 1 }, { unique: true, sparse: true });
 
 export const AutoPoolNode =
   mongoose.models.AutoPoolNode ||

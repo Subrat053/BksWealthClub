@@ -110,7 +110,7 @@ const AutoPoolQueuePage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{entry.parentPoolNodeId?.poolNodeId || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{entry.rebirthChildrenCount ?? 0} / 2</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{entry.rebirthChildrenCount ?? 0} / 3</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {entry.completedAt ? formatDate(entry.completedAt).split(",")[0] : "-"}
                     </td>

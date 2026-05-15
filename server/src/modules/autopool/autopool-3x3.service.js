@@ -15,6 +15,7 @@ import { AutoPoolNode } from "./autopool-matrix.model.js";
 import { RebirthId } from "./rebirth.model.js";
 import { DepositModel } from "../deposit/deposit.model.js";
 import { User } from "../user/user.model.js";
+import { AutoPoolLevelCompletion } from "./autopool-level-completion.model.js";
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 100;
@@ -58,19 +59,23 @@ async function withTransactionRetry(fn, retries = MAX_RETRIES) {
 }
 
 // ─── Rebirth Code Generation ────────────────────────────────────────────────────
-function generateRebirthCode({ memberIdOrCode, parentRebirthCode, generation, sequence }) {
-  // For initial rebirths (generation 0)
-  if (!parentRebirthCode) {
-    return `${memberIdOrCode}-R${sequence}`;
-  }
+/**
+ * Format: MEMBERID-LEVEL.SEQUENCE
+ * Round 0: BKS12345-0.1, BKS12345-0.2
+ * Round 1: BKS12345-1.1, BKS12345-1.2, BKS12345-1.3, BKS12345-1.4
+ */
+export function generateRebirthCode({ memberId, level, sequence }) {
+  return `${memberId}-${level}.${sequence}`;
+}
 
-  // For rebirths from completed nodes
-  if (generation === 1) {
-    return `${parentRebirthCode}-X${sequence}`;
-  }
-
-  // For deeper generations
-  return `${parentRebirthCode}-A${sequence}`;
+/**
+ * Generate the 2 initial rebirth codes for a new user (Level 0)
+ */
+export function generateInitialRebirthCodes(memberId) {
+  return [
+    generateRebirthCode({ memberId, level: 0, sequence: 1 }),
+    generateRebirthCode({ memberId, level: 0, sequence: 2 })
+  ];
 }
 
 // ─── Root Management ────────────────────────────────────────────────────────────
@@ -136,6 +141,36 @@ async function ensureAutoPoolRoot(session = null) {
   return rootNode;
 }
 
+/**
+ * Ensure initial Admin Rebirths exist and are ENQUEUED
+ * Format: MEMBERID-LEVEL.SEQUENCE
+ */
+async function ensureAdminInitialRebirths(session = null) {
+  const memberId = "BKS000000";
+  const user = await User.findOne({ memberId }).session(session);
+  if (!user) return;
+
+  for (let i = 1; i <= 2; i++) {
+    const displayCode = `${memberId}-0.${i}`;
+    let node = await AutoPoolNode.findOne({ displayCode }).session(session);
+    if (!node) {
+      console.log(`[AutoPool] Enqueuing Admin Rebirth Node: ${displayCode}`);
+      await AutoPoolNode.create([{
+        ownerUserId: user._id,
+        ownerMemberId: memberId,
+        nodeCode: displayCode,
+        displayCode: displayCode,
+        nodeId: displayCode,
+        nodeType: "REBIRTH",
+        levelNumber: 0,
+        levelSequence: i,
+        status: "PENDING", // Enqueued as per rules
+        queueTimestamp: new Date("2000-01-01T00:00:00Z"), // Old timestamp to ensure priority
+      }], { session });
+    }
+  }
+}
+
 // ─── Core Service Functions ────────────────────────────────────────────────────
 
 export const autopool3x3Service = {
@@ -158,77 +193,49 @@ export const autopool3x3Service = {
       if (!deposit) throw new Error(`Deposit ${depositIdOrDoc} not found`);
 
       // Guard: already processed?
-      if (deposit.rebirthProcessed && deposit.autoPoolProcessed) {
+      if (deposit.autoPoolProcessed) {
         console.log(`[AutoPool] Deposit ${deposit._id} already processed, skipping`);
-        return {
-          skipped: true,
-          message: "Deposit already processed",
-        };
+        return { skipped: true, message: "Already processed" };
       }
 
       // Fetch user
       const user = await User.findById(deposit.userRef).session(s);
       if (!user) throw new Error(`User ${deposit.userRef} not found`);
 
-      // Ensure root exists before processing any deposit
+      // 1. Activate user (if not already)
+      if (user.status !== 'active') {
+        user.status = 'active';
+        user.isActive = true;
+        user.isActivated = true;
+        user.activationStatus = 'ACTIVE';
+        user.activatedAt = new Date();
+        await user.save({ session: s });
+      }
+
+      // Ensure root exists
       await ensureAutoPoolRoot(s);
 
-      // Check if rebirths already exist for this user and deposit (Source Type: INITIAL)
-      const existingRebirths = await RebirthId.find({
-        ownerUserId: user._id,
-        depositId: deposit._id,
-        sourceType: "INITIAL"
-      }).session(s);
+      // 2. Generate initial rebirth nodes (MEMBERID-0.1, MEMBERID-0.2)
+      const rebirthNodes = await autopool3x3Service.createInitialRebirthsForUser(
+        user._id,
+        deposit._id,
+        user.memberId,
+        s,
+      );
 
-      let rebirths;
-      let rebirthNodes = [];
-
-      if (existingRebirths.length === 2) {
-        // Rebirths already created, use them
-        rebirths = existingRebirths;
-        console.log(`[AutoPool] Rebirths already exist for ${user.memberId} (Deposit: ${deposit._id}), reusing`);
-      } else if (existingRebirths.length === 0) {
-        // Create exactly 2 initial rebirths
-        rebirths = await autopool3x3Service.createInitialRebirthsForUser(
-          user._id,
-          deposit._id,
-          user.memberId,
-          s,
-        );
-      } else {
-        // Partial state
-        throw new Error(
-          `Inconsistent rebirth state: found ${existingRebirths.length} initial rebirths for ${user.memberId}`,
-        );
-      }
-
-      // Create rebirth AutoPool nodes (REBIRTH nodes)
-      for (const rebirth of rebirths) {
-        const rebirthNode = await autopool3x3Service.createAutoPoolNodeForRebirth(
-          rebirth._id,
-          s,
-        );
-        rebirthNodes.push(rebirthNode);
-      }
-
-      // Enqueue rebirth nodes
+      // 3. ONLY rebirth IDs enter AutoPool queue
       for (const node of rebirthNodes) {
         await autopool3x3Service.enqueueAutoPoolNode(node._id, s);
       }
 
       // Mark deposit processed
-      deposit.rebirthProcessed = true;
       deposit.autoPoolProcessed = true;
-      
-      if (!(depositIdOrDoc && typeof depositIdOrDoc === 'object' && depositIdOrDoc._id)) {
-        await deposit.save({ session: s });
-      }
+      if (deposit.save) await deposit.save({ session: s });
 
       return {
         depositId: deposit._id,
         userId: user._id,
         rebirthNodeIds: rebirthNodes.map((n) => n._id),
-        rebirthIds: rebirths.map((r) => r.rebirthCode),
       };
     };
 
@@ -241,46 +248,25 @@ export const autopool3x3Service = {
    */
   activateUserIn3x3AutoPool: async (userId, memberId, session = null) => {
     const fn = async (s) => {
-      // 1. Create initial rebirths
-      const rebirths = await autopool3x3Service.createInitialRebirthsForUser(
+      // 1. Create initial rebirths (0.1 and 0.2)
+      const rebirthNodes = await autopool3x3Service.createInitialRebirthsForUser(
         userId,
         null, // No deposit
         memberId,
         s,
       );
 
-      // 2. Create main user AutoPool node
-      const mainNode = await autopool3x3Service.createAutoPoolNodeForMainUser(
-        userId,
-        null, // No deposit
-        memberId,
-        s,
-      );
-
-      // 3. Create rebirth AutoPool nodes
-      const rebirthNodes = [];
-      for (const rebirth of rebirths) {
-        const rebirthNode = await autopool3x3Service.createAutoPoolNodeForRebirth(
-          rebirth._id,
-          s,
-        );
-        rebirthNodes.push(rebirthNode);
-      }
-
-      // 4. Enqueue all nodes
-      await autopool3x3Service.enqueueAutoPoolNode(mainNode._id, s);
+      // 2. Enqueue only rebirth nodes
       for (const node of rebirthNodes) {
         await autopool3x3Service.enqueueAutoPoolNode(node._id, s);
       }
 
-      console.log(`[AutoPool] Manually activated ${memberId} in 3x3 AutoPool`);
+      console.log(`[AutoPool] Manually activated ${memberId} in 3x3 AutoPool with rebirth nodes`);
 
       return {
         userId,
         memberId,
-        mainNodeId: mainNode._id,
         rebirthNodeIds: rebirthNodes.map((n) => n._id),
-        rebirthCodes: rebirths.map((r) => r.rebirthCode),
       };
     };
 
@@ -292,47 +278,37 @@ export const autopool3x3Service = {
    */
   createInitialRebirthsForUser: async (userId, depositId, memberId, session = null) => {
     const fn = async (s) => {
-      const rebirths = [];
+      const rebirthNodes = [];
 
       for (let i = 1; i <= 2; i++) {
-        const rebirthCode = generateRebirthCode({
-          memberIdOrCode: memberId,
-          parentRebirthCode: null,
-          generation: 0,
+        const displayCode = generateRebirthCode({
+          memberId: memberId,
+          level: 0,
           sequence: i,
         });
 
-        // Check for duplicate
-        const existing = await RebirthId.findOne({
-          rebirthCode,
-        }).session(s);
-
-        if (existing) {
-          rebirths.push(existing);
-          continue;
+        // Atomic check/create to prevent duplicates
+        let node = await AutoPoolNode.findOne({ displayCode }).session(s);
+        if (!node) {
+          const results = await AutoPoolNode.create([{
+            ownerUserId: userId,
+            ownerMemberId: memberId,
+            nodeCode: displayCode,
+            displayCode: displayCode,
+            nodeId: displayCode,
+            nodeType: "REBIRTH",
+            levelNumber: 0,
+            levelSequence: i,
+            depositId: depositId,
+            status: "PENDING",
+            queueTimestamp: new Date(),
+          }], { session: s });
+          node = results[0];
         }
-
-        // Create rebirth
-        const rebirth = await RebirthId.create(
-          [
-            {
-              ownerUserId: userId,
-              depositId,
-              rebirthCode,
-              sequenceNumber: i,
-              generation: 0,
-              sourceType: "INITIAL",
-              isInitialRebirth: true,
-              status: "ACTIVE",
-            },
-          ],
-          { session: s },
-        );
-
-        rebirths.push(rebirth[0]);
+        rebirthNodes.push(node);
       }
 
-      return rebirths;
+      return rebirthNodes;
     };
 
     return session ? fn(session) : withTransactionRetry(fn);
@@ -447,21 +423,23 @@ export const autopool3x3Service = {
    * Finds oldest pending nodes and places them under oldest available parents
    */
   findNextAvailableParent: async (session = null) => {
-    // 1. Try to find the ROOT node if it has space
-    const rootParent = await AutoPoolNode.findOne({
-      nodeType: "ROOT",
+    // 1. Try to find the Admin ROOT node (BKS000000) if it has space
+    const adminRoot = await AutoPoolNode.findOne({
+      nodeCode: "BKS000000",
       status: "PLACED",
       directChildrenCount: { $lt: 3 },
     }).session(session);
 
-    if (rootParent) return rootParent;
+    if (adminRoot) return adminRoot;
 
-    // 2. Otherwise find oldest placed node (ROOT or REBIRTH or MAIN) with capacity
+    // 2. Find oldest placed REBIRTH node with capacity
+    // ROOT nodes other than BKS000000 (if any) are excluded here
     return await AutoPoolNode.findOne({
       status: "PLACED",
       directChildrenCount: { $lt: 3 },
+      nodeType: "REBIRTH"
     })
-      .sort({ queueTimestamp: 1 }) // FIFO order by when they entered the pool
+      .sort({ queueTimestamp: 1 })
       .session(session);
   },
 
@@ -470,8 +448,9 @@ export const autopool3x3Service = {
       const MAX_PROCESS_PER_RUN = 100;
       let placedCount = 0;
 
-      // Ensure root exists
+      // Ensure root and admin rebirths exist
       await ensureAutoPoolRoot(s);
+      await ensureAdminInitialRebirths(s);
 
       while (placedCount < MAX_PROCESS_PER_RUN) {
         // 1. Find oldest pending node
@@ -559,19 +538,7 @@ export const autopool3x3Service = {
       const node = await AutoPoolNode.findById(nodeId).session(s);
       if (!node) throw new Error(`Node ${nodeId} not found`);
 
-      // Guard: already completed?
-      if (node.status === "COMPLETED") {
-        console.log(`[AutoPool] Node ${node.nodeCode} already completed`);
-        return node;
-      }
-
-      // Guard: has 3 children?
-      if (node.directChildrenCount !== 3) {
-        console.log(
-          `[AutoPool] Node ${node.nodeCode} has only ${node.directChildrenCount} children, not completing`,
-        );
-        return node;
-      }
+      if (node.status === "COMPLETED") return node;
 
       // Mark as completed
       node.status = "COMPLETED";
@@ -580,29 +547,16 @@ export const autopool3x3Service = {
 
       console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
 
-      // Generate new rebirth IDs ONLY for REBIRTH nodes
-      if (node.nodeType === "REBIRTH") {
-        const newRebirths = await autopool3x3Service.generateNextRebirthsFromCompletedNode(
-          node._id,
-          s,
-        );
-
-        // Create and enqueue rebirth nodes
-        for (const rebirth of newRebirths) {
-          const rebirthNode = await autopool3x3Service.createAutoPoolNodeForRebirth(
-            rebirth._id,
-            s,
-          );
-          await autopool3x3Service.enqueueAutoPoolNode(rebirthNode._id, s);
-        }
-      } else {
-        console.log(`[AutoPool] ${node.nodeType} node ${node.nodeCode} completed. No additional rebirths generated.`);
+      // Generate next-round rebirth IDs
+      if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
+        await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
+        node.rebirthGenerated = true;
+        node.rebirthGeneratedAt = new Date();
+        await node.save({ session: s });
       }
 
-      // Mark rebirths as generated
-      node.rebirthGenerated = true;
-      node.rebirthGeneratedAt = new Date();
-      await node.save({ session: s });
+      // Check User Level Completion
+      await autopool3x3Service.checkUserAutoPoolLevelCompletion(node.ownerUserId, node.levelNumber, s);
 
       return node;
     };
@@ -613,68 +567,103 @@ export const autopool3x3Service = {
   /**
    * Generate 2 new rebirth IDs from a completed node
    */
-  generateNextRebirthsFromCompletedNode: async (completedNodeId, session = null) => {
+  generateNextLevelRebirthsFromCompletedNode: async (completedNodeId, session = null) => {
     const fn = async (s) => {
       const node = await AutoPoolNode.findById(completedNodeId).session(s);
-      if (!node) throw new Error(`Node ${completedNodeId} not found`);
+      if (!node) return;
 
-      const user = await User.findById(node.ownerUserId).session(s);
-      if (!user) throw new Error(`User ${node.ownerUserId} not found`);
+      const nextLevel = node.levelNumber + 1;
+      const memberId = node.ownerMemberId;
 
-      const newRebirths = [];
+      // Find current max sequence for this user at the next level to maintain GLOBAL SEQUENCE per round
+      const lastNodeAtNextLevel = await AutoPoolNode.findOne({
+        ownerUserId: node.ownerUserId,
+        levelNumber: nextLevel
+      }).sort({ levelSequence: -1 }).session(s);
 
-      // Determine rebirth code generation
-      let parentCode = node.nodeCode;
-      let generation = 1; // First generation of new rebirths
+      let startSequence = lastNodeAtNextLevel ? lastNodeAtNextLevel.levelSequence + 1 : 1;
 
-      // If this node is already a rebirth, increment generation
-      if (node.nodeType === "REBIRTH") {
-        const rebirth = await RebirthId.findById(node.rebirthId).session(s);
-        if (rebirth) {
-          generation = rebirth.generation + 1;
+      for (let i = 0; i < 2; i++) {
+        const sequence = startSequence + i;
+        const displayCode = generateRebirthCode({ memberId, level: nextLevel, sequence });
+
+        let newNode = await AutoPoolNode.findOne({ displayCode }).session(s);
+        if (!newNode) {
+          const results = await AutoPoolNode.create([{
+            ownerUserId: node.ownerUserId,
+            ownerMemberId: memberId,
+            nodeCode: displayCode,
+            displayCode: displayCode,
+            nodeId: displayCode,
+            nodeType: "REBIRTH",
+            levelNumber: nextLevel,
+            levelSequence: sequence,
+            generatedFromNodeId: node._id,
+            status: "PENDING",
+            queueTimestamp: new Date(),
+          }], { session: s });
+          newNode = results[0];
         }
+        
+        await autopool3x3Service.enqueueAutoPoolNode(newNode._id, s);
       }
+    };
 
-      for (let i = 1; i <= 2; i++) {
-        const rebirthCode = generateRebirthCode({
-          memberIdOrCode: null,
-          parentRebirthCode: parentCode,
-          generation,
-          sequence: i,
-        });
+    return session ? fn(session) : withTransactionRetry(fn);
+  },
 
-        // Check for duplicate
-        const existing = await RebirthId.findOne({
-          rebirthCode,
+  /**
+   * Check User Level Completion
+   * Level completes when expectedNodeCount (2^(level+1)) nodes are COMPLETED
+   */
+  checkUserAutoPoolLevelCompletion: async (ownerUserId, levelNumber, session = null) => {
+    const fn = async (s) => {
+      const user = await User.findById(ownerUserId).session(s);
+      if (!user) return;
+
+      const expectedNodeCount = Math.pow(2, levelNumber + 1);
+      const completedNodeCount = await AutoPoolNode.countDocuments({
+        ownerUserId,
+        levelNumber,
+        status: "COMPLETED"
+      }).session(s);
+
+      if (completedNodeCount >= expectedNodeCount) {
+        // Prevent duplicate completion
+        const existing = await AutoPoolLevelCompletion.findOne({
+          ownerUserId,
+          levelNumber
         }).session(s);
 
-        if (existing) {
-          newRebirths.push(existing);
-          continue;
-        }
-
-        // Create rebirth
-        const rebirth = await RebirthId.create(
-          [
+        if (!existing || !existing.isCompleted) {
+          await AutoPoolLevelCompletion.findOneAndUpdate(
+            { ownerUserId, levelNumber },
             {
-              ownerUserId: node.ownerUserId,
-              rebirthCode,
-              sequenceNumber: i,
-              generation,
-              sourceType: "AUTOPool_COMPLETION",
-              parentRebirthId: node.rebirthId || null,
-              generatedFromNodeId: node._id,
-              isInitialRebirth: false,
-              status: "ACTIVE",
+              ownerMemberId: user.memberId,
+              autoPoolNumber: levelNumber + 1,
+              expectedNodeCount,
+              completedNodeCount,
+              isCompleted: true,
+              completedAt: new Date()
             },
-          ],
-          { session: s },
+            { upsert: true, session: s }
+          );
+          console.log(`[AutoPool] User ${user.memberId} completed Level ${levelNumber} (AutoPool ${levelNumber + 1})`);
+        }
+      } else {
+        // Update progress if not completed
+        await AutoPoolLevelCompletion.findOneAndUpdate(
+          { ownerUserId, levelNumber },
+          {
+            ownerMemberId: user.memberId,
+            autoPoolNumber: levelNumber + 1,
+            expectedNodeCount,
+            completedNodeCount,
+            isCompleted: false
+          },
+          { upsert: true, session: s }
         );
-
-        newRebirths.push(rebirth[0]);
       }
-
-      return newRebirths;
     };
 
     return session ? fn(session) : withTransactionRetry(fn);
