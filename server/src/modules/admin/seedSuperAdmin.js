@@ -6,7 +6,7 @@ import { logger } from "../../common/logger/logger.js";
 const DEFAULT_SUPERADMIN_USERNAME = "superadmin";
 const DEFAULT_SUPERADMIN_EMAIL = "superadmin@bkswealthclub.local";
 const DEFAULT_SUPERADMIN_PASSWORD = "SuperAdmin@123";
-const DEFAULT_SUPERADMIN_SPONSOR_ID = "BKS000000";
+const DEFAULT_SUPERADMIN_SPONSOR_ID = "BK000000";
 
 export async function seedSuperAdmin() {
   const username =
@@ -20,9 +20,9 @@ export async function seedSuperAdmin() {
     process.env.SUPERADMIN_SPONSOR_ID?.trim().toUpperCase() ||
     DEFAULT_SUPERADMIN_SPONSOR_ID;
 
-  if (!/^(BKS|BWC)\d{5,}$/.test(sponsorId)) {
+  if (!/^(BK|BKS|BWC)\d{5,}$/.test(sponsorId)) {
     throw new Error(
-      "SUPERADMIN_SPONSOR_ID must be in BKS12345 format or the legacy BWC12345 format",
+      "SUPERADMIN_SPONSOR_ID must be in BK12345 format or the legacy BKS/BWC format",
     );
   }
 

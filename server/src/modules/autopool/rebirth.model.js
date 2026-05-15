@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 /**
  * Rebirth Model
- * 
+ *
  * Represents rebirth IDs generated when an AutoPool node completes.
  * Main user gets 2 initial rebirths on deposit.
  * Completed nodes generate 2 new rebirths.
@@ -98,6 +98,32 @@ const rebirthSchema = new mongoose.Schema(
       default: "ACTIVE",
       index: true,
     },
+
+    // NEW: Owner member ID for display
+    ownerMemberId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // NEW: Rebirth level number (0 = initial, 1 = first generation, etc.)
+    levelNumber: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+
+    // NEW: Sequence number within this level
+    levelSequence: {
+      type: Number,
+      default: 0,
+    },
+
+    // NEW: Display code in format: BKS12345-1.5
+    displayCode: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true },
 );
@@ -108,8 +134,17 @@ rebirthSchema.index({ ownerUserId: 1, isInitialRebirth: 1 });
 // Compound index for finding rebirths by generation
 rebirthSchema.index({ ownerUserId: 1, generation: 1 });
 
+// Compound index for finding rebirths by level and sequence
+rebirthSchema.index({ ownerUserId: 1, levelNumber: 1, levelSequence: 1 });
+
+// Index for display code lookup
+rebirthSchema.index({ displayCode: 1 });
+
 // Compound index for duplicate prevention
-rebirthSchema.index({ depositId: 1, ownerUserId: 1, sequenceNumber: 1 }, { sparse: true });
+rebirthSchema.index(
+  { depositId: 1, ownerUserId: 1, sequenceNumber: 1 },
+  { sparse: true },
+);
 
 export const RebirthId =
   mongoose.models.RebirthId || mongoose.model("RebirthId", rebirthSchema);
