@@ -595,13 +595,15 @@ export const autopool3x3Service = {
 
       console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
 
-      // Generate next-round rebirth IDs
+      // Generate next-round rebirth IDs (Now handled by Level Completion Fund Distribution)
+      /*
       if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
         await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
         node.rebirthGenerated = true;
         node.rebirthGeneratedAt = new Date();
         await node.save({ session: s });
       }
+      */
       
       // --- FUND MANAGEMENT HOOK ---
       // Process individual rebirth completion payout ($60)

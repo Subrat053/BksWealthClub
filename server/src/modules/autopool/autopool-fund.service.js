@@ -169,7 +169,17 @@ export const autopoolFundService = {
     
     // For every new rebirth to be generated:
     for (let i = 1; i <= nextLevelRebirthCount; i++) {
-        // Sponsor Deduction
+        // 1. Allocation Entry ($25)
+        await PoolFundLedger.create([{
+            mainUserId: userId,
+            level,
+            type: "NEW_REBIRTH_ALLOCATION",
+            amount: 25,
+            status: "COMPLETED",
+            meta: { distributionLedgerId: distributionLedger[0]._id, rebirthIndex: i }
+        }], { session });
+
+        // 2. Sponsor Deduction ($2.5)
         if (sponsorUserId) {
             await Wallet.findOneAndUpdate(
                 { userRef: sponsorUserId },
@@ -185,7 +195,6 @@ export const autopoolFundService = {
                 remarks: `Sponsor income from ${user.memberId} AutoPool Level ${level} completion`,
             }], { session });
 
-            // CREATE LEDGER ENTRY for stats
             await PoolFundLedger.create([{
                 mainUserId: userId,
                 sponsorUserId,
@@ -196,7 +205,6 @@ export const autopoolFundService = {
                 meta: { distributionLedgerId: distributionLedger[0]._id, rebirthIndex: i }
             }], { session });
         } else {
-            // If no sponsor, route to company fund
             await CompanyFund.findOneAndUpdate(
                 {},
                 { $inc: { totalCompanyFund: sponsorDeductionPerRebirth } },
@@ -213,7 +221,7 @@ export const autopoolFundService = {
             }], { session });
         }
 
-        // Company Deduction
+        // 3. Company Deduction ($2.5)
         await CompanyFund.findOneAndUpdate(
             {},
             { $inc: { totalCompanyFund: companyDeductionPerRebirth }, $set: { lastUpdated: new Date() } },
@@ -231,6 +239,16 @@ export const autopoolFundService = {
             level,
             type: "COMPANY_FUND_DEDUCTION",
             amount: companyDeductionPerRebirth,
+            status: "COMPLETED",
+            meta: { distributionLedgerId: distributionLedger[0]._id, rebirthIndex: i }
+        }], { session });
+
+        // 4. Final Rebirth Pool Value ($20)
+        await PoolFundLedger.create([{
+            mainUserId: userId,
+            level,
+            type: "FINAL_REBIRTH_POOL_VALUE",
+            amount: finalPoolValuePerRebirth,
             status: "COMPLETED",
             meta: { distributionLedgerId: distributionLedger[0]._id, rebirthIndex: i }
         }], { session });

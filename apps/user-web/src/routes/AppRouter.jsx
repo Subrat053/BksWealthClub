@@ -27,6 +27,7 @@ import WithdrawalHistoryPage from "../pages/member/WithdrawalHistoryPage";
 import SupportPage from "../pages/member/SupportPage";
 import MyTeamReportPage from "../pages/member/MyTeamReportPage";
 import WalletIncomePage from "../pages/member/WalletIncomePage";
+import AutoPoolLedgerPage from "../pages/member/AutoPoolLedgerPage";
 
 function LogoutPage() {
   return <Navigate to="/login" replace />;
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
           { path: "team/direct", element: <DirectTeamPage /> },
           { path: "team/generation", element: <GenerationTeamPage /> },
           { path: "team/autopool", element: <AutopoolTreePage /> },
+          { path: "team/autopool-ledger", element: <AutoPoolLedgerPage /> },
           { path: "team/referrals", element: <DirectTeamPage /> },
           { path: "income/sponsor", element: <SponsorIncomePage /> },
           { path: "team/report", element: <MyTeamReportPage /> },

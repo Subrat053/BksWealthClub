@@ -52,7 +52,10 @@ async function clearAndSeed() {
       "notifications",
       "otps",
       "emailverifications",
-      "passwordresets"
+      "passwordresets",
+      "poolfundledgers",
+      "companyfunds",
+      "companyfundentries"
     ];
 
     for (const col of collections) {

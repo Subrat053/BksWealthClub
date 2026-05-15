@@ -147,25 +147,39 @@ export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
 
   const nodes = await autopool3x3Service.getUserAutoPoolTree(userId);
   
-  // Format for user web compatibility
-  const entries = nodes.map(node => ({
-    _id: node._id,
-    displayId: node.nodeCode,
-    status: node.status,
-    queueTimestamp: node.queueTimestamp,
-    levelNumber: node.levelNumber,
-    levelSequence: node.levelSequence,
-    matrixParentEntryId: node.matrixParentId
-      ? { displayId: node.matrixParentId.nodeCode }
-      : null,
-  }));
+  const mappedNodes = nodes.map(node => {
+    const leanNode = node.toObject ? node.toObject() : node;
+    return {
+      ...leanNode,
+      displayId: leanNode.nodeCode,
+      poolNodeId: leanNode.nodeCode,
+      parentPoolNodeId: leanNode.matrixParentId 
+        ? { poolNodeId: leanNode.matrixParentId.nodeCode } 
+        : null,
+      linkedRebirthNodeId: { 
+        ownerUserId: { fullName: req.user.fullName, memberId: req.user.memberId }
+      },
+      autopoolChildrenCount: leanNode.directChildrenCount || 0
+    };
+  });
 
-  // For now, return empty completions or fetch them if implemented
-  const completions = []; 
+  // Fetch completions separately
+  const rebirths = await autopool3x3Service.getUserRebirths(userId);
+  const completions = rebirths.map(r => ({
+    _id: r._id,
+    autoPoolNumber: r.levelNumber + 1,
+    completedNodeCount: nodes.find(n => n.nodeCode === r.displayCode)?.directChildrenCount || 0,
+    expectedNodeCount: 3,
+    isCompleted: nodes.find(n => n.nodeCode === r.displayCode)?.status === "COMPLETED",
+    completedAt: nodes.find(n => n.nodeCode === r.displayCode)?.completedAt
+  }));
 
   res.json(new ApiResponse({
     message: "My autopool nodes fetched",
-    data: { entries, completions }
+    data: { 
+      nodes: mappedNodes, 
+      completions 
+    }
   }));
 });
 

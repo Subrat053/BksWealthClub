@@ -22,6 +22,7 @@ const TYPE_LABELS = {
   ADMIN_FUND: "Admin Fund",
   ACHIEVER_FUND: "Achiever Fund",
   LEFTOVER_TO_COMPANY: "Leftover",
+  AUTOPOOL_INCOME: "AutoPool Income",
 };
 
 function TypeBadge({ type }) {
@@ -29,6 +30,7 @@ function TypeBadge({ type }) {
     RB_INCOME: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
     SPONSOR_INCOME: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
     LEVEL_INCOME: "bg-teal-400/15 text-teal-300 border-teal-400/30",
+    AUTOPOOL_INCOME: "bg-purple-400/15 text-purple-300 border-purple-400/30",
   };
   return (
     <span

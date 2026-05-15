@@ -79,10 +79,13 @@ const poolFundLedgerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Unique constraints to prevent duplicate payouts
+// Unique constraint only for individual rebirth completions to prevent double $60 payouts
 poolFundLedgerSchema.index(
   { completedRebirthId: 1, type: 1 },
-  { unique: true, sparse: true }
+  { 
+    unique: true, 
+    partialFilterExpression: { type: "REBIRTH_AUTOPOOL_COMPLETED" } 
+  }
 );
 
 // Unique constraint to prevent duplicate level payouts

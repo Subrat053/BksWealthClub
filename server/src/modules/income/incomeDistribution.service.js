@@ -4,6 +4,7 @@ import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { RebirthModel } from "./rebirth.model.js";
 import { IncomeTransactionModel } from "./incomeTransaction.model.js";
+import { IncomeLedgerModel } from "./income.model.js";
 import {
   SuperAdminFundModel,
   getOrCreateFund,
@@ -523,34 +524,70 @@ export async function getAllIncomeLogs({ page = 1, limit = 50, type = null }) {
 
 /**
  * Get income transactions for a specific user (admin or user self-view).
+ * Merges IncomeTransaction (deposit-based) and IncomeLedger (autopool/sponsor).
  */
 export async function getUserIncomeLogs(
   targetUserId,
   { page = 1, limit = 50, type = null } = {},
 ) {
-  const filter = { userId: targetUserId };
-  if (type) {
-    filter.type = type;
-  }
   const skip = (page - 1) * limit;
 
-  const [docs, total] = await Promise.all([
-    IncomeTransactionModel.find(filter)
+  // 1. Fetch from IncomeTransaction (Deposit-based)
+  const txFilter = { userId: targetUserId };
+  if (type) txFilter.type = type;
+  
+  const [txDocs, txTotal] = await Promise.all([
+    IncomeTransactionModel.find(txFilter)
       .populate("fromUserId", "memberId fullName email")
       .populate("rebirthId", "rebirthCode sequenceNo")
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .lean(),
-    IncomeTransactionModel.countDocuments(filter),
+    IncomeTransactionModel.countDocuments(txFilter),
   ]);
 
+  // 2. Fetch from IncomeLedger (AutoPool/Sponsor/etc)
+  const ledgerFilter = { userRef: targetUserId };
+  if (type) {
+    // Map type if needed, e.g. "SPONSOR_INCOME" -> "sponsor"
+    let mappedType = type;
+    if (type === "SPONSOR_INCOME") mappedType = "sponsor";
+    if (type === "AUTOPOOL_INCOME") mappedType = "autopool";
+    ledgerFilter.incomeType = mappedType;
+  }
+
+  const [ledgerDocs, ledgerTotal] = await Promise.all([
+    IncomeLedgerModel.find(ledgerFilter).sort({ createdAt: -1 }).lean(),
+    IncomeLedgerModel.countDocuments(ledgerFilter),
+  ]);
+
+  // 3. Merge and Format
+  const mappedTxDocs = txDocs.map(d => ({
+    ...d,
+    source: "TRANSACTION"
+  }));
+
+  const mappedLedgerDocs = ledgerDocs.map(d => ({
+    _id: d._id,
+    userId: d.userRef,
+    fromUserId: null,
+    type: d.incomeType === "sponsor" ? "SPONSOR_INCOME" : 
+          d.incomeType === "autopool" ? "AUTOPOOL_INCOME" : d.incomeType,
+    amount: d.amount,
+    remarks: d.remarks,
+    createdAt: d.createdAt,
+    source: "LEDGER"
+  }));
+
+  const unifiedLogs = [...mappedTxDocs, ...mappedLedgerDocs]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(skip, skip + limit);
+
   return {
-    logs: docs,
-    total,
+    logs: unifiedLogs,
+    total: txTotal + ledgerTotal,
     page,
     limit,
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.ceil((txTotal + ledgerTotal) / limit),
   };
 }
 
@@ -990,6 +1027,44 @@ export async function getUserIncomeStats(userId) {
       today: r.today,
       thisWeek: r.thisWeek
     };
+  });
+
+  // 2. Aggregate from IncomeLedger
+  const ledgerAgg = await IncomeLedgerModel.aggregate([
+    { $match: { userRef: new mongoose.Types.ObjectId(userId) } },
+    {
+      $group: {
+        _id: "$incomeType",
+        allTime: { $sum: "$amount" },
+        today: {
+          $sum: {
+            $cond: [{ $gte: ["$createdAt", startOfToday] }, "$amount", 0]
+          }
+        },
+        thisWeek: {
+          $sum: {
+            $cond: [{ $gte: ["$createdAt", startOfWeek] }, "$amount", 0]
+          }
+        }
+      }
+    }
+  ]);
+
+  ledgerAgg.forEach(r => {
+    const type = r._id === "sponsor" ? "SPONSOR_INCOME" : 
+                 r._id === "autopool" ? "AUTOPOOL_INCOME" : r._id;
+    
+    if (stats[type]) {
+      stats[type].allTime += r.allTime;
+      stats[type].today += r.today;
+      stats[type].thisWeek += r.thisWeek;
+    } else {
+      stats[type] = {
+        allTime: r.allTime,
+        today: r.today,
+        thisWeek: r.thisWeek
+      };
+    }
   });
   
   return stats;
