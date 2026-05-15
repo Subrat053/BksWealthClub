@@ -3,7 +3,7 @@ import userAxios from "./userAxios";
 export const autopoolService = {
   getMyAutoPool: async () => {
     try {
-      const response = await userAxios.get("/autopool/my");
+      const response = await userAxios.get("/autopool/3x3/my");
       return response.data?.data || { entries: [], rebirths: [] };
     } catch (error) {
       console.error("Error fetching my autopool:", error);

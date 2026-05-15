@@ -18,6 +18,7 @@ import { DepositModel } from "../deposit/deposit.model.js";
 import { User } from "../user/user.model.js";
 import { AutoPoolLevelCompletion } from "./autopool-level-completion.model.js";
 import { env } from "../../config/env.js";
+import { autopoolFundService } from "./autopool-fund.service.js";
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 100;
@@ -256,7 +257,6 @@ export const autopool3x3Service = {
       return {
         depositId: deposit._id,
         userId: user._id,
-        mainNodeId: mainNode._id,
         rebirthNodeIds: rebirthNodes.map((n) => n._id),
       };
     };
@@ -602,6 +602,12 @@ export const autopool3x3Service = {
         node.rebirthGeneratedAt = new Date();
         await node.save({ session: s });
       }
+      
+      // --- FUND MANAGEMENT HOOK ---
+      // Process individual rebirth completion payout ($60)
+      if (node.nodeType === "REBIRTH") {
+        await autopoolFundService.processRebirthCompletionFund(node._id, s);
+      }
 
       // Check User Level Completion
       await autopool3x3Service.checkUserAutoPoolLevelCompletion(node.ownerUserId, node.levelNumber, s);
@@ -697,6 +703,10 @@ export const autopool3x3Service = {
             { upsert: true, session: s }
           );
           console.log(`[AutoPool] User ${user.memberId} completed Level ${levelNumber} (AutoPool ${levelNumber + 1})`);
+          
+          // --- FUND MANAGEMENT HOOK ---
+          // Process full level distribution (Withdrawal, Reinvest, Sponsor, etc.)
+          await autopoolFundService.processLevelDistribution(ownerUserId, levelNumber, s);
         }
       } else {
         // Update progress if not completed
@@ -762,19 +772,37 @@ export const autopool3x3Service = {
   /**
    * Get AutoPool queue status
    */
+  /**
+   * Get AutoPool queue status
+   */
   getQueueStatus: async () => {
-    const pending = await AutoPoolNode.countDocuments({ status: "PENDING" });
-    const placed = await AutoPoolNode.countDocuments({ status: "PLACED" });
-    const completed = await AutoPoolNode.countDocuments({
-      status: "COMPLETED",
-    });
-
+    const totalEntries = await AutoPoolNode.countDocuments({ nodeType: "REBIRTH" });
+    const pendingEntries = await AutoPoolNode.countDocuments({ nodeType: "REBIRTH", status: "PENDING" });
+    const placedEntries = await AutoPoolNode.countDocuments({ nodeType: "REBIRTH", status: "PLACED" });
+    const completedEntries = await AutoPoolNode.countDocuments({ nodeType: "REBIRTH", status: "COMPLETED" });
+    
     return {
-      pending,
-      placed,
-      completed,
-      total: pending + placed + completed,
+      totalEntries,
+      pendingEntries,
+      placedEntries,
+      completedEntries,
+      totalRebirths: totalEntries, // In 3x3, almost everything is a rebirth node
+      queueWaiting: pendingEntries,
+      queueProcessing: 0,
     };
+  },
+
+  /**
+   * Get AutoPool queue nodes (list)
+   */
+  getQueueNodes: async (limit = 100) => {
+    const nodes = await AutoPoolNode.find({ nodeType: "REBIRTH" })
+      .populate("ownerUserId", "fullName memberId")
+      .populate("matrixParentId", "nodeCode")
+      .sort({ queueTimestamp: 1 })
+      .limit(limit);
+
+    return nodes;
   },
 
   /**

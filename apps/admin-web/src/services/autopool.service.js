@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axiosInstance";
 export const autopoolService = {
   getQueue: async () => {
     try {
-      const response = await axiosInstance.get("/autopool/admin/queue");
+      const response = await axiosInstance.get("/autopool/3x3/admin/queue");
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching autopool queue:", error);
@@ -13,7 +13,7 @@ export const autopoolService = {
 
   getTree: async () => {
     try {
-      const response = await axiosInstance.get("/autopool/admin/tree");
+      const response = await axiosInstance.get("/autopool/3x3/admin/tree");
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching autopool tree:", error);
@@ -23,7 +23,7 @@ export const autopoolService = {
 
   getStats: async () => {
     try {
-      const response = await axiosInstance.get("/autopool/admin/stats");
+      const response = await axiosInstance.get("/autopool/3x3/admin/stats");
       return response.data?.data || {
         totalEntries: 0,
         pendingEntries: 0,
@@ -49,7 +49,7 @@ export const autopoolService = {
 
   getUserDetail: async (userId) => {
     try {
-      const response = await axiosInstance.get(`/autopool/admin/user/${userId}`);
+      const response = await axiosInstance.get(`/autopool/3x3/admin/user/${userId}`);
       return response.data?.data || { entries: [], rebirths: [] };
     } catch (error) {
       console.error("Error fetching user autopool detail:", error);
@@ -59,11 +59,31 @@ export const autopoolService = {
 
   processQueue: async () => {
     try {
-      const response = await axiosInstance.post("/autopool/admin/process-queue");
+      const response = await axiosInstance.post("/autopool/3x3/admin/process-queue");
       return response.data;
     } catch (error) {
       console.error("Error processing autopool queue:", error);
       throw error;
+    }
+  },
+  
+  getPoolFundSummary: async () => {
+    try {
+      const response = await axiosInstance.get("/autopool/3x3/admin/pool-fund-summary");
+      return response.data?.data || null;
+    } catch (error) {
+      console.error("Error fetching pool fund summary:", error);
+      return null;
+    }
+  },
+
+  getPoolFundLedger: async (params) => {
+    try {
+      const response = await axiosInstance.get("/autopool/3x3/admin/pool-fund-ledger", { params });
+      return response.data?.data || { ledger: [], pagination: {} };
+    } catch (error) {
+      console.error("Error fetching pool fund ledger:", error);
+      return { ledger: [], pagination: {} };
     }
   }
 };

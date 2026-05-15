@@ -8,6 +8,7 @@ import { Router } from "express";
 import { authMiddleware, adminOnly } from "../../middleware/auth.middleware.js";
 import {
   getAutoPoolTree,
+  getQueueNodes,
   getQueueStatus,
   getCompletedNodes,
   getUserAutoPoolDetails,
@@ -16,6 +17,12 @@ import {
   getMyRebirths,
   getMyAutoPoolSummary,
 } from "./autopool-3x3.controller.js";
+import {
+  getPoolFundSummary,
+  getPoolFundLedger,
+  getCompanyFundSummary,
+  getUserPoolFund,
+} from "./autopool-fund.controller.js";
 
 export const autopool3x3Router = Router();
 
@@ -32,10 +39,20 @@ autopool3x3Router.get(
 );
 
 /**
- * Admin: Get queue status
+ * Admin: Get queue list
  */
 autopool3x3Router.get(
   "/admin/queue",
+  authMiddleware,
+  adminOnly,
+  getQueueNodes,
+);
+
+/**
+ * Admin: Get queue status/stats
+ */
+autopool3x3Router.get(
+  "/admin/stats",
   authMiddleware,
   adminOnly,
   getQueueStatus,
@@ -71,6 +88,46 @@ autopool3x3Router.post(
   processQueueManually,
 );
 
+/**
+ * Admin: Get Pool Fund Summary
+ */
+autopool3x3Router.get(
+  "/admin/pool-fund-summary",
+  authMiddleware,
+  adminOnly,
+  getPoolFundSummary
+);
+
+/**
+ * Admin: Get Pool Fund Ledger
+ */
+autopool3x3Router.get(
+  "/admin/pool-fund-ledger",
+  authMiddleware,
+  adminOnly,
+  getPoolFundLedger
+);
+
+/**
+ * Admin: Get Company Fund Summary
+ */
+autopool3x3Router.get(
+  "/admin/company-fund-summary",
+  authMiddleware,
+  adminOnly,
+  getCompanyFundSummary
+);
+
+/**
+ * Admin: Get specific user pool fund
+ */
+autopool3x3Router.get(
+  "/admin/user-pool-fund/:userId",
+  authMiddleware,
+  adminOnly,
+  getUserPoolFund
+);
+
 // ─── User Routes ────────────────────────────────────────────────────────────
 
 /**
@@ -98,6 +155,15 @@ autopool3x3Router.get(
   "/my/summary",
   authMiddleware,
   getMyAutoPoolSummary,
+);
+
+/**
+ * User: Get my pool fund ledger
+ */
+autopool3x3Router.get(
+  "/my/pool-fund",
+  authMiddleware,
+  getUserPoolFund
 );
 
 export default autopool3x3Router;
