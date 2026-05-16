@@ -586,7 +586,17 @@ export const autopool3x3Service = {
       const node = await AutoPoolNode.findById(nodeId).session(s);
       if (!node) throw new Error(`Node ${nodeId} not found`);
 
-      if (node.status === "COMPLETED") return node;
+      // If already completed, check if rebirths still need to be generated
+      if (node.status === "COMPLETED") {
+        if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
+          console.log(`[AutoPool] Generating delayed rebirths for already completed node: ${node.nodeCode}`);
+          await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
+          node.rebirthGenerated = true;
+          node.rebirthGeneratedAt = new Date();
+          await node.save({ session: s });
+        }
+        return node;
+      }
 
       // Mark as completed
       node.status = "COMPLETED";
@@ -595,15 +605,13 @@ export const autopool3x3Service = {
 
       console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
 
-      // Generate next-round rebirth IDs (Now handled by Level Completion Fund Distribution)
-      /*
+      // Generate next-round rebirth IDs (Restored per-node completion trigger)
       if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
         await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
         node.rebirthGenerated = true;
         node.rebirthGeneratedAt = new Date();
         await node.save({ session: s });
       }
-      */
       
       // --- FUND MANAGEMENT HOOK ---
       // Process individual rebirth completion payout ($60)
@@ -639,11 +647,13 @@ export const autopool3x3Service = {
 
       let startSequence = lastNodeAtNextLevel ? lastNodeAtNextLevel.levelSequence + 1 : 1;
 
+      console.log(`[AutoPool] Generating 2 rebirth nodes for ${memberId} starting at sequence ${startSequence} for Level ${nextLevel}`);
+
       for (let i = 0; i < 2; i++) {
         const sequence = startSequence + i;
         const displayCode = generateRebirthCode({ memberId, level: nextLevel, sequence });
 
-        let newNode = await AutoPoolNode.findOne({ displayCode }).session(s);
+        let newNode = await AutoPoolNode.findOne({ nodeCode: displayCode }).session(s);
         if (!newNode) {
           const results = await AutoPoolNode.create([{
             ownerUserId: node.ownerUserId,
@@ -659,6 +669,7 @@ export const autopool3x3Service = {
             queueTimestamp: new Date(),
           }], { session: s });
           newNode = results[0];
+          console.log(`[AutoPool] Created rebirth node ${displayCode}`);
         }
         
         await autopool3x3Service.enqueueAutoPoolNode(newNode._id, s);

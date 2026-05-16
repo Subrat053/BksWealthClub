@@ -4,6 +4,7 @@ import { AutoPoolNode } from "./src/modules/autopool/autopool-matrix.model.js";
 import { CompanyFund, CompanyFundEntry } from "./src/modules/autopool/company-fund.model.js";
 import { User } from "./src/modules/user/user.model.js";
 import { autopoolFundService } from "./src/modules/autopool/autopool-fund.service.js";
+import { autopool3x3Service } from "./src/modules/autopool/autopool-3x3.service.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -38,6 +39,20 @@ async function repairLedger() {
         status: "COMPLETED"
       });
       rebirthRepairCount++;
+    }
+
+    // 1.1 Repair Missing Rebirth Nodes
+    if (!node.rebirthGenerated && node.nodeType === "REBIRTH") {
+      console.log(`[Repair] Generating missing rebirth nodes for node ${node.nodeCode}`);
+      try {
+        await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id);
+        await AutoPoolNode.findByIdAndUpdate(node._id, { 
+          rebirthGenerated: true, 
+          rebirthGeneratedAt: new Date() 
+        });
+      } catch (err) {
+        console.error(`❌ Error generating rebirths for ${node.nodeCode}:`, err.message);
+      }
     }
   }
   console.log(`✅ Fixed ${rebirthRepairCount} rebirth completion entries.`);
