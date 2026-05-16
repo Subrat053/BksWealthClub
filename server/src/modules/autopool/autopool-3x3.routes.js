@@ -1,6 +1,6 @@
 /**
  * AutoPool 3x3 Routes
- * 
+ *
  * API endpoints for 3x3 Matrix AutoPool system
  */
 
@@ -11,6 +11,7 @@ import {
   getQueueNodes,
   getQueueStatus,
   getCompletedNodes,
+  getOperationalAdminMyTree,
   getUserAutoPoolDetails,
   processQueueManually,
   getMyAutoPoolNodes,
@@ -41,12 +42,7 @@ autopool3x3Router.get(
 /**
  * Admin: Get queue list
  */
-autopool3x3Router.get(
-  "/admin/queue",
-  authMiddleware,
-  adminOnly,
-  getQueueNodes,
-);
+autopool3x3Router.get("/admin/queue", authMiddleware, adminOnly, getQueueNodes);
 
 /**
  * Admin: Get queue status/stats
@@ -89,13 +85,22 @@ autopool3x3Router.post(
 );
 
 /**
+ * Operational Admin: Get scoped AutoPool tree
+ */
+autopool3x3Router.get(
+  "/operational-admin/my-tree",
+  authMiddleware,
+  getOperationalAdminMyTree,
+);
+
+/**
  * Admin: Get Pool Fund Summary
  */
 autopool3x3Router.get(
   "/admin/pool-fund-summary",
   authMiddleware,
   adminOnly,
-  getPoolFundSummary
+  getPoolFundSummary,
 );
 
 /**
@@ -105,7 +110,7 @@ autopool3x3Router.get(
   "/admin/pool-fund-ledger",
   authMiddleware,
   adminOnly,
-  getPoolFundLedger
+  getPoolFundLedger,
 );
 
 /**
@@ -115,7 +120,7 @@ autopool3x3Router.get(
   "/admin/company-fund-summary",
   authMiddleware,
   adminOnly,
-  getCompanyFundSummary
+  getCompanyFundSummary,
 );
 
 /**
@@ -125,7 +130,7 @@ autopool3x3Router.get(
   "/admin/user-pool-fund/:userId",
   authMiddleware,
   adminOnly,
-  getUserPoolFund
+  getUserPoolFund,
 );
 
 // ─── User Routes ────────────────────────────────────────────────────────────
@@ -133,37 +138,21 @@ autopool3x3Router.get(
 /**
  * User: Get my AutoPool nodes
  */
-autopool3x3Router.get(
-  "/my",
-  authMiddleware,
-  getMyAutoPoolNodes,
-);
+autopool3x3Router.get("/my", authMiddleware, getMyAutoPoolNodes);
 
 /**
  * User: Get my rebirth IDs
  */
-autopool3x3Router.get(
-  "/my-rebirths",
-  authMiddleware,
-  getMyRebirths,
-);
+autopool3x3Router.get("/my-rebirths", authMiddleware, getMyRebirths);
 
 /**
  * User: Get my AutoPool summary
  */
-autopool3x3Router.get(
-  "/my/summary",
-  authMiddleware,
-  getMyAutoPoolSummary,
-);
+autopool3x3Router.get("/my/summary", authMiddleware, getMyAutoPoolSummary);
 
 /**
  * User: Get my pool fund ledger
  */
-autopool3x3Router.get(
-  "/my/pool-fund",
-  authMiddleware,
-  getUserPoolFund
-);
+autopool3x3Router.get("/my/pool-fund", authMiddleware, getUserPoolFund);
 
 export default autopool3x3Router;

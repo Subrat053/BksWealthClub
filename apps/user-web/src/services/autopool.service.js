@@ -11,6 +11,25 @@ export const autopoolService = {
     }
   },
 
+  getOperationalAdminMyTree: async () => {
+    try {
+      const response = await userAxios.get(
+        "/autopool/operational-admin/my-tree",
+      );
+      return (
+        response.data?.data || {
+          admin: null,
+          nodes: [],
+          completions: [],
+          summary: {},
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching operational admin autopool tree:", error);
+      return { admin: null, nodes: [], completions: [], summary: {} };
+    }
+  },
+
   getMyPoolFundLedger: async () => {
     try {
       const response = await userAxios.get("/autopool/3x3/my/pool-fund");
@@ -19,5 +38,5 @@ export const autopoolService = {
       console.error("Error fetching my pool fund ledger:", error);
       return [];
     }
-  }
+  },
 };

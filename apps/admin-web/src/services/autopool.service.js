@@ -21,18 +21,39 @@ export const autopoolService = {
     }
   },
 
+  getOperationalAdminMyTree: async () => {
+    try {
+      const response = await axiosInstance.get(
+        "/autopool/operational-admin/my-tree",
+      );
+      return (
+        response.data?.data || {
+          admin: null,
+          nodes: [],
+          completions: [],
+          summary: {},
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching operational admin autopool tree:", error);
+      return { admin: null, nodes: [], completions: [], summary: {} };
+    }
+  },
+
   getStats: async () => {
     try {
       const response = await axiosInstance.get("/autopool/3x3/admin/stats");
-      return response.data?.data || {
-        totalEntries: 0,
-        pendingEntries: 0,
-        placedEntries: 0,
-        completedEntries: 0,
-        totalRebirths: 0,
-        queueWaiting: 0,
-        queueProcessing: 0,
-      };
+      return (
+        response.data?.data || {
+          totalEntries: 0,
+          pendingEntries: 0,
+          placedEntries: 0,
+          completedEntries: 0,
+          totalRebirths: 0,
+          queueWaiting: 0,
+          queueProcessing: 0,
+        }
+      );
     } catch (error) {
       console.error("Error fetching autopool stats:", error);
       return {
@@ -49,7 +70,9 @@ export const autopoolService = {
 
   getUserDetail: async (userId) => {
     try {
-      const response = await axiosInstance.get(`/autopool/3x3/admin/user/${userId}`);
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/user/${userId}`,
+      );
       return response.data?.data || { entries: [], rebirths: [] };
     } catch (error) {
       console.error("Error fetching user autopool detail:", error);
@@ -59,17 +82,21 @@ export const autopoolService = {
 
   processQueue: async () => {
     try {
-      const response = await axiosInstance.post("/autopool/3x3/admin/process-queue");
+      const response = await axiosInstance.post(
+        "/autopool/3x3/admin/process-queue",
+      );
       return response.data;
     } catch (error) {
       console.error("Error processing autopool queue:", error);
       throw error;
     }
   },
-  
+
   getPoolFundSummary: async () => {
     try {
-      const response = await axiosInstance.get("/autopool/3x3/admin/pool-fund-summary");
+      const response = await axiosInstance.get(
+        "/autopool/3x3/admin/pool-fund-summary",
+      );
       return response.data?.data || null;
     } catch (error) {
       console.error("Error fetching pool fund summary:", error);
@@ -79,11 +106,14 @@ export const autopoolService = {
 
   getPoolFundLedger: async (params) => {
     try {
-      const response = await axiosInstance.get("/autopool/3x3/admin/pool-fund-ledger", { params });
+      const response = await axiosInstance.get(
+        "/autopool/3x3/admin/pool-fund-ledger",
+        { params },
+      );
       return response.data?.data || { ledger: [], pagination: {} };
     } catch (error) {
       console.error("Error fetching pool fund ledger:", error);
       return { ledger: [], pagination: {} };
     }
-  }
+  },
 };

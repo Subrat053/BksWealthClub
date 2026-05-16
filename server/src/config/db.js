@@ -54,14 +54,21 @@ export async function connectDatabase() {
     logger.warn(
       "MONGODB_URI not provided. Starting without database connection.",
     );
-    return;
+    return false;
   }
 
-  await mongoose.connect(env.MONGODB_URI, {
-    autoIndex: env.NODE_ENV !== "production",
-  });
+  try {
+    await mongoose.connect(env.MONGODB_URI, {
+      autoIndex: env.NODE_ENV !== "production",
+      serverSelectionTimeoutMS: 10000,
+    });
 
-  await ensureUserSponsorIndex();
+    await ensureUserSponsorIndex();
 
-  logger.info("MongoDB connected");
+    logger.info("MongoDB connected");
+    return true;
+  } catch (error) {
+    logger.error("MongoDB connection failed", error);
+    return false;
+  }
 }

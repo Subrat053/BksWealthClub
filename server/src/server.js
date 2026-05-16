@@ -9,14 +9,19 @@ import { seedSuperAdmin } from "./modules/admin/seedSuperAdmin.js";
 import { seedOperationalAdmin } from "./modules/admin/seedOperationalAdmin.js";
 
 async function bootstrap() {
-  await connectDatabase();
-  await seedSuperAdmin();
-  await seedOperationalAdmin();
+  const databaseReady = await connectDatabase();
 
-  registerAutopoolJob();
-  registerAutopool3x3Job();
-  registerIncomeJob();
-  registerNotificationJob();
+  if (databaseReady) {
+    await seedSuperAdmin();
+    await seedOperationalAdmin();
+    registerAutopoolJob();
+    registerAutopool3x3Job();
+    registerIncomeJob();
+    registerNotificationJob();
+  } else {
+    logger.warn("Skipping admin seeding because the database is unavailable.");
+    logger.warn("Skipping scheduled jobs because the database is unavailable.");
+  }
 
   const app = createApp();
 

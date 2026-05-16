@@ -1,87 +1,172 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { autopoolService } from "../../services/autopool.service";
-import Card from "../../components/common/Card";
 
-const TreeNode = ({ node, childrenMap, depth = 0 }) => {
-  const children = childrenMap.get(node._id.toString()) || [];
-  
+const VISIBLE_DEPTHS = new Set([0, 3, 9]);
+
+const sortNodes = (a, b) => {
+  const pa = a.levelSequence ?? a.position ?? 0;
+  const pb = b.levelSequence ?? b.position ?? 0;
+  if (pa !== pb) return pa - pb;
+  return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+};
+
+/* ── Compact Node ─────────────────────────────────────────────────────────── */
+const TreeNode = ({
+  node,
+  visualChildrenMap,
+  treeDepth = 0,
+  expandedNodes,
+  onToggleExpand,
+}) => {
+  const children = visualChildrenMap.get(node._id.toString()) || [];
+  const childCount = node.autopoolChildrenCount || 0;
+  const isCompleted = node.status === "COMPLETED";
+  const ownerName =
+    node.linkedRebirthNodeId?.ownerUserId?.fullName || "Operational Admin";
+  const ownerMemberId =
+    node.linkedRebirthNodeId?.ownerUserId?.memberId || node.poolNodeId;
+  const isExpanded = expandedNodes.has(node._id.toString());
+  const isDepth9 = treeDepth === 9;
+  const hasChildren = children.length > 0;
+  const showExpandBtn = isDepth9 && hasChildren;
+  const renderChildren = hasChildren && (!isDepth9 || isExpanded);
+
   return (
-    <div className="flex flex-col items-center">
-      {/* Node Card */}
-      <div className={`group relative p-5 rounded-2xl border transition-all duration-300 hover:scale-105 ${
-        node.status === 'COMPLETED' 
-          ? 'bg-linear-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
-          : 'bg-[#091a39]/95 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)]'
-      } min-w-[200px] text-center z-20 hover:shadow-[0_0_30px_rgba(245,158,11,0.15)] hover:border-amber-500/40`}>
-        
-        {/* Connection Dot - Top */}
-        {depth > 0 && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-amber-500/50 border-2 border-[#08142f] z-30" />
+    <div className="flex flex-col items-center relative hover:z-50">
+      <div
+        className={`group relative px-2 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.04] ${
+          isCompleted
+            ? "bg-linear-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/30"
+            : "bg-[#091a39]/95 border-amber-500/20"
+        } w-[90px] text-center z-20 hover:z-50 hover:border-amber-500/40`}
+      >
+        {treeDepth > 0 && (
+          <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-500/50 border border-[#08142f] z-30" />
         )}
 
-        {/* Badge */}
-        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm ${
-          node.parentPoolNodeId ? 'bg-amber-600 text-white' : 'bg-linear-to-r from-amber-400 to-yellow-600 text-white'
-        }`}>
-          {node.parentPoolNodeId ? `LEVEL ${depth}` : 'ROOT NODE'}
+        <div
+          className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full text-[7px] font-bold uppercase tracking-wider ${
+            treeDepth > 0
+              ? "bg-amber-600 text-white"
+              : "bg-linear-to-r from-amber-400 to-yellow-600 text-white"
+          }`}
+        >
+          {treeDepth > 0 ? `D${treeDepth}` : "ROOT"}
         </div>
 
-        {/* Content */}
-        <div className="mt-2">
-          <h4 className="font-black text-amber-100 text-lg leading-tight tracking-tight">{node.poolNodeId}</h4>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="w-6 h-6 rounded-full bg-amber-500/10 flex items-center justify-center text-[10px] text-amber-400 font-bold border border-amber-500/20">
-              {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) || "U"}
-            </div>
-            <p className="text-xs text-amber-100/70 font-semibold truncate max-w-[120px]">
-              {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
-            </p>
+        {isCompleted && (
+          <div className="absolute -top-1.5 -right-1 px-1 py-px rounded text-[6px] font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-500/30">
+            ✓
           </div>
+        )}
+
+        <div className="mt-2 mx-auto flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-amber-400/80 bg-[#08142f]">
+          <svg
+            className="w-3.5 h-3.5 text-amber-400"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
         </div>
-        
-        {/* Children Status Dots */}
-        <div className="mt-4 flex justify-center gap-2">
-          {[1, 2, 3].map(i => (
-            <div 
-              key={i} 
-              className={`w-3 h-3 rounded-full border-2 border-[#08142f] shadow-sm transition-all duration-500 ${
-                i <= (node.autopoolChildrenCount || 0) 
-                  ? 'bg-linear-to-tr from-emerald-400 to-teal-500 scale-110' 
-                  : 'bg-white/5'
-              }`} 
-              title={`Position ${i}: ${i <= (node.autopoolChildrenCount || 0) ? 'Filled' : 'Empty'}`}
+        <p className="text-[7px] font-mono font-semibold text-amber-200/45 mt-1 truncate leading-none">
+          {ownerMemberId}
+        </p>
+        <p className="text-[8px] font-bold text-amber-100/90 mt-0.5 truncate leading-tight">
+          {ownerName}
+        </p>
+
+        <div className="mt-1.5 flex justify-center gap-1">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`w-2 h-2 rounded-full transition-all ${
+                i <= childCount
+                  ? "bg-linear-to-tr from-emerald-400 to-teal-500"
+                  : "bg-white/8 border border-white/10"
+              }`}
+              title={`${i <= childCount ? "Filled" : "Empty"}`}
             />
           ))}
         </div>
 
-        {/* Connection Dot - Bottom */}
-        {children.length > 0 && (
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-amber-500 border-2 border-[#08142f] z-30 group-hover:scale-125 transition-transform" />
+        {/* Hover tooltip — high z-index to stay above siblings */}
+        <div className="pointer-events-none absolute left-full top-1/2 ml-2 hidden w-[160px] -translate-y-1/2 rounded-xl border border-amber-500/20 bg-[#101d40]/95 p-2 text-left shadow-lg backdrop-blur-md group-hover:block z-[100]">
+          <h5 className="text-[10px] font-bold text-white truncate">
+            {ownerName}
+          </h5>
+          <div className="mt-1 space-y-0.5 text-[8px]">
+            <div className="flex justify-between">
+              <span className="text-amber-100/40">ID</span>
+              <span className="text-amber-100/80 font-mono">
+                {ownerMemberId}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-amber-100/40">Status</span>
+              <span
+                className={isCompleted ? "text-emerald-300" : "text-amber-300"}
+              >
+                {node.status || "PENDING"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-amber-100/40">Children</span>
+              <span className="text-amber-100/80">{childCount}/3</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-amber-100/40">Depth</span>
+              <span className="text-amber-100/80">{treeDepth}</span>
+            </div>
+          </div>
+        </div>
+
+        {(renderChildren || showExpandBtn) && (
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-500 border border-[#08142f] z-30" />
         )}
       </div>
 
-      {/* Recursive Children Rendering */}
-      {children.length > 0 && (
-        <div className="flex flex-col items-center w-full mt-12 relative">
-          {/* Vertical line from parent to horizontal bar */}
-          <div className="w-0.5 h-12 bg-linear-to-b from-amber-500/50 to-amber-500/10 absolute -top-12" />
-          
-          <div className="flex justify-center gap-24 relative w-full pt-6">
-            {/* Horizontal connection bar */}
+      {showExpandBtn && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand(node._id.toString());
+          }}
+          className="mt-1.5 px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-wider border cursor-pointer bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
+        >
+          {isExpanded ? "▲ Hide" : "▼ Expand"}
+        </button>
+      )}
+
+      {renderChildren && (
+        <div className="flex flex-col items-center w-full mt-6 relative">
+          <div className="w-px h-6 bg-amber-500/30 absolute -top-6" />
+          <div className="flex justify-center gap-3 md:gap-5 relative w-full pt-3">
             {children.length > 1 && (
-              <div className="absolute top-0 h-0.5 bg-amber-500/20 rounded-full" 
-                style={{ 
-                  left: `${150 / (children.length * 2)}%`,
-                  right: `${150 / (children.length * 2)}%`
-                }} 
+              <div
+                className="absolute top-0 h-px bg-amber-500/20"
+                style={{
+                  left: `${100 / (children.length * 2)}%`,
+                  right: `${100 / (children.length * 2)}%`,
+                }}
               />
             )}
-            
             {children.map((child) => (
-              <div key={child._id} className="relative">
-                {/* Vertical line from horizontal bar to child */}
-                <div className="w-0.5 h-6 bg-amber-500/20 absolute -top-6 left-1/2 -translate-x-1/2" />
-                <TreeNode node={child} childrenMap={childrenMap} depth={depth + 1} />
+              <div key={child.node._id} className="relative">
+                <div className="w-px h-3 bg-amber-500/20 absolute -top-3 left-1/2 -translate-x-1/2" />
+                <TreeNode
+                  node={child.node}
+                  visualChildrenMap={visualChildrenMap}
+                  treeDepth={child.depth}
+                  expandedNodes={expandedNodes}
+                  onToggleExpand={onToggleExpand}
+                />
               </div>
             ))}
           </div>
@@ -91,146 +176,299 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
   );
 };
 
+/* ── Page ──────────────────────────────────────────────────────────────────── */
 export default function AutopoolTreePage() {
-  const [data, setData] = useState({ nodes: [], completions: [] });
+  const [data, setData] = useState({
+    admin: null,
+    nodes: [],
+    completions: [],
+    summary: {},
+  });
   const [loading, setLoading] = useState(true);
-  const scrollContainerRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
+  const [expandedNodes, setExpandedNodes] = useState(new Set());
+  const scrollRef = useRef(null);
+  const [drag, setDrag] = useState({
+    active: false,
+    sx: 0,
+    sy: 0,
+    sl: 0,
+    st: 0,
+  });
 
   useEffect(() => {
-    fetchMyAutoPool();
+    fetchData();
   }, []);
 
-  const fetchMyAutoPool = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const result = await autopoolService.getMyAutoPool();
-      setData(result);
-    } catch (err) {
-      console.error("Failed to fetch my autopool:", err);
+      setData(await autopoolService.getOperationalAdminMyTree());
+    } catch (e) {
+      console.error("Failed to fetch tree:", e);
     } finally {
       setLoading(false);
     }
   };
 
-  // Efficiently build the tree structure
-  const { roots, childrenMap } = useMemo(() => {
-    const map = new Map();
-    const possibleRoots = [];
-    const nodeIds = new Set(data.nodes.map(n => n._id.toString()));
-
-    data.nodes.forEach(node => {
-      const parentId = node.parentPoolNodeId?._id || node.parentPoolNodeId;
-      const pidStr = parentId?.toString();
-      
-      // A node is a root if it has no parent OR its parent is not in the set of nodes we're displaying
-      if (!parentId || !nodeIds.has(pidStr)) {
-        possibleRoots.push(node);
-      } else {
-        if (!map.has(pidStr)) map.set(pidStr, []);
-        map.get(pidStr).push(node);
-      }
+  const onToggleExpand = useCallback((id) => {
+    setExpandedNodes((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
     });
+  }, []);
 
-    return { roots: possibleRoots, childrenMap: map };
+  // Build visual tree: full tree → BFS to compute depths → filter to VISIBLE_DEPTHS → reparent
+  const { roots, visualChildrenMap } = useMemo(() => {
+    // 1. Deduplicate
+    const byId = new Map();
+    for (const n of data.nodes) {
+      const id = n._id.toString();
+      if (!byId.has(id)) byId.set(id, n);
+    }
+    const all = Array.from(byId.values());
+
+    // 2. Build full childrenMap
+    const fullChildren = new Map();
+    const rootNodes = [];
+    for (const n of all) {
+      const pid = n.parentPoolNodeId?._id || n.parentPoolNodeId;
+      if (!pid) {
+        rootNodes.push(n);
+      } else {
+        const ps = pid.toString();
+        if (!fullChildren.has(ps)) fullChildren.set(ps, []);
+        fullChildren.get(ps).push(n);
+      }
+    }
+    // Sort children
+    for (const [k, v] of fullChildren) fullChildren.set(k, v.sort(sortNodes));
+    rootNodes.sort(sortNodes);
+
+    // 3. BFS to assign depth to every node
+    const depthMap = new Map(); // nodeId → tree depth
+    const queue = rootNodes.map((n) => ({ node: n, depth: 0 }));
+    while (queue.length) {
+      const { node, depth } = queue.shift();
+      const nid = node._id.toString();
+      if (depthMap.has(nid)) continue;
+      depthMap.set(nid, depth);
+      const kids = fullChildren.get(nid) || [];
+      for (const kid of kids) queue.push({ node: kid, depth: depth + 1 });
+    }
+
+    // 4. Build visual tree: connect visible-depth nodes
+    // For each visible node, find its descendants at the next visible depth
+    const sortedVisibleDepths = [...VISIBLE_DEPTHS].sort((a, b) => a - b);
+    const nextVisibleDepth = (d) => {
+      for (const vd of sortedVisibleDepths) {
+        if (vd > d) return vd;
+      }
+      return null; // no next visible depth → show all children (expanded subtree)
+    };
+
+    // Collect descendants at a specific target depth
+    const getDescendantsAtDepth = (nodeId, targetDepth) => {
+      const result = [];
+      const q = [nodeId];
+      while (q.length) {
+        const cid = q.shift();
+        const kids = fullChildren.get(cid) || [];
+        for (const kid of kids) {
+          const kidId = kid._id.toString();
+          const kidDepth = depthMap.get(kidId);
+          if (kidDepth === targetDepth) {
+            result.push({ node: kid, depth: kidDepth });
+          } else if (kidDepth < targetDepth) {
+            q.push(kidId);
+          }
+        }
+      }
+      return result;
+    };
+
+    // For depth-9 expanded nodes, get ALL direct children (full sub-tree, depth by depth)
+    const getAllDirectChildren = (nodeId) => {
+      const kids = fullChildren.get(nodeId) || [];
+      return kids.map((k) => ({
+        node: k,
+        depth: depthMap.get(k._id.toString()) ?? 0,
+      }));
+    };
+
+    // Build visualChildrenMap
+    const vcm = new Map();
+    const visibleRoots = [];
+
+    // Process roots (depth 0)
+    for (const root of rootNodes) {
+      const rid = root._id.toString();
+      const rd = depthMap.get(rid);
+      if (!VISIBLE_DEPTHS.has(rd)) continue;
+      visibleRoots.push({ node: root, depth: rd });
+
+      // BFS through visible nodes to build their visual children
+      const vq = [{ id: rid, depth: rd }];
+      const visited = new Set();
+      while (vq.length) {
+        const { id, depth: d } = vq.shift();
+        if (visited.has(id)) continue;
+        visited.add(id);
+
+        const nd = nextVisibleDepth(d);
+        let visualKids;
+        if (nd !== null) {
+          visualKids = getDescendantsAtDepth(id, nd);
+        } else {
+          // Past last visible depth → show direct children (for expanded L9)
+          visualKids = getAllDirectChildren(id);
+        }
+
+        if (visualKids.length) {
+          vcm.set(id, visualKids);
+          for (const vk of visualKids) {
+            vq.push({ id: vk.node._id.toString(), depth: vk.depth });
+          }
+        }
+      }
+    }
+
+    return { roots: visibleRoots, visualChildrenMap: vcm };
   }, [data.nodes]);
 
-  // Mouse drag to scroll handlers
-  const handleMouseDown = (e) => {
-    if (!scrollContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setStartY(e.pageY - scrollContainerRef.current.offsetTop);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-    setScrollTop(scrollContainerRef.current.scrollTop);
+  // Drag handlers
+  const onDown = (e) => {
+    if (!scrollRef.current) return;
+    setDrag({
+      active: true,
+      sx: e.pageX - scrollRef.current.offsetLeft,
+      sy: e.pageY - scrollRef.current.offsetTop,
+      sl: scrollRef.current.scrollLeft,
+      st: scrollRef.current.scrollTop,
+    });
   };
-
-  const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp = () => setIsDragging(false);
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !scrollContainerRef.current) return;
+  const onUp = () => setDrag((d) => ({ ...d, active: false }));
+  const onMove = (e) => {
+    if (!drag.active || !scrollRef.current) return;
     e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const y = e.pageY - scrollContainerRef.current.offsetTop;
-    const walkX = (x - startX) * 1.5;
-    const walkY = (y - startY) * 1.5;
-    scrollContainerRef.current.scrollLeft = scrollLeft - walkX;
-    scrollContainerRef.current.scrollTop = scrollTop - walkY;
+    scrollRef.current.scrollLeft =
+      drag.sl - (e.pageX - scrollRef.current.offsetLeft - drag.sx) * 1.5;
+    scrollRef.current.scrollTop =
+      drag.st - (e.pageY - scrollRef.current.offsetTop - drag.sy) * 1.5;
   };
 
   return (
-    <div className="flex flex-col space-y-6 h-full">
-      <div className="space-y-2 px-4 md:px-0">
-        <div className="h-1 w-24 rounded-full bg-linear-to-r from-amber-300 via-amber-500 to-yellow-200" />
-        <h1 className="text-3xl font-bold leading-none text-white md:text-4xl">Auto Pool Visualizer</h1>
-        <p className="max-w-2xl text-sm text-amber-100/70 md:text-base">
-          Interactive global matrix hierarchy tracking for your rebirth nodes.
+    <div className="flex flex-col space-y-3 md:space-y-4 h-full">
+      <div className="space-y-1 px-4 md:px-0">
+        <div className="h-0.5 w-16 rounded-full bg-linear-to-r from-amber-300 via-amber-500 to-yellow-200" />
+        <h1 className="text-xl font-bold leading-none text-white md:text-2xl">
+          Operational Admin Auto Pool Tree
+        </h1>
+        <p className="max-w-2xl text-xs text-amber-100/70">
+          Visualize your own rebirth matrix, placed nodes, completed nodes, and
+          children under your admin tree.
         </p>
-      </div>
-
-      {/* Stats Quick View */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4 md:px-0">
-        <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg">
-          <p className="text-[10px] font-bold text-amber-200/50 uppercase tracking-widest">Total Nodes</p>
-          <p className="text-2xl font-black text-white mt-1">{data.nodes.length}</p>
-        </div>
-        <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg">
-          <p className="text-[10px] font-bold text-amber-200/50 uppercase tracking-widest">Completed</p>
-          <p className="text-2xl font-black text-emerald-400 mt-1">{data.nodes.filter(n => n.status === 'COMPLETED').length}</p>
-        </div>
-        <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg">
-          <p className="text-[10px] font-bold text-amber-200/50 uppercase tracking-widest">Pending</p>
-          <p className="text-2xl font-black text-amber-400 mt-1">{data.nodes.filter(n => n.status === 'PENDING' || n.status === 'PLACED').length}</p>
-        </div>
-        <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg">
-          <p className="text-[10px] font-bold text-amber-200/50 uppercase tracking-widest">Active Rebirths</p>
-          <p className="text-2xl font-black text-indigo-400 mt-1">{data.completions.length}</p>
+        <div className="flex items-center gap-2 mt-1">
+          {data.admin?.name && (
+            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-amber-200/40">
+              {data.admin.name} • {data.admin.adminId}
+            </span>
+          )}
+          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-200/30 bg-[#091a39] px-2 py-0.5 rounded border border-amber-500/10">
+            D0 · D3 · D9
+          </span>
         </div>
       </div>
 
-      <div 
-        ref={scrollContainerRef}
-        onMouseDown={handleMouseDown}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-        className={`relative flex-1 bg-[#050b1d] rounded-3xl border border-amber-500/10 overflow-auto min-h-[600px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] cursor-${isDragging ? 'grabbing' : 'grab'} selection:bg-none`}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 px-4 md:px-0">
+        <div className="bg-[#091a39]/95 p-2.5 md:p-3 rounded-xl border border-amber-500/10">
+          <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
+            Total Nodes
+          </p>
+          <p className="text-lg font-black text-white mt-0.5">
+            {data.summary.totalNodes ?? data.nodes.length}
+          </p>
+        </div>
+        <div className="bg-[#091a39]/95 p-2.5 md:p-3 rounded-xl border border-amber-500/10">
+          <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
+            Completed
+          </p>
+          <p className="text-lg font-black text-emerald-400 mt-0.5">
+            {data.summary.completedNodes ??
+              data.nodes.filter((n) => n.status === "COMPLETED").length}
+          </p>
+        </div>
+        <div className="bg-[#091a39]/95 p-2.5 md:p-3 rounded-xl border border-amber-500/10">
+          <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
+            Pending/Placed
+          </p>
+          <p className="text-lg font-black text-amber-400 mt-0.5">
+            {data.summary.pendingPlacedNodes ??
+              data.nodes.filter(
+                (n) => n.status === "PENDING" || n.status === "PLACED",
+              ).length}
+          </p>
+        </div>
+        <div className="bg-[#091a39]/95 p-2.5 md:p-3 rounded-xl border border-amber-500/10">
+          <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
+            Rebirths
+          </p>
+          <p className="text-lg font-black text-indigo-400 mt-0.5">
+            {data.summary.activeRebirths ?? data.completions.length}
+          </p>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        onMouseDown={onDown}
+        onMouseLeave={onUp}
+        onMouseUp={onUp}
+        onMouseMove={onMove}
+        className={`relative flex-1 bg-[#050b1d] rounded-2xl border border-amber-500/10 overflow-auto min-h-[350px] md:min-h-[500px] shadow-[inset_0_1px_6px_rgba(0,0,0,0.2)] ${drag.active ? "cursor-grabbing" : "cursor-grab"} select-none`}
       >
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#f59e0b 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}></div>
-
-        <div className="min-w-full min-h-full py-24 px-40 text-center">
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(#f59e0b 0.5px, transparent 0.5px)",
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+        <div className="min-w-full min-h-full py-8 px-4 md:py-12 md:px-12 text-center">
           {loading ? (
-            <div className="inline-flex flex-col items-center justify-center py-40 text-amber-200/40">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full border-4 border-amber-500/10 border-t-amber-500 animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-8 h-8 bg-amber-500 rounded-full scale-75 animate-pulse opacity-20"></div>
-                </div>
-              </div>
-              <p className="mt-6 font-bold tracking-wide uppercase text-xs">Mapping your matrix...</p>
+            <div className="inline-flex flex-col items-center justify-center py-16 text-amber-200/40">
+              <div className="w-10 h-10 rounded-full border-[3px] border-amber-500/10 border-t-amber-500 animate-spin"></div>
+              <p className="mt-3 font-bold tracking-wide uppercase text-[10px]">
+                Mapping matrix…
+              </p>
             </div>
           ) : roots.length === 0 ? (
-            <div className="inline-flex flex-col items-center justify-center py-40 text-center max-w-lg mx-auto">
-              <div className="w-24 h-24 bg-[#091a39] rounded-3xl shadow-xl flex items-center justify-center text-5xl mb-8 border border-amber-500/10">
+            <div className="inline-flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto">
+              <div className="w-12 h-12 bg-[#091a39] rounded-xl shadow-lg flex items-center justify-center text-2xl mb-3 border border-amber-500/10">
                 🧬
               </div>
-              <h3 className="text-2xl font-black text-white mb-3">No Active Matrix Nodes</h3>
-              <p className="text-amber-100/50 leading-relaxed">Your nodes haven't been placed in the global matrix yet. Once they enter the queue and get placed, your visual tree will appear here.</p>
+              <h3 className="text-base font-black text-white mb-1">
+                No Operational Tree Nodes
+              </h3>
+              <p className="text-[11px] text-amber-100/50 leading-relaxed">
+                Your scoped rebirth tree has no placed nodes yet.
+              </p>
             </div>
           ) : (
-            <div className="inline-flex flex-col gap-32 items-center text-left">
-              {roots.map((root, index) => (
-                <div key={root._id} className="flex flex-col items-center">
-                  {index > 0 && (
-                    <div className="w-full h-px bg-linear-to-r from-transparent via-amber-500/10 to-transparent my-16" />
+            <div className="inline-flex flex-col gap-6 items-center text-left">
+              {roots.map((r, i) => (
+                <div key={r.node._id} className="flex flex-col items-center">
+                  {i > 0 && (
+                    <div className="w-full h-px bg-linear-to-r from-transparent via-amber-500/10 to-transparent my-3" />
                   )}
-                  <TreeNode node={root} childrenMap={childrenMap} />
+                  <TreeNode
+                    node={r.node}
+                    visualChildrenMap={visualChildrenMap}
+                    treeDepth={r.depth}
+                    expandedNodes={expandedNodes}
+                    onToggleExpand={onToggleExpand}
+                  />
                 </div>
               ))}
             </div>
@@ -238,24 +476,36 @@ export default function AutopoolTreePage() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap justify-center md:justify-between items-center gap-4 px-6 py-4 bg-[#091a39]/95 border border-amber-500/10 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-[10px] font-bold text-amber-200/50 uppercase tracking-wider">Your Node</span>
+      <div className="flex flex-wrap justify-center md:justify-between items-center gap-3 px-3 py-2 bg-[#091a39]/95 border border-amber-500/10 rounded-xl">
+        <div className="flex items-center gap-3 flex-wrap justify-center">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <span className="text-[8px] font-bold text-amber-200/50 uppercase">
+              Root
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-            <span className="text-[10px] font-bold text-amber-200/50 uppercase tracking-wider">Filled Position</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+            <span className="text-[8px] font-bold text-amber-200/50 uppercase">
+              Filled
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white/10 border border-white/5"></div>
-            <span className="text-[10px] font-bold text-amber-200/50 uppercase tracking-wider">Empty Position</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-white/10 border border-white/10"></div>
+            <span className="text-[8px] font-bold text-amber-200/50 uppercase">
+              Empty
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[8px] font-bold text-emerald-400">✓</span>
+            <span className="text-[8px] font-bold text-amber-200/50 uppercase">
+              Done
+            </span>
           </div>
         </div>
-        <div className="text-[10px] text-amber-200/30 font-bold uppercase tracking-widest">
-          Drag to Navigate • Use refresh to update status
+        <div className="text-[8px] text-amber-200/30 font-bold uppercase tracking-widest">
+          Nodes: {data.summary.totalNodes ?? data.nodes.length} • Drag to pan •
+          Click D9 to expand
         </div>
       </div>
     </div>

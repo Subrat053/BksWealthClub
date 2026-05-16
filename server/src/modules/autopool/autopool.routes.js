@@ -8,6 +8,7 @@ import {
   getMyRebirthTreeController,
   getRebirthTreeByUserController,
 } from "./autopool.controller.js";
+import { getOperationalAdminMyTree } from "./autopool-3x3.controller.js";
 import {
   getQueue as getQueueV2,
   getTree as getTreeV2,
@@ -19,7 +20,20 @@ import {
 export const autopoolRouter = Router();
 
 // Member routes
-autopoolRouter.get("/rebirth-tree/my", authMiddleware, getMyRebirthTreeController);
+autopoolRouter.get(
+  "/rebirth-tree/my",
+  authMiddleware,
+  getMyRebirthTreeController,
+);
+
+/**
+ * Operational admin: scoped tree view
+ */
+autopoolRouter.get(
+  "/operational-admin/my-tree",
+  authMiddleware,
+  getOperationalAdminMyTree,
+);
 
 // Legacy admin-compatible routes (used by admin frontend)
 autopoolRouter.get("/admin/queue", authMiddleware, adminOnly, getQueueV2);
@@ -45,14 +59,24 @@ autopoolRouter.get(
   adminOnly,
   getRebirthTreeByUserController,
 );
-autopoolRouter.get("/queue", authMiddleware, adminOnly, getAutopoolQueueController);
+autopoolRouter.get(
+  "/queue",
+  authMiddleware,
+  adminOnly,
+  getAutopoolQueueController,
+);
 autopoolRouter.post(
   "/process",
   authMiddleware,
   adminOnly,
   processAutopoolQueueController,
 );
-autopoolRouter.get("/matrix", authMiddleware, adminOnly, getAutopoolMatrixController);
+autopoolRouter.get(
+  "/matrix",
+  authMiddleware,
+  adminOnly,
+  getAutopoolMatrixController,
+);
 autopoolRouter.get(
   "/matrix/:id",
   authMiddleware,
