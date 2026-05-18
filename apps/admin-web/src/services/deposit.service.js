@@ -22,7 +22,7 @@ export const depositService = {
   rejectDeposit: (depositId, reason) => {
     return adminApiClient(`/deposits/${depositId}/reject`, {
       method: "PATCH",
-      body: JSON.stringify({ reason }),
+      data: { reason },
     });
   },
 };

@@ -247,6 +247,7 @@ export default function DepositRequestsPage() {
   const [approveTarget, setApproveTarget] = useState(null);
   const [distributionSummary, setDistributionSummary] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState(null);
   const [recentlyApprovedDepositId, setRecentlyApprovedDepositId] =
     useState(null);
@@ -311,7 +312,9 @@ export default function DepositRequestsPage() {
         setDistributionSummary(distData);
       }
     } catch (err) {
-      showToast(err.message || "Approval failed.", "error");
+      const errMsg = err?.response?.data?.message || err.message || "Approval failed.";
+      showToast(errMsg, "error");
+      alert(errMsg);
     } finally {
       setActionLoading(null);
       setApproveTarget(null);
@@ -331,22 +334,40 @@ export default function DepositRequestsPage() {
       );
       showToast("Deposit rejected.");
     } catch (err) {
-      showToast(err.message || "Rejection failed.", "error");
+      const errMsg = err?.response?.data?.message || err.message || "Rejection failed.";
+      showToast(errMsg, "error");
+      alert(errMsg);
     } finally {
       setActionLoading(null);
       setRejectTarget(null);
     }
   };
 
-  const filtered =
-    filter === "all"
-      ? deposits
-      : filter === "pending"
-        ? deposits.filter(
-            (d) =>
-              d.status === "pending" || d._id === recentlyApprovedDepositId,
-          )
-        : deposits.filter((d) => d.status === filter);
+  const filtered = deposits.filter((d) => {
+    // 1. Status Filter
+    let statusMatch = true;
+    if (filter === "pending") {
+      statusMatch = d.status === "pending" || d._id === recentlyApprovedDepositId;
+    } else if (filter !== "all") {
+      statusMatch = d.status === filter;
+    }
+
+    if (!statusMatch) return false;
+
+    // 2. Search Query Filter
+    if (!searchQuery) return true;
+    const s = searchQuery.toLowerCase();
+    const memberId = d.userRef?.memberId || "";
+    const fullName = d.userRef?.fullName || "";
+    const txHash = d.txHash || "";
+    const email = d.userRef?.email || "";
+    return (
+      memberId.toLowerCase().includes(s) ||
+      fullName.toLowerCase().includes(s) ||
+      txHash.toLowerCase().includes(s) ||
+      email.toLowerCase().includes(s)
+    );
+  });
 
   const counts = {
     all: deposits.length,
@@ -401,14 +422,14 @@ export default function DepositRequestsPage() {
         subtitle="Review submitted deposits and trigger member activation on approval."
       />
 
-      {/* Filter tabs & Export */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Search, Filter tabs & Export */}
+      <div className="grid gap-4 rounded-[22px] border border-white/10 bg-[#091a4a]/70 p-4 shadow-lg lg:grid-cols-2 items-center">
         <div className="flex flex-wrap gap-2">
           {["all", "pending", "approved", "rejected"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`rounded-xl border px-4 py-2 text-sm font-medium capitalize transition ${
+              className={`rounded-xl border px-4 py-2.5 text-sm font-medium capitalize transition ${
                 filter === tab
                   ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300"
                   : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
@@ -420,20 +441,29 @@ export default function DepositRequestsPage() {
           ))}
         </div>
 
-        <DownloadReportButton
-          data={filtered}
-          fileName="deposits-report"
-          sheetName="Deposits"
-          columns={[
-            { header: "Member ID", key: "userRef.memberId" },
-            { header: "Name", key: "userRef.fullName" },
-            { header: "Amount", key: "amount" },
-            { header: "Wallet", key: "walletType" },
-            { header: "Tx Hash", key: "txHash" },
-            { header: "Status", key: "status", format: "capitalize" },
-            { header: "Date", key: "createdAt", format: "date" },
-          ]}
-        />
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, email, member ID..."
+            className="w-full sm:max-w-[240px] rounded-xl border border-white/10 bg-[#08173f] px-4 py-2.5 text-sm text-white placeholder:text-blue-200/40 outline-none focus:border-blue-400/40"
+          />
+          <DownloadReportButton
+            data={filtered}
+            fileName="deposits-report"
+            sheetName="Deposits"
+            columns={[
+              { header: "Member ID", key: "userRef.memberId" },
+              { header: "Name", key: "userRef.fullName" },
+              { header: "Amount", key: "amount" },
+              { header: "Wallet", key: "walletType" },
+              { header: "Tx Hash", key: "txHash" },
+              { header: "Status", key: "status", format: "capitalize" },
+              { header: "Date", key: "createdAt", format: "date" },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Table */}

@@ -1,19 +1,26 @@
 import axiosInstance from "../utils/axiosInstance";
 
 export const autopoolService = {
-  getQueue: async () => {
+  getQueue: async (page = 1, limit = 100, search = "") => {
     try {
-      const response = await axiosInstance.get("/autopool/3x3/admin/queue");
-      return response.data?.data || [];
+      const response = await axiosInstance.get("/autopool/3x3/admin/queue", {
+        params: { page, limit, search }
+      });
+      return {
+        data: response.data?.data || [],
+        meta: response.data?.meta || { total: 0, page: 1, limit: 100, totalPages: 1 }
+      };
     } catch (error) {
       console.error("Error fetching autopool queue:", error);
-      return [];
+      return { data: [], meta: { total: 0, page: 1, limit: 100, totalPages: 1 } };
     }
   },
 
-  getTree: async () => {
+  getTree: async (limit = 100) => {
     try {
-      const response = await axiosInstance.get("/autopool/3x3/admin/tree");
+      const response = await axiosInstance.get("/autopool/3x3/admin/tree", {
+        params: { limit }
+      });
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching autopool tree:", error);

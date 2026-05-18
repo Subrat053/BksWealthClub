@@ -606,7 +606,17 @@ export const autopool3x3Service = {
       const node = await AutoPoolNode.findById(nodeId).session(s);
       if (!node) throw new Error(`Node ${nodeId} not found`);
 
-      if (node.status === "COMPLETED") return node;
+      // If already completed, check if rebirths still need to be generated
+      if (node.status === "COMPLETED") {
+        if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
+          console.log(`[AutoPool] Generating delayed rebirths for already completed node: ${node.nodeCode}`);
+          await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
+          node.rebirthGenerated = true;
+          node.rebirthGeneratedAt = new Date();
+          await node.save({ session: s });
+        }
+        return node;
+      }
 
       // Mark as completed
       node.status = "COMPLETED";
@@ -615,16 +625,14 @@ export const autopool3x3Service = {
 
       console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
 
-      // Generate next-round rebirth IDs (Now handled by Level Completion Fund Distribution)
-      /*
+      // Generate next-round rebirth IDs (Restored per-node completion trigger)
       if (node.nodeType === "REBIRTH" && !node.rebirthGenerated) {
         await autopool3x3Service.generateNextLevelRebirthsFromCompletedNode(node._id, s);
         node.rebirthGenerated = true;
         node.rebirthGeneratedAt = new Date();
         await node.save({ session: s });
       }
-      */
-
+      
       // --- FUND MANAGEMENT HOOK ---
       // Process individual rebirth completion payout ($60)
       if (node.nodeType === "REBIRTH") {
@@ -670,6 +678,8 @@ export const autopool3x3Service = {
         ? lastNodeAtNextLevel.levelSequence + 1
         : 1;
 
+      console.log(`[AutoPool] Generating 2 rebirth nodes for ${memberId} starting at sequence ${startSequence} for Level ${nextLevel}`);
+
       for (let i = 0; i < 2; i++) {
         const sequence = startSequence + i;
         const displayCode = generateRebirthCode({
@@ -678,7 +688,7 @@ export const autopool3x3Service = {
           sequence,
         });
 
-        let newNode = await AutoPoolNode.findOne({ displayCode }).session(s);
+        let newNode = await AutoPoolNode.findOne({ nodeCode: displayCode }).session(s);
         if (!newNode) {
           const results = await AutoPoolNode.create(
             [
@@ -699,6 +709,7 @@ export const autopool3x3Service = {
             { session: s },
           );
           newNode = results[0];
+          console.log(`[AutoPool] Created rebirth node ${displayCode}`);
         }
 
         await autopool3x3Service.enqueueAutoPoolNode(newNode._id, s);
@@ -1042,14 +1053,18 @@ export const autopool3x3Service = {
    * Get AutoPool tree (admin)
    */
   getAutoPoolTree: async (limit = 100) => {
-    const nodes = await AutoPoolNode.find()
+    let query = AutoPoolNode.find()
       .populate("ownerUserId", "memberId email")
       .populate("matrixParentId", "nodeCode")
       .populate("userId", "memberId")
       .populate("rebirthId", "displayCode")
-      .sort({ queueTimestamp: 1 })
-      .limit(limit);
+      .sort({ queueTimestamp: 1 });
 
+    if (limit > 0) {
+      query = query.limit(limit);
+    }
+
+    const nodes = await query;
     return nodes;
   },
 
@@ -1090,13 +1105,40 @@ export const autopool3x3Service = {
   /**
    * Get AutoPool queue nodes (list)
    */
-  getQueueNodes: async (limit = 100) => {
-    const nodes = await AutoPoolNode.find({ nodeType: "REBIRTH" })
+  getQueueNodes: async (limit = 100, page = 1, returnTotal = false, search = "") => {
+    const skip = (page - 1) * limit;
+    const filter = { nodeType: "REBIRTH" };
+    if (search) {
+      const matchingUsers = await User.find({
+        $or: [
+          { fullName: { $regex: search, $options: "i" } },
+          { memberId: { $regex: search, $options: "i" } }
+        ]
+      }).select("_id").lean();
+      
+      const matchingUserIds = matchingUsers.map(u => u._id);
+      
+      filter.$or = [
+        { nodeCode: { $regex: search, $options: "i" } },
+        { ownerUserId: { $in: matchingUserIds } }
+      ];
+    }
+
+    let query = AutoPoolNode.find(filter)
       .populate("ownerUserId", "fullName memberId")
       .populate("matrixParentId", "nodeCode")
-      .sort({ queueTimestamp: 1 })
-      .limit(limit);
+      .sort({ queueTimestamp: 1 });
 
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const nodes = await query;
+
+    if (returnTotal) {
+      const total = await AutoPoolNode.countDocuments(filter);
+      return { nodes, total };
+    }
     return nodes;
   },
 

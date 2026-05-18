@@ -137,6 +137,14 @@ export default function UserListPage() {
     status: "",
     type: "all",
   });
+  const [searchInput, setSearchInput] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchInput }));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const [mergedUsers, setMergedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,6 +187,15 @@ export default function UserListPage() {
 
   const columns2 = useMemo(
     () => [
+      {
+        key: "serialNo",
+        label: "S.NO",
+        render: (_value, _row, index) => (
+          <span className="font-semibold text-slate-300">
+            {index + 1}
+          </span>
+        ),
+      },
       {
         key: "memberId",
         label: "USER ID",
@@ -359,11 +376,9 @@ export default function UserListPage() {
       <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
         <input
           type="text"
-          value={filters.search}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, search: e.target.value }))
-          }
-          placeholder="Search by name or email"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by name, email or member ID..."
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white placeholder:text-blue-200/40 outline-none focus:border-blue-400/40"
         />
         <select

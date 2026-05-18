@@ -48,13 +48,11 @@ export const getAutoPoolTree = asyncHandler(async (req, res) => {
   );
 });
 
-/**
- * GET /api/v1/autopool/admin/queue
- * Get queue nodes list
- */
 export const getQueueNodes = asyncHandler(async (req, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit) : 100;
-  const nodes = await autopool3x3Service.getQueueNodes(limit);
+  const page = req.query.page ? parseInt(req.query.page) : 1;
+  const search = req.query.search || "";
+  const { nodes, total } = await autopool3x3Service.getQueueNodes(limit, page, true, search);
 
   const mappedNodes = nodes.map((node) => {
     const leanNode = node.toObject ? node.toObject() : node;
@@ -73,6 +71,12 @@ export const getQueueNodes = asyncHandler(async (req, res) => {
     new ApiResponse({
       message: "Queue nodes fetched",
       data: mappedNodes,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: limit > 0 ? Math.ceil(total / limit) : 1,
+      }
     }),
   );
 });

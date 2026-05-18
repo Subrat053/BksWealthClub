@@ -116,6 +116,20 @@ export const depositService = {
       const user = await User.findById(deposit.userRef).session(session);
       if (!user) throw new ApiError(404, "User not found");
 
+      // Guard: Check for duplicate deposit approval
+      const alreadyApproved = await DepositModel.findOne({
+        userRef: deposit.userRef,
+        status: "approved",
+        _id: { $ne: depositId },
+      }).session(session);
+
+      if (user.isActivated || alreadyApproved) {
+        throw new ApiError(
+          400,
+          "This user has already deposited the money and is already active."
+        );
+      }
+
       // ── 4. Credit fund wallet ────────────────────────────────────────────────
       await WalletModel.findOneAndUpdate(
         { userRef: deposit.userRef },

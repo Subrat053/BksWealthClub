@@ -862,7 +862,20 @@ export async function getAdminUsersWithRebirths({
   if (actualType === "all" || actualType === "rebirths") {
     const rbFilter = {};
     if (search) {
-      rbFilter.$or = [{ rebirthCode: { $regex: search, $options: "i" } }];
+      const matchingUsers = await User.find({
+        $or: [
+          { fullName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { memberId: { $regex: search, $options: "i" } }
+        ]
+      }).select("_id").lean();
+      
+      const matchingUserIds = matchingUsers.map(u => u._id);
+      
+      rbFilter.$or = [
+        { rebirthCode: { $regex: search, $options: "i" } },
+        { userId: { $in: matchingUserIds } }
+      ];
     }
 
     const rebirths = await RebirthModel.find(rbFilter)

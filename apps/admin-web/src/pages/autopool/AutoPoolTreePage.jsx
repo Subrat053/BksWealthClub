@@ -132,7 +132,7 @@ const AutoPoolTreePage = () => {
         setNodes(scopedTree.nodes || []);
         setTreeMeta(scopedTree);
       } else {
-        const data = await autopoolService.getTree();
+        const data = await autopoolService.getTree(0); // 0 retrieves the entire tree
         setNodes(data);
         setTreeMeta({ admin: null, summary: {} });
       }
@@ -207,7 +207,7 @@ const AutoPoolTreePage = () => {
             Drag to Navigate
           </div>
           <button
-            onClick={fetchTree}
+            onClick={() => fetchTree()}
             className="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 font-bold text-sm flex items-center gap-2"
           >
             {loading ? (
@@ -231,6 +231,8 @@ const AutoPoolTreePage = () => {
           </button>
         </div>
       </div>
+
+
 
       <div
         ref={scrollContainerRef}
@@ -314,6 +316,7 @@ const AutoPoolTreePage = () => {
           )}
         </div>
       </div>
+
 
       {/* Stats overlay or footer if needed */}
       <div className="flex justify-between items-center px-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
