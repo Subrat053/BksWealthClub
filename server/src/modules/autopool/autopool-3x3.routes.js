@@ -17,6 +17,9 @@ import {
   getMyAutoPoolNodes,
   getMyRebirths,
   getMyAutoPoolSummary,
+  getIndividualAutopoolSummary,
+  getIndividualAutopoolDetails,
+  getIndividualAutopoolTree,
 } from "./autopool-3x3.controller.js";
 import {
   getPoolFundSummary,
@@ -82,6 +85,36 @@ autopool3x3Router.post(
   authMiddleware,
   adminOnly,
   processQueueManually,
+);
+
+/**
+ * Admin: Individual Autopool summarize report
+ */
+autopool3x3Router.get(
+  "/admin/individuals",
+  authMiddleware,
+  adminOnly,
+  getIndividualAutopoolSummary,
+);
+
+/**
+ * Admin: Individual Autopool detailed report per user
+ */
+autopool3x3Router.get(
+  "/admin/individuals/:userId",
+  authMiddleware,
+  adminOnly,
+  getIndividualAutopoolDetails,
+);
+
+/**
+ * Admin: Scoped individual autopool tree per user
+ */
+autopool3x3Router.get(
+  "/admin/individuals/:userId/tree",
+  authMiddleware,
+  adminOnly,
+  getIndividualAutopoolTree,
 );
 
 /**

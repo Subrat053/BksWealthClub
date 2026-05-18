@@ -123,4 +123,41 @@ export const autopoolService = {
       return { ledger: [], pagination: {} };
     }
   },
+
+  getIndividualSummary: async (params) => {
+    try {
+      const response = await axiosInstance.get(
+        "/autopool/3x3/admin/individuals",
+        { params }
+      );
+      return response.data?.data || { users: [], pagination: {} };
+    } catch (error) {
+      console.error("Error fetching individual autopool summary:", error);
+      return { users: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 1 } };
+    }
+  },
+
+  getIndividualDetails: async (userId) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/individuals/${userId}`
+      );
+      return response.data?.data || null;
+    } catch (error) {
+      console.error("Error fetching individual autopool details:", error);
+      return null;
+    }
+  },
+
+  getIndividualTree: async (userId) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/individuals/${userId}/tree`
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching individual autopool tree:", error);
+      return [];
+    }
+  },
 };

@@ -1176,6 +1176,310 @@ export const autopool3x3Service = {
       rebirths,
     };
   },
+
+  /**
+   * Get individual users paginated and summarized list for admin autopool panel
+   */
+  getIndividualAutopoolSummary: async (options = {}) => {
+    const { search = "", status = "", level = "", round = "", page = 1, limit = 10 } = options;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    const targetLevel = level !== "" ? level : round;
+
+    const userFilter = {};
+    if (search) {
+      userFilter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { memberId: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { sponsorId: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const allUsers = await User.find(userFilter)
+      .select("memberId fullName email sponsorId phone createdAt")
+      .lean();
+
+    const results = [];
+    for (const user of allUsers) {
+      const nodes = await AutoPoolNode.find({ ownerUserId: user._id })
+        .select("levelNumber status")
+        .lean();
+
+      let latestCompletedLevel = -1;
+      let currentLevel = 0;
+      const hasAnyRebirth = nodes.length > 0;
+
+      for (let r = 0; r <= 9; r++) {
+        const required = Math.pow(2, r + 1);
+        const roundNodes = nodes.filter((n) => n.levelNumber === r);
+        const completedCount = roundNodes.filter((n) => n.status === "COMPLETED").length;
+        const isCompleted = roundNodes.length === required && completedCount === required;
+
+        if (isCompleted) {
+          latestCompletedLevel = r;
+        }
+      }
+
+      for (let r = 0; r <= 9; r++) {
+        const required = Math.pow(2, r + 1);
+        const roundNodes = nodes.filter((n) => n.levelNumber === r);
+        const completedCount = roundNodes.filter((n) => n.status === "COMPLETED").length;
+        const isCompleted = roundNodes.length === required && completedCount === required;
+        if (!isCompleted) {
+          currentLevel = r;
+          break;
+        }
+        if (r === 9 && isCompleted) {
+          currentLevel = 9;
+        }
+      }
+
+      let userStatus = "Pending";
+      if (latestCompletedLevel === 9) {
+        userStatus = "Completed";
+      } else if (hasAnyRebirth) {
+        userStatus = "In Progress";
+      }
+
+      results.push({
+        userId: user._id,
+        memberId: user.memberId,
+        fullName: user.fullName,
+        email: user.email,
+        sponsorId: user.sponsorId || "N/A",
+        phone: user.phone || "N/A",
+        totalRebirths: nodes.length,
+        completedRebirthsCount: nodes.filter((n) => n.status === "COMPLETED").length,
+        pendingRebirthsCount: nodes.filter((n) => n.status !== "COMPLETED").length,
+        currentLevel,
+        latestCompletedLevel: latestCompletedLevel === -1 ? null : latestCompletedLevel,
+        status: userStatus,
+      });
+    }
+
+    // Apply in-memory filters
+    let filteredResults = results;
+    if (status) {
+      filteredResults = filteredResults.filter(
+        (u) => u.status.toLowerCase() === status.toLowerCase()
+      );
+    }
+    if (targetLevel !== undefined && targetLevel !== null && targetLevel !== "") {
+      const levelNum = parseInt(targetLevel);
+      filteredResults = filteredResults.filter((u) => u.currentLevel === levelNum);
+    }
+
+    const total = filteredResults.length;
+    const paginated = filteredResults.slice(skip, skip + limitNum);
+
+    return {
+      users: paginated,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
+  },
+
+  /**
+   * Get complete details of one user's individual autopool progress
+   */
+  getIndividualAutopoolDetails: async (userId) => {
+    const { WalletModel } = await import("../user/wallet.model.js");
+
+    const user = await User.findById(userId).lean();
+    if (!user) throw new Error("User not found");
+
+    const wallet = await WalletModel.findOne({ userRef: userId }).lean();
+    const allUserNodes = await AutoPoolNode.find({ ownerUserId: userId })
+      .populate("matrixParentId", "nodeCode")
+      .lean();
+
+    // Map children nodes for rendering child codes
+    const allChildrenIds = allUserNodes.reduce((acc, n) => {
+      if (n.directChildren) {
+        acc.push(...n.directChildren.map((c) => c.toString()));
+      }
+      return acc;
+    }, []);
+
+    const childrenNodes = await AutoPoolNode.find({ _id: { $in: allChildrenIds } })
+      .select("nodeCode displayCode status directChildrenCount")
+      .lean();
+
+    const childrenMap = new Map(childrenNodes.map((c) => [c._id.toString(), c]));
+
+    // Get rebirth nodes generated FROM user's completed nodes
+    const allNodeIds = allUserNodes.map((n) => n._id);
+    const generatedRebirths = await AutoPoolNode.find({
+      generatedFromNodeId: { $in: allNodeIds },
+    })
+      .select("nodeCode displayCode generatedFromNodeId")
+      .lean();
+
+    const generatedMap = new Map();
+    generatedRebirths.forEach((gr) => {
+      const fromId = gr.generatedFromNodeId.toString();
+      if (!generatedMap.has(fromId)) generatedMap.set(fromId, []);
+      generatedMap.get(fromId).push(gr.nodeCode || gr.displayCode);
+    });
+
+    const levelWiseStatus = [];
+    let latestCompletedLevel = -1;
+    let currentActiveLevel = 0;
+
+    for (let r = 0; r <= 9; r++) {
+      const required = Math.pow(2, r + 1);
+      const roundNodes = allUserNodes.filter((n) => n.levelNumber === r);
+      const completedCount = roundNodes.filter((n) => n.status === "COMPLETED").length;
+      const generatedCount = roundNodes.length;
+
+      let status = "Pending";
+      if (generatedCount === required && completedCount === required) {
+        status = "Completed";
+        latestCompletedLevel = r;
+      } else if (generatedCount > 0 || completedCount > 0) {
+        status = "In Progress";
+      }
+
+      let completionDate = null;
+      if (status === "Completed") {
+        const completedTimes = roundNodes
+          .map((n) => n.completedAt)
+          .filter((t) => t)
+          .map((t) => new Date(t).getTime());
+        if (completedTimes.length > 0) {
+          completionDate = new Date(Math.max(...completedTimes));
+        }
+      }
+
+      const rebirths = roundNodes.map((n) => {
+        const directChildrenList = (n.directChildren || []).map((cId) => {
+          const cNode = childrenMap.get(cId.toString());
+          return cNode ? cNode.nodeCode || cNode.displayCode : cId.toString();
+        });
+
+        return {
+          _id: n._id,
+          rebirthCode: n.nodeCode || n.displayCode,
+          level: n.levelNumber,
+          sequence: n.levelSequence,
+          parentCode: n.matrixParentId?.nodeCode || "None",
+          childrenCount: n.directChildrenCount || 0,
+          childCodes: directChildrenList,
+          newRebirthCodes: generatedMap.get(n._id.toString()) || [],
+          status:
+            n.status === "COMPLETED"
+              ? "Completed"
+              : n.status === "PLACED"
+              ? "Active"
+              : "In Queue",
+          completedAt: n.completedAt,
+        };
+      });
+
+      levelWiseStatus.push({
+        level: r,
+        requiredCount: required,
+        generatedCount,
+        completedCount,
+        pendingCount: required - completedCount,
+        status,
+        completionDate,
+        rebirths,
+      });
+    }
+
+    for (let r = 0; r <= 9; r++) {
+      if (levelWiseStatus[r].status !== "Completed") {
+        currentActiveLevel = r;
+        break;
+      }
+      if (r === 9 && levelWiseStatus[r].status === "Completed") {
+        currentActiveLevel = 9;
+      }
+    }
+
+    const totalRebirths = allUserNodes.length;
+    const totalCompletedRebirths = allUserNodes.filter(
+      (n) => n.status === "COMPLETED"
+    ).length;
+    const totalPendingRebirths = totalRebirths - totalCompletedRebirths;
+
+    const rebirthDetails = [];
+    levelWiseStatus.forEach((lws) => {
+      rebirthDetails.push(...lws.rebirths);
+    });
+
+    return {
+      userSummary: {
+        userId: user._id,
+        memberId: user.memberId,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone || "N/A",
+        sponsorId: user.sponsorId || "N/A",
+        totalRebirthsCreated: totalRebirths,
+        currentActiveLevel,
+        totalCompletedRebirths,
+        totalPendingRebirths,
+        latestCompletedLevel: latestCompletedLevel === -1 ? null : latestCompletedLevel,
+        withdrawableWalletAmount: wallet?.withdrawableFund || 0,
+        poolFundAmount: wallet?.fundWallet || 0,
+      },
+      levelWiseStatus,
+      rebirthDetails,
+    };
+  },
+
+  /**
+   * Get user's isolated individual tree structure
+   */
+  getIndividualAutopoolTree: async (userId) => {
+    const user = await User.findById(userId).lean();
+    if (!user) throw new Error("User not found");
+
+    const nodes = await AutoPoolNode.find({ ownerUserId: userId })
+      .populate("matrixParentId", "nodeCode ownerUserId")
+      .lean();
+
+    const userNodeIds = new Set(nodes.map((n) => n._id.toString()));
+
+    const mappedNodes = nodes.map((node) => {
+      const hasParentInTree =
+        node.matrixParentId && userNodeIds.has(node.matrixParentId._id.toString());
+
+      return {
+        ...node,
+        poolNodeId: node.nodeCode,
+        parentPoolNodeId: hasParentInTree
+          ? {
+              ...node.matrixParentId,
+              poolNodeId: node.matrixParentId.nodeCode,
+            }
+          : null,
+        linkedRebirthNodeId: {
+          rebirthId: node.nodeCode,
+          ownerUserId: {
+            _id: user._id,
+            fullName: user.fullName,
+            memberId: user.memberId,
+          },
+          ownerName: user.fullName,
+          memberId: user.memberId,
+          level: node.levelNumber ?? 0,
+          sequence: node.levelSequence ?? 0,
+        },
+        autopoolChildrenCount: node.directChildrenCount || 0,
+      };
+    });
+
+    return mappedNodes;
+  },
 };
 
 export default autopool3x3Service;

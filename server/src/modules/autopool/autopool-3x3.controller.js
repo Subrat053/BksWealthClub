@@ -291,6 +291,61 @@ export const getMyAutoPoolSummary = asyncHandler(async (req, res) => {
   );
 });
 
+/**
+ * GET /api/v1/autopool/3x3/admin/individuals
+ * Get paginated list of all users with summarized individual autopool progress
+ */
+export const getIndividualAutopoolSummary = asyncHandler(async (req, res) => {
+  const { search, status, level, round, page, limit } = req.query;
+  const result = await autopool3x3Service.getIndividualAutopoolSummary({
+    search,
+    status,
+    level,
+    round,
+    page,
+    limit,
+  });
+
+  res.json(
+    new ApiResponse({
+      message: "Individual autopool summaries fetched successfully",
+      data: result,
+    }),
+  );
+});
+
+/**
+ * GET /api/v1/autopool/3x3/admin/individuals/:userId
+ * Get detailed individual autopool progress for a user
+ */
+export const getIndividualAutopoolDetails = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const result = await autopool3x3Service.getIndividualAutopoolDetails(userId);
+
+  res.json(
+    new ApiResponse({
+      message: "Individual autopool details fetched successfully",
+      data: result,
+    }),
+  );
+});
+
+/**
+ * GET /api/v1/autopool/3x3/admin/individuals/:userId/tree
+ * Get isolated individual autopool tree structure for a user
+ */
+export const getIndividualAutopoolTree = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const result = await autopool3x3Service.getIndividualAutopoolTree(userId);
+
+  res.json(
+    new ApiResponse({
+      message: "Individual autopool tree fetched successfully",
+      data: result,
+    }),
+  );
+});
+
 export default {
   getAutoPoolTree,
   getQueueNodes,
@@ -302,4 +357,7 @@ export default {
   getMyAutoPoolNodes,
   getMyRebirths,
   getMyAutoPoolSummary,
+  getIndividualAutopoolSummary,
+  getIndividualAutopoolDetails,
+  getIndividualAutopoolTree,
 };
