@@ -1054,7 +1054,7 @@ export const autopool3x3Service = {
    */
   getAutoPoolTree: async (limit = 100) => {
     let query = AutoPoolNode.find()
-      .populate("ownerUserId", "memberId email")
+      .populate("ownerUserId", "memberId email fullName")
       .populate("matrixParentId", "nodeCode")
       .populate("userId", "memberId")
       .populate("rebirthId", "displayCode")
