@@ -48,6 +48,7 @@ const poolFundLedgerSchema = new mongoose.Schema(
         "SPONSOR_DEDUCTION",
         "COMPANY_FUND_DEDUCTION",
         "FINAL_REBIRTH_POOL_VALUE",
+        "ALIAS_ACCOUNT_DEDUCTION",
       ],
       required: true,
       index: true,

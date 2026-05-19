@@ -3,14 +3,14 @@ import { autopoolService } from "../../services/autopool.service";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { useAuth } from "../../context/useAuth";
 
-const TreeNode = ({ node, childrenMap, depth = 0 }) => {
+const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
   const children = childrenMap.get(node._id.toString()) || [];
 
   return (
     <div className="flex flex-col items-center">
       {/* Node Card */}
       <div
-        className={`group relative p-5 rounded-2xl border transition-all duration-300 hover:scale-105 ${
+        className={`group relative p-2 rounded-2xl border transition-all duration-300 hover:scale-105 ${
           node.status === "COMPLETED"
             ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
             : "bg-white border-slate-200 shadow-slate-100"
@@ -24,12 +24,12 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
         {/* Badge */}
         <div
           className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm ${
-            node.parentPoolNodeId
+            node.parentNodeId
               ? "bg-indigo-600 text-white"
               : "bg-amber-500 text-white"
           }`}
         >
-          {node.parentPoolNodeId ? `LEVEL ${depth}` : "ROOT NODE"}
+          {node.parentNodeId ? `LEVEL ${depth}` : "ROOT NODE"}
         </div>
 
         {/* Content */}
@@ -38,17 +38,17 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
             {node.poolNodeId}
           </h4>
           <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
+            {/* <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) ||
                 "U"}
-            </div>
+            </div> */}
             <p className="text-xs text-slate-600 font-semibold truncate max-w-[120px]">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
             </p>
           </div>
-          <p className="text-[10px] text-indigo-400 font-mono mt-1 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
+          {/* <p className="text-[10px] text-indigo-400 font-mono mt-1 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
             {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
-          </p>
+          </p> */}
         </div>
 
         {/* Children Status Dots */}
@@ -73,7 +73,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
       </div>
 
       {/* Recursive Children Rendering */}
-      {children.length > 0 && (
+      {children.length > 0 && depth < maxDepth && (
         <div className="flex flex-col items-center w-full mt-12 relative">
           {/* Vertical line from parent to horizontal bar */}
           <div className="w-0.5 h-12 bg-gradient-to-b from-indigo-500 to-slate-300 absolute -top-12" />
@@ -98,6 +98,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
                   node={child}
                   childrenMap={childrenMap}
                   depth={depth + 1}
+                  maxDepth={maxDepth}
                 />
               </div>
             ))}
@@ -118,10 +119,29 @@ const AutoPoolTreePage = () => {
   const [startY, setStartY] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
+  const [maxDepth, setMaxDepth] = useState(3);
+  const [zoom, setZoom] = useState(1);
   const { admin } = useAuth();
 
   useEffect(() => {
     fetchTree();
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e) => {
+      // Allow zooming only when Ctrl or Cmd is pressed
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const zoomChange = e.deltaY > 0 ? -0.1 : 0.1;
+        setZoom((prevZoom) => Math.min(Math.max(0.1, prevZoom + zoomChange), 2));
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
   }, []);
 
   const fetchTree = async () => {
@@ -149,7 +169,7 @@ const AutoPoolTreePage = () => {
     const possibleRoots = [];
 
     nodes.forEach((node) => {
-      const parentId = node.parentPoolNodeId?._id || node.parentPoolNodeId;
+      const parentId = node.parentNodeId?._id || node.parentNodeId || node.matrixParentId?._id || node.matrixParentId;
       if (!parentId) {
         possibleRoots.push(node);
       } else {
@@ -202,6 +222,51 @@ const AutoPoolTreePage = () => {
           }
         />
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Depth:</span>
+            <select 
+              value={maxDepth} 
+              onChange={(e) => setMaxDepth(Number(e.target.value))}
+              className="text-xs font-bold text-indigo-700 bg-transparent outline-none cursor-pointer"
+            >
+              <option value={1}>1 Level</option>
+              <option value={2}>2 Levels</option>
+              <option value={3}>3 Levels</option>
+              <option value={4}>4 Levels</option>
+              <option value={5}>5 Levels</option>
+              <option value={6}>6 Levels</option>
+              <option value={9}>9 Levels</option>
+              <option value={15}>15 Levels</option>
+              <option value={999}>All Levels</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1 bg-white px-1.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <button
+              onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
+              className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-600 font-bold transition-all cursor-pointer"
+              title="Zoom Out"
+            >
+              —
+            </button>
+            <span className="text-[10px] font-bold text-slate-500 min-w-[36px] text-center select-none">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom(z => Math.min(z + 0.1, 2))}
+              className="w-7 h-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-600 font-bold transition-all cursor-pointer"
+              title="Zoom In"
+            >
+              ＋
+            </button>
+            <div className="w-px h-4 bg-slate-200 mx-1" />
+            <button
+              onClick={() => setZoom(1)}
+              className="px-2 py-1 text-[9px] font-bold text-indigo-600 hover:bg-indigo-50 rounded transition-all cursor-pointer"
+              title="Reset Zoom"
+            >
+              RESET
+            </button>
+          </div>
           <div className="hidden md:flex items-center px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg text-[10px] text-indigo-600 font-medium uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2 animate-pulse"></span>
             Drag to Navigate
@@ -238,9 +303,8 @@ const AutoPoolTreePage = () => {
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
-        className={`relative flex-1 bg-[#f8fafc] rounded-3xl border border-slate-200 overflow-auto min-h-[750px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.03)] cursor-${isDragging ? "grabbing" : "grab"} selection:bg-none`}
+        className={`relative flex-1 bg-[#f8fafc] rounded-3xl border border-slate-200 overflow-auto h-[calc(100vh-220px)] shadow-[inset_0_2px_10px_rgba(0,0,0,0.03)] cursor-${isDragging ? "grabbing" : "grab"} selection:bg-none`}
       >
         {/* Background Grid Pattern */}
         <div
@@ -254,7 +318,10 @@ const AutoPoolTreePage = () => {
 
         {/* This wrapper ensures the content is at least as wide as the container, but can grow. 
             Using inline-block on children and text-center on parent centers the tree without clipping on the left. */}
-        <div className="min-w-full min-h-full py-24 px-40 text-center">
+        <div 
+          className="min-w-full min-h-full py-24 px-40 text-center"
+          style={{ zoom: zoom }}
+        >
           {loading && nodes.length === 0 ? (
             <div className="inline-flex flex-col items-center justify-center py-40 text-slate-400">
               <div className="relative">
@@ -309,12 +376,14 @@ const AutoPoolTreePage = () => {
                   {index > 0 && (
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-16" />
                   )}
-                  <TreeNode node={root} childrenMap={childrenMap} />
+                  <TreeNode node={root} childrenMap={childrenMap} maxDepth={maxDepth} />
                 </div>
               ))}
             </div>
           )}
         </div>
+
+
       </div>
 
 

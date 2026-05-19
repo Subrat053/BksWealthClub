@@ -8,6 +8,7 @@ import { User } from "../user/user.model.js";
 import { WalletModel } from "../user/wallet.model.js";
 import { ACTIVATION_AMOUNT_USD } from "../autopool/autopool.engine.js";
 import { distributeDepositIncome } from "../income/incomeDistribution.service.js";
+import { AutoPoolNode } from "../autopool/autopool-matrix.model.js";
 
 // ─── Retry helper for TransientTransactionError ────────────────────────────────
 const MAX_RETRIES = 5;
@@ -116,14 +117,18 @@ export const depositService = {
       const user = await User.findById(deposit.userRef).session(session);
       if (!user) throw new ApiError(404, "User not found");
 
-      // Guard: Check for duplicate deposit approval
+      // Guard: Check for duplicate deposit approval or existing AutoPool membership
       const alreadyApproved = await DepositModel.findOne({
         userRef: deposit.userRef,
         status: "approved",
         _id: { $ne: depositId },
       }).session(session);
 
-      if (user.isActivated || alreadyApproved) {
+      const hasAutoPoolNodes = await AutoPoolNode.findOne({
+        ownerUserId: deposit.userRef,
+      }).session(session);
+
+      if (alreadyApproved || hasAutoPoolNodes) {
         throw new ApiError(
           400,
           "This user has already deposited the money and is already active."

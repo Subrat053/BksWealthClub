@@ -6,6 +6,8 @@ import React, {
   useCallback,
 } from "react";
 import { autopoolService } from "../../services/autopool.service";
+import { incomeService } from "../../services/income.service";
+import { Award, Wallet, X } from "lucide-react";
 
 const VISIBLE_DEPTHS = new Set([0, 3, 9]);
 
@@ -38,13 +40,15 @@ const TreeNode = ({
   const renderChildren = hasChildren && (!isDepth9 || isExpanded);
 
   return (
-    <div className="flex flex-col items-center relative hover:z-50">
+    <div className="flex flex-col items-center relative hover:z-50 flex-shrink-0">
       <div
         className={`group relative px-2 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.04] ${
-          isCompleted
+          treeDepth === 0
+            ? "bg-gradient-to-br from-amber-500/20 via-yellow-500/5 to-[#091a39]/95 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.35)]"
+            : isCompleted
             ? "bg-linear-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/30"
             : "bg-[#091a39]/95 border-amber-500/20"
-        } w-[90px] text-center z-20 hover:z-50 hover:border-amber-500/40`}
+        } w-[90px] text-center z-20 hover:z-50 hover:border-amber-500/40 flex-shrink-0`}
       >
         {treeDepth > 0 && (
           <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-500/50 border border-[#08142f] z-30" />
@@ -134,11 +138,12 @@ const TreeNode = ({
 
       {showExpandBtn && (
         <button
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onToggleExpand(node._id.toString());
           }}
-          className="mt-1.5 px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-wider border cursor-pointer bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
+          className="mt-1.5 px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-wider border cursor-pointer bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20 z-30"
         >
           {isExpanded ? "▲ Hide" : "▼ Expand"}
         </button>
@@ -147,7 +152,7 @@ const TreeNode = ({
       {renderChildren && (
         <div className="flex flex-col items-center w-full mt-6 relative">
           <div className="w-px h-6 bg-amber-500/30 absolute -top-6" />
-          <div className="flex justify-center gap-3 md:gap-5 relative w-full pt-3">
+          <div className="flex justify-center gap-3 md:gap-5 relative w-full pt-3 flex-nowrap">
             {children.length > 1 && (
               <div
                 className="absolute top-0 h-px bg-amber-500/20"
@@ -158,7 +163,7 @@ const TreeNode = ({
               />
             )}
             {children.map((child) => (
-              <div key={child.node._id} className="relative">
+              <div key={child.node._id} className="relative flex-shrink-0">
                 <div className="w-px h-3 bg-amber-500/20 absolute -top-3 left-1/2 -translate-x-1/2" />
                 <TreeNode
                   node={child.node}
@@ -184,6 +189,10 @@ export default function AutopoolTreePage() {
     completions: [],
     summary: {},
   });
+  const [wallet, setWallet] = useState(null);
+  const [poolFundHistory, setPoolFundHistory] = useState([]);
+  const [showPoolFundModal, setShowPoolFundModal] = useState(false);
+  const [poolFundLoading, setPoolFundLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const scrollRef = useRef(null);
@@ -194,6 +203,11 @@ export default function AutopoolTreePage() {
     sl: 0,
     st: 0,
   });
+  const [zoom, setZoom] = useState(1);
+
+  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 1.5));
+  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.1, 0.5));
+  const handleZoomReset = () => setZoom(1);
 
   useEffect(() => {
     fetchData();
@@ -202,12 +216,41 @@ export default function AutopoolTreePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      setData(await autopoolService.getOperationalAdminMyTree());
+      const [treeRes, walletRes] = await Promise.all([
+        autopoolService.getOperationalAdminMyTree(),
+        incomeService.getMyWallet(),
+      ]);
+      setData(treeRes);
+      setWallet(walletRes?.data || null);
     } catch (e) {
       console.error("Failed to fetch tree:", e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenPoolFund = async () => {
+    setPoolFundLoading(true);
+    setShowPoolFundModal(true);
+    try {
+      const response = await autopoolService.getMyPoolFundLedger();
+      setPoolFundHistory(response);
+    } catch (error) {
+      console.error("Failed to load pool fund history", error);
+    } finally {
+      setPoolFundLoading(false);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const onToggleExpand = useCallback((id) => {
@@ -336,6 +379,35 @@ export default function AutopoolTreePage() {
     return { roots: visibleRoots, visualChildrenMap: vcm };
   }, [data.nodes]);
 
+  // Centering & Resize Observer
+  useEffect(() => {
+    if (loading || roots.length === 0) return;
+
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const centerRoot = () => {
+      const scrollLeftVal = (container.scrollWidth - container.clientWidth) / 2;
+      container.scrollLeft = scrollLeftVal;
+      container.scrollTop = 0;
+    };
+
+    // Run immediately on load/render
+    const timer = setTimeout(centerRoot, 100);
+
+    const resizeObserver = new ResizeObserver(() => {
+      centerRoot();
+    });
+    resizeObserver.observe(container);
+    window.addEventListener("resize", centerRoot);
+
+    return () => {
+      clearTimeout(timer);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", centerRoot);
+    };
+  }, [loading, roots, zoom]);
+
   // Drag handlers
   const onDown = (e) => {
     if (!scrollRef.current) return;
@@ -419,14 +491,52 @@ export default function AutopoolTreePage() {
         </div>
       </div>
 
+      {/* Financial Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 px-4 md:px-0">
+        <div className="bg-[#091a39]/95 p-4 rounded-xl border border-emerald-500/20 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <Wallet size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] text-emerald-200/50 uppercase tracking-widest font-bold">Withdrawable Balance</p>
+              <p className="text-2xl font-black text-emerald-400 mt-0.5">
+                ${(wallet?.withdrawableFund || 0).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#091a39]/95 p-4 rounded-xl border border-amber-500/20 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+              <Award size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] text-amber-200/50 uppercase tracking-widest font-bold">Pool Fund / Reinvested</p>
+              <p className="text-2xl font-black text-amber-400 mt-0.5">
+                ${(wallet?.fundWallet || 0).toFixed(2)}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleOpenPoolFund}
+            className="px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20 hover:bg-amber-500/20 font-bold transition text-[10px]"
+          >
+            View History
+          </button>
+        </div>
+      </div>
+
       <div
         ref={scrollRef}
         onMouseDown={onDown}
         onMouseLeave={onUp}
         onMouseUp={onUp}
         onMouseMove={onMove}
-        className={`relative flex-1 bg-[#050b1d] rounded-2xl border border-amber-500/10 overflow-auto min-h-[350px] md:min-h-[500px] shadow-[inset_0_1px_6px_rgba(0,0,0,0.2)] ${drag.active ? "cursor-grabbing" : "cursor-grab"} select-none`}
+        className={`relative bg-[#050b1d] rounded-2xl border border-amber-500/10 overflow-auto h-[400px] md:h-[calc(100vh-240px)] shadow-[inset_0_1px_6px_rgba(0,0,0,0.2)] ${drag.active ? "cursor-grabbing" : "cursor-grab"} select-none scroll-smooth`}
       >
+        {/* Background Grid Pattern */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{
@@ -435,16 +545,21 @@ export default function AutopoolTreePage() {
             backgroundSize: "20px 20px",
           }}
         ></div>
-        <div className="min-w-full min-h-full py-8 px-4 md:py-12 md:px-12 text-center">
+
+        {/* Large Scrollable Canvas Wrapper */}
+        <div 
+          className="w-[2400px] h-[1600px] py-16 px-12 text-center flex flex-col items-center justify-start relative"
+          style={{ zoom: zoom }}
+        >
           {loading ? (
-            <div className="inline-flex flex-col items-center justify-center py-16 text-amber-200/40">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-amber-200/40">
               <div className="w-10 h-10 rounded-full border-[3px] border-amber-500/10 border-t-amber-500 animate-spin"></div>
               <p className="mt-3 font-bold tracking-wide uppercase text-[10px]">
                 Mapping matrix…
               </p>
             </div>
           ) : roots.length === 0 ? (
-            <div className="inline-flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center max-w-sm mx-auto px-4">
               <div className="w-12 h-12 bg-[#091a39] rounded-xl shadow-lg flex items-center justify-center text-2xl mb-3 border border-amber-500/10">
                 🧬
               </div>
@@ -474,6 +589,40 @@ export default function AutopoolTreePage() {
             </div>
           )}
         </div>
+
+        {/* Floating Zoom Control Panel */}
+        {!loading && roots.length > 0 && (
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            className="absolute top-4 left-4 z-30 flex items-center gap-1 bg-[#091a39]/95 backdrop-blur-xs p-1.5 rounded-xl border border-amber-500/20 shadow-lg"
+          >
+            <button
+              onClick={handleZoomOut}
+              className="w-8 h-8 rounded-lg hover:bg-amber-500/10 flex items-center justify-center text-amber-200 font-bold transition-all cursor-pointer"
+              title="Zoom Out"
+            >
+              —
+            </button>
+            <span className="text-[10px] font-bold text-amber-200/80 min-w-[36px] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={handleZoomIn}
+              className="w-8 h-8 rounded-lg hover:bg-amber-500/10 flex items-center justify-center text-amber-200 font-bold transition-all cursor-pointer"
+              title="Zoom In"
+            >
+              ＋
+            </button>
+            <div className="w-px h-4 bg-amber-500/20 mx-1" />
+            <button
+              onClick={handleZoomReset}
+              className="px-2 py-1 text-[9px] font-bold text-amber-400 hover:bg-amber-500/20 rounded transition-all cursor-pointer"
+              title="Reset Zoom"
+            >
+              RESET
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-center md:justify-between items-center gap-3 px-3 py-2 bg-[#091a39]/95 border border-amber-500/10 rounded-xl">
@@ -508,6 +657,93 @@ export default function AutopoolTreePage() {
           Click D9 to expand
         </div>
       </div>
+
+      {/* Pool Fund History Modal */}
+      {showPoolFundModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-[#091a39] w-full max-w-4xl h-[80vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden relative">
+            <div className="px-6 py-4 border-b border-amber-500/10 flex items-center justify-between bg-black/20">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Award size={18} className="text-amber-400" />
+                  My Pool Fund Ledger
+                </h3>
+                <p className="text-xs text-amber-200/50 mt-0.5">
+                  Complete transaction history for your Autopool reinvestments
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPoolFundModal(false);
+                  setPoolFundHistory([]);
+                }}
+                className="p-2 text-amber-200/50 hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-xl transition shadow-sm"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto bg-black/10 p-6">
+              {poolFundLoading ? (
+                <div className="h-full flex items-center justify-center text-amber-200/50 font-medium text-sm">
+                  Loading transaction history...
+                </div>
+              ) : poolFundHistory.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-amber-200/50 font-medium text-sm">
+                  No pool fund transactions found yet.
+                </div>
+              ) : (
+                <div className="bg-[#091a39] rounded-2xl border border-amber-500/10 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-black/20 border-b border-amber-500/10">
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Amount</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Rebirth Node</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Level</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-amber-200/40 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-500/5">
+                      {poolFundHistory.map((txn) => (
+                        <tr key={txn._id} className="hover:bg-white/5 transition">
+                          <td className="px-4 py-3 text-xs text-amber-100/60">
+                            {formatDate(txn.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/20 text-amber-100/80 border border-amber-500/10">
+                              {txn.type.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-black text-amber-400">
+                            ${txn.amount.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-xs font-mono text-cyan-400 font-bold">
+                            {txn.completedRebirthId?.nodeCode || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-amber-100/90 font-bold">
+                            {txn.level !== undefined ? `Level ${txn.level}` : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                              txn.status === "COMPLETED"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}>
+                              {txn.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

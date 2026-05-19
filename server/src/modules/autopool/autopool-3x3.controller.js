@@ -296,7 +296,7 @@ export const getMyAutoPoolSummary = asyncHandler(async (req, res) => {
  * Get paginated list of all users with summarized individual autopool progress
  */
 export const getIndividualAutopoolSummary = asyncHandler(async (req, res) => {
-  const { search, status, level, round, page, limit } = req.query;
+  const { search, status, level, round, page, limit, accountType } = req.query;
   const result = await autopool3x3Service.getIndividualAutopoolSummary({
     search,
     status,
@@ -304,6 +304,7 @@ export const getIndividualAutopoolSummary = asyncHandler(async (req, res) => {
     round,
     page,
     limit,
+    accountType,
   });
 
   res.json(

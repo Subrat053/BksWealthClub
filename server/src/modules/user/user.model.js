@@ -175,6 +175,65 @@ const userSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
+    // Alias Account Tracking
+    isAliasAccount: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    aliasOfUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    aliasOfAccountId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    rootOwnerUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    rootOwnerAccountId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    createdFromAutopoolLevel: {
+      type: Number,
+      default: null,
+    },
+    createdFromCompletionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AutoPoolLevelCompletion",
+      default: null,
+    },
+    source: {
+      type: String,
+      default: null,
+    },
+    autoCreatedDepositAmount: {
+      type: Number,
+      default: 0,
+    },
+    lifecycleStoppedAfterRound9: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    currentCompletedAutopoolRound: {
+      type: Number,
+      default: -1,
+      index: true,
+    },
+    processedAutopoolRounds: {
+      type: [Number],
+      default: [],
+    },
   },
   { timestamps: true },
 );

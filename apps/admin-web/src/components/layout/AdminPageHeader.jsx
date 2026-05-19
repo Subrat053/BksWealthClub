@@ -7,11 +7,11 @@ export default function AdminPageHeader({
   children,
 }) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)] backdrop-blur-md md:p-7">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="rounded-[10px] border border-white/10 bg-[#091a4a]/70 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.22)] backdrop-blur-md md:p-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
-          <p className="mt-1 text-sm text-blue-100/75">{subtitle}</p>
+          <h1 className="text-xl font-bold tracking-tight text-white">{title}</h1>
+          <p className="mt-1 text-xs text-blue-100/75">{subtitle}</p>
         </div>
 
         <div className="flex flex-wrap gap-3">

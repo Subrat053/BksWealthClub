@@ -143,6 +143,11 @@ export default function IndividualAutoPoolPage() {
   const [treeLoading, setTreeLoading] = useState(false);
   const [showTreeModal, setShowTreeModal] = useState(false);
 
+  // Pool Fund History state
+  const [poolFundHistory, setPoolFundHistory] = useState([]);
+  const [showPoolFundModal, setShowPoolFundModal] = useState(false);
+  const [poolFundLoading, setPoolFundLoading] = useState(false);
+
   // Filters state
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -214,6 +219,22 @@ export default function IndividualAutoPoolPage() {
       console.error("Failed to load subtree nodes", error);
     } finally {
       setTreeLoading(false);
+    }
+  };
+
+  const handleOpenPoolFund = async () => {
+    if (!selectedUser) return;
+    setPoolFundLoading(true);
+    setShowPoolFundModal(true);
+    try {
+      const response = await autopoolService.getUserPoolFund(
+        selectedUser.userSummary.userId
+      );
+      setPoolFundHistory(response);
+    } catch (error) {
+      console.error("Failed to load pool fund history", error);
+    } finally {
+      setPoolFundLoading(false);
     }
   };
 
@@ -312,7 +333,7 @@ export default function IndividualAutoPoolPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search user, name, sponsor..."
+                placeholder="Search user ID, name, email..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-500 font-semibold outline-none focus:border-indigo-500 focus:bg-white transition shadow-sm"
               />
             </div>
@@ -473,9 +494,9 @@ export default function IndividualAutoPoolPage() {
                 <User size={24} />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium">Referral Sponsor</p>
+                <p className="text-xs text-slate-400 font-medium">User ID</p>
                 <p className="text-lg font-bold text-slate-900 mt-0.5">
-                  {selectedUser.userSummary.sponsorId}
+                  {selectedUser.userSummary.memberId}
                 </p>
               </div>
             </div>
@@ -492,16 +513,24 @@ export default function IndividualAutoPoolPage() {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <Award size={24} />
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                  <Award size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-medium">Pool Fund / Reinvested</p>
+                  <p className="text-lg font-black text-slate-900 mt-0.5">
+                    ${selectedUser.userSummary.poolFundAmount.toFixed(2)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Pool Fund / Reinvested</p>
-                <p className="text-lg font-black text-slate-900 mt-0.5">
-                  ${selectedUser.userSummary.poolFundAmount.toFixed(2)}
-                </p>
-              </div>
+              <button
+                onClick={handleOpenPoolFund}
+                className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 font-bold transition text-[10px]"
+              >
+                View History
+              </button>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white flex items-center justify-between gap-4">
@@ -782,6 +811,93 @@ export default function IndividualAutoPoolPage() {
             <div className="px-6 py-4 border-t border-white/10 bg-[#020b29] flex justify-between items-center text-xs text-slate-400 font-medium">
               <span>Total Rebirth Nodes Rendered: <strong className="text-white">{treeNodes.length}</strong></span>
               <span>Click drag to navigate canvas</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pool Fund History Modal */}
+      {showPoolFundModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-4xl h-[80vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Award size={18} className="text-amber-500" />
+                  Pool Fund Ledger
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Transaction history for {selectedUser?.userSummary.fullName} ({selectedUser?.userSummary.memberId})
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPoolFundModal(false);
+                  setPoolFundHistory([]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 rounded-xl transition shadow-sm border border-slate-200"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto bg-slate-50 p-6">
+              {poolFundLoading ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm">
+                  Loading transaction history...
+                </div>
+              ) : poolFundHistory.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm">
+                  No pool fund transactions found for this user.
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rebirth Node</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Level</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {poolFundHistory.map((txn) => (
+                        <tr key={txn._id} className="hover:bg-slate-50/50 transition">
+                          <td className="px-4 py-3 text-xs text-slate-500">
+                            {formatDate(txn.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                              {txn.type.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-black text-amber-600">
+                            ${txn.amount.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-xs font-mono text-indigo-600 font-bold">
+                            {txn.completedRebirthId?.nodeCode || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-700 font-bold">
+                            {txn.level !== undefined ? `Level ${txn.level}` : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                              txn.status === "COMPLETED"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {txn.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>

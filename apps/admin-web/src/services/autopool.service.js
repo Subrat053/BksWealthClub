@@ -124,6 +124,18 @@ export const autopoolService = {
     }
   },
 
+  getUserPoolFund: async (userId) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/user-pool-fund/${userId}`
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching user pool fund:", error);
+      return [];
+    }
+  },
+
   getIndividualSummary: async (params) => {
     try {
       const response = await axiosInstance.get(

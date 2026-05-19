@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { User, Users, CheckCircle2, XCircle, Calendar, ChevronRight, Info } from "lucide-react";
 import { referralService } from "../../services/referal.service.js";
 
@@ -147,6 +147,8 @@ export default function TeamTreePage() {
   const [tree, setTree] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const scrollContainerRef = useRef(null);
 
   const totalReferrals = useMemo(() => countTotal(tree), [tree]);
   const activeMembers = useMemo(() => countActive(tree), [tree]);
@@ -154,6 +156,23 @@ export default function TeamTreePage() {
 
   useEffect(() => {
     loadTree();
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e) => {
+      // Allow zooming only when Ctrl or Cmd is pressed
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const zoomChange = e.deltaY > 0 ? -0.1 : 0.1;
+        setZoom((prevZoom) => Math.min(Math.max(0.1, prevZoom + zoomChange), 2));
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
   }, []);
 
   const loadTree = async () => {
@@ -219,16 +238,51 @@ export default function TeamTreePage() {
       <div className="rounded-[30px] border border-white/10 bg-[#061333]/85 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-xl font-extrabold">Tree Visualization</h2>
-          <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200">
-            Live Data
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 bg-white/5 px-1.5 py-1.5 rounded-lg border border-white/10 shadow-sm">
+              <button
+                onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
+                className="w-7 h-7 rounded hover:bg-white/10 flex items-center justify-center text-blue-200 font-bold transition-all cursor-pointer"
+                title="Zoom Out"
+              >
+                —
+              </button>
+              <span className="text-[10px] font-bold text-cyan-400 min-w-[36px] text-center select-none">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                onClick={() => setZoom(z => Math.min(z + 0.1, 2))}
+                className="w-7 h-7 rounded hover:bg-white/10 flex items-center justify-center text-blue-200 font-bold transition-all cursor-pointer"
+                title="Zoom In"
+              >
+                ＋
+              </button>
+              <div className="w-px h-4 bg-white/20 mx-1" />
+              <button
+                onClick={() => setZoom(1)}
+                className="px-2 py-1 text-[9px] font-bold text-cyan-400 hover:bg-white/10 rounded transition-all cursor-pointer"
+                title="Reset Zoom"
+              >
+                RESET
+              </button>
+            </div>
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200">
+              Live Data
+            </span>
+          </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,#0b1d52,#07122d)] p-8 pt-48">
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-auto max-h-[calc(100vh-250px)] rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,#0b1d52,#07122d)] p-8 pt-48 relative"
+        >
           {loading ? (
             <p className="text-blue-100/70">Loading referral tree...</p>
           ) : tree ? (
-            <div className="min-w-max pb-12">
+            <div 
+              className="min-w-max pb-12 flex justify-center"
+              style={{ zoom: zoom }}
+            >
               <TreeNode node={tree} />
             </div>
           ) : (

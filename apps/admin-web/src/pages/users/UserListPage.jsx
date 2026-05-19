@@ -214,9 +214,13 @@ export default function UserListPage() {
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/15 px-2 py-0.5 text-xs font-medium text-cyan-300">
               Rebirth
             </span>
+          ) : row.isAliasAccount ? (
+            <span className="inline-flex rounded-full border border-violet-400/30 bg-violet-400/15 px-2 py-0.5 text-xs font-medium text-violet-300">
+              Alias
+            </span>
           ) : (
             <span className="inline-flex rounded-full border border-slate-400/30 bg-slate-400/15 px-2 py-0.5 text-xs font-medium text-slate-300">
-              User
+              Main Account
             </span>
           ),
       },
@@ -225,15 +229,22 @@ export default function UserListPage() {
         label: "MEMBER",
         render: (_value, row) => (
           <div className="flex flex-col">
-            <span
-              className={
-                row.isRebirth
-                  ? "font-bold text-cyan-300"
-                  : "font-semibold text-white"
-              }
-            >
-              {row.displayLabel}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={
+                  row.isRebirth
+                    ? "font-bold text-cyan-300"
+                    : "font-semibold text-white"
+                }
+              >
+                {row.displayLabel}
+              </span>
+              {row.isAliasAccount && (
+                <span className="inline-flex rounded-full bg-violet-500/20 border border-violet-500/30 px-2 py-0.5 text-[10px] font-bold text-violet-300 uppercase tracking-wide">
+                  Alias
+                </span>
+              )}
+            </div>
             <span className="font-mono text-xs text-slate-400">
               {row.memberId || "—"}
             </span>
@@ -241,16 +252,67 @@ export default function UserListPage() {
         ),
       },
       {
+        key: "linkedAccount",
+        label: "LINKED ROOT",
+        render: (_value, row) => {
+          if (row.isAliasAccount) {
+            return (
+              <div className="flex flex-col text-xs">
+                <span className="text-violet-300 font-mono font-medium">
+                  {row.rootOwnerAccountId || row.aliasOfAccountId || "—"}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  Via Round {row.currentCompletedAutopoolRound !== undefined && row.currentCompletedAutopoolRound !== -1 ? row.currentCompletedAutopoolRound : "0"}
+                </span>
+              </div>
+            );
+          }
+          return <span className="text-slate-500 text-xs">—</span>;
+        }
+      },
+      {
+        key: "currentCompletedAutopoolRound",
+        label: "AUTOPOOL ROUND",
+        render: (_value, row) => {
+          if (row.isRebirth) return <span className="text-slate-500 text-xs">—</span>;
+          const round = row.currentCompletedAutopoolRound;
+          if (round === undefined || round === null || round === -1) {
+            return (
+              <span className="inline-flex rounded-full border border-slate-700 bg-slate-800/50 px-2 py-0.5 text-xs text-slate-400">
+                Pending Round 0
+              </span>
+            );
+          }
+          return (
+            <span className="inline-flex rounded-full border border-indigo-500/30 bg-indigo-500/15 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
+              Round {round} Completed
+            </span>
+          );
+        }
+      },
+      {
+        key: "rebirthCount",
+        label: "REBIRTHS",
+        render: (_value, row) => {
+          if (row.isRebirth) return <span className="text-slate-500 text-xs">—</span>;
+          return (
+            <span className="font-semibold text-white">
+              {row.rebirthCount || 0} rebirths
+            </span>
+          );
+        }
+      },
+      {
         key: "wallet",
         label: "FUNDS",
         render: (_value, row) => (
           <div className="flex flex-col gap-1 text-xs">
             {row.isRebirth ? (
-              <span className="text-cyan-300">
+              <span className="text-cyan-300 font-medium">
                 RB Wallet: ${row.walletBalance}
               </span>
             ) : (
-              <span className="text-emerald-300">
+              <span className="text-emerald-300 font-medium">
                 Withdrawable: ${row.withdrawableFund}
               </span>
             )}
@@ -403,9 +465,11 @@ export default function UserListPage() {
           }
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
-          <option value="all">All Accounts (Mixed)</option>
-          <option value="users">Actual IDs (Main Accounts)</option>
-          <option value="rebirths">Rebirth IDs (0.1, 0.2, etc.)</option>
+          <option value="all">All Accounts</option>
+          <option value="normal">Normal Accounts</option>
+          <option value="alias">Alias Accounts</option>
+          <option value="rebirths">Rebirth Accounts</option>
+          <option value="users">All Main Accounts (Users)</option>
         </select>
       </div>
 

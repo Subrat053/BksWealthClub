@@ -798,16 +798,24 @@ export async function getUserWallet(userId) {
 export async function getAdminUsersWithRebirths({
   search = "",
   status = "",
-  type = "all", // "all" | "users" | "rebirths"
+  type = "all", // "all" | "users" | "rebirths" | "normal" | "alias"
 } = {}) {
   // Normalize type for internal logic
   const actualType = type === "actual" ? "users" : type;
+  const { AutoPoolNode } = await import("../autopool/autopool-matrix.model.js");
   const result = [];
 
   // Normal users (Main Accounts)
-  if (actualType === "all" || actualType === "users") {
+  if (actualType === "all" || actualType === "users" || actualType === "normal" || actualType === "alias") {
     const userFilter = {};
     if (status) userFilter.status = status;
+    
+    if (actualType === "normal") {
+      userFilter.isAliasAccount = { $ne: true };
+    } else if (actualType === "alias") {
+      userFilter.isAliasAccount = true;
+    }
+
     if (search) {
       userFilter.$or = [
         { fullName: { $regex: search, $options: "i" } },
@@ -828,6 +836,7 @@ export async function getAdminUsersWithRebirths({
     for (const u of users) {
       // Get wallet info
       const wallet = await WalletModel.findOne({ userRef: u._id }).lean();
+      const totalRebirthNodes = await AutoPoolNode.countDocuments({ ownerUserId: u._id, nodeType: "REBIRTH" });
       const rebirths = await RebirthModel.find({ userId: u._id }).lean();
       const totalRebirthBalance = rebirths.reduce(
         (s, r) => s + (r.walletBalance || 0),
@@ -852,8 +861,14 @@ export async function getAdminUsersWithRebirths({
         displayLabel: u.fullName,
         withdrawableFund: wallet?.withdrawableFund || 0,
         totalRebirthBalance: round2(totalRebirthBalance),
-        rebirthCount: rebirths.length,
+        rebirthCount: totalRebirthNodes,
         createdAt: u.createdAt,
+        isAliasAccount: u.isAliasAccount || false,
+        aliasOfUserId: u.aliasOfUserId || null,
+        aliasOfAccountId: u.aliasOfAccountId || null,
+        rootOwnerUserId: u.rootOwnerUserId || null,
+        rootOwnerAccountId: u.rootOwnerAccountId || null,
+        currentCompletedAutopoolRound: u.currentCompletedAutopoolRound !== undefined ? u.currentCompletedAutopoolRound : -1,
       });
     }
   }
