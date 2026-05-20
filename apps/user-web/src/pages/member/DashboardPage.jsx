@@ -64,13 +64,6 @@ export default function DashboardPage() {
   const w = wallet || {};
   const totalWallet = (w.mainWallet || 0) + (w.fundWallet || 0) + (w.holdingWallet || 0);
 
-  // Calculate income totals from logs
-  const sponsorTotal = incomeLogs
-    .filter((l) => l.type === "SPONSOR_INCOME")
-    .reduce((s, l) => s + l.amount, 0);
-  const levelTotal = incomeLogs
-    .filter((l) => l.type === "LEVEL_INCOME")
-    .reduce((s, l) => s + l.amount, 0);
   const totalIncome = (w.withdrawableFund || 0);
 
   return (
@@ -136,10 +129,12 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <StatCard title="Withdrawable Fund" value={(w.withdrawableFund || 0).toFixed(2)} color="text-emerald-300" />
-        <StatCard title="Sponsor Income" value={sponsorTotal.toFixed(2)} color="text-cyan-300" />
-        <StatCard title="Level Income" value={levelTotal.toFixed(2)} color="text-purple-300" />
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <StatCard title="Pool Fund" value={(w.poolFundTotal || 0).toFixed(2)} color="text-blue-300" />
+        <StatCard title="ReInvestment Fund" value={(w.reinvestmentFundTotal || 0).toFixed(2)} color="text-amber-300" />
+        <StatCard title="Withdrawal Fund of Autopool" value={(w.autopoolWithdrawableFund || 0).toFixed(2)} color="text-emerald-300" />
+        <StatCard title="Direct referral" value={(w.directReferralIncome || 0).toFixed(2)} color="text-cyan-300" />
+        <StatCard title="Level Income" value={(w.levelIncome || 0).toFixed(2)} color="text-purple-300" />
       </div>
 
       {/* ── Rebirth IDs ────────────────────────────────────────────────────── */}
