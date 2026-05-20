@@ -286,7 +286,8 @@ export const autopoolFundService = {
       { session }
     );
 
-    // 5. Credit Withdrawal Amount to User Wallet (if > 0)
+    // 5. User Autopool Credits are now handled by applyAutopoolFundCompletion in AutopoolUserFund.
+    // We only save the PoolFundLedger records here for legacy reports/admin views, but do NOT credit Wallet or Income.
     if (withdrawalAmount > 0) {
       await PoolFundLedger.create([
         {
@@ -299,30 +300,8 @@ export const autopoolFundService = {
         }
       ], { session });
 
-      // Update actual wallet and income log
-      await Wallet.findOneAndUpdate(
-        { userRef: userId },
-        { $inc: { withdrawableFund: withdrawalAmount } },
-        { session, upsert: true }
-      );
-
-      await Income.create([{
-        userRef: userId,
-        amount: withdrawalAmount,
-        incomeType: "autopool",
-        entryType: "credit",
-        remarks: `AutoPool Level ${level} completion: Gross $${grossLevelIncome}, Reinvestment Deduction $${aliasDeduction}, Net Withdrawable Credit $${withdrawalAmount}`,
-      }], { session });
-
-      if (aliasDeduction > 0) {
-        await Income.create([{
-          userRef: userId,
-          amount: aliasDeduction,
-          incomeType: "autopool",
-          entryType: "debit",
-          remarks: `Alias account auto-creation deduction from AutoPool Level ${level} completion (${config.aliases} Alias ID(s) auto-created)`,
-        }], { session });
-      }
+      // [MODIFIED] Skipped primary Wallet and legacy Income ledger updates
+      // Primary wallets are isolated from autopool payouts now.
     }
 
     // 6. Handle Reinvestment Allocation Ledgers
@@ -338,14 +317,10 @@ export const autopoolFundService = {
         }
       ], { session });
 
-      await Wallet.findOneAndUpdate(
-        { userRef: userId },
-        { $inc: { fundWallet: reinvestAmount } },
-        { session, upsert: true }
-      );
+      // [MODIFIED] Skipped primary fundWallet updates.
     }
 
-    // 7. Handle Alias Accounts generation and deduction
+    // 7. Handle Alias Accounts generation ledger
     if (aliasDeduction > 0 && config.aliases > 0) {
       await PoolFundLedger.create([
         {
@@ -361,10 +336,8 @@ export const autopoolFundService = {
         }
       ], { session });
 
-      // Auto-create alias accounts inside this transaction!
-      for (let i = 1; i <= config.aliases; i++) {
-        await createAliasAccount(userId, level, i, session);
-      }
+      // [MODIFIED] Skipped legacy virtual alias user creation and standard deposit distribution.
+      // Separate UpgradeAliasIds are created by applyAutopoolFundCompletion under the new isolated flow.
     }
 
     // 8. Generate new Rebirth allocations
@@ -387,7 +360,7 @@ export const autopoolFundService = {
             meta: { distributionLedgerId: distributionLedger[0]._id, rebirthIndex: i }
         }], { session });
 
-        // 2. Sponsor Deduction ($2.5)
+        // 2. Sponsor Deduction ($2.5) - Keep exactly the same for sponsor income flow!
         if (sponsorUserId) {
             await Wallet.findOneAndUpdate(
                 { userRef: sponsorUserId },
@@ -429,7 +402,7 @@ export const autopoolFundService = {
             }], { session });
         }
 
-        // 3. Company Deduction ($2.5)
+        // 3. Company Deduction ($2.5) - Keep exactly the same!
         await CompanyFund.findOneAndUpdate(
             {},
             { $inc: { totalCompanyFund: companyDeductionPerRebirth }, $set: { lastUpdated: new Date() } },
@@ -463,6 +436,6 @@ export const autopoolFundService = {
       }
     }
 
-    console.log(`[AutoPoolFund] Level ${level} distribution completed for user ${user.memberId}. Withdrawal: $${withdrawalAmount}, Reinvest: $${reinvestAmount}, Alias Deduction: $${aliasDeduction}`);
+    console.log(`[AutoPoolFund] Level ${level} distribution completed for user ${user.memberId}. Sponsor referral & company payouts processed successfully.`);
   },
 };

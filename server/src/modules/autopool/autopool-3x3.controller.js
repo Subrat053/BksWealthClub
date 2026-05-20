@@ -8,6 +8,9 @@ import { asyncHandler } from "../../core/asyncHandler.js";
 import { ApiError } from "../../core/ApiError.js";
 import { ApiResponse } from "../../core/ApiResponse.js";
 import autopool3x3Service from "./autopool-3x3.service.js";
+import { AutopoolUserFund } from "./autopool-user-fund.model.js";
+import { AutopoolFundTransaction } from "./autopool-fund-transaction.model.js";
+import { UpgradeAliasId } from "./upgrade-alias-id.model.js";
 
 // ─── Admin Routes ────────────────────────────────────────────────────────────
 
@@ -347,6 +350,126 @@ export const getIndividualAutopoolTree = asyncHandler(async (req, res) => {
   );
 });
 
+/**
+ * GET /api/v1/autopool/my/funds
+ * Get logged-in user's isolated autopool funds
+ */
+export const getMyFunds = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  let fund = await AutopoolUserFund.findOne({ userId });
+  if (!fund) {
+    fund = {
+      userId,
+      completedAutopoolLevel: null,
+      poolFundTotal: 0,
+      reinvestmentFundTotal: 0,
+      withdrawableAutopoolFund: 0,
+      upgradeIdCount: 0,
+      upgradeDeductionTotal: 0,
+      lastCompletedRound: -1,
+    };
+  }
+
+  res.json(
+    new ApiResponse({
+      message: "My autopool funds fetched successfully",
+      data: fund,
+    })
+  );
+});
+
+/**
+ * GET /api/v1/autopool/my/fund-transactions
+ * Get logged-in user's autopool fund transactions ledger
+ */
+export const getMyFundTransactions = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const transactions = await AutopoolFundTransaction.find({ userId }).sort({ createdAt: -1 });
+
+  res.json(
+    new ApiResponse({
+      message: "My autopool fund transactions fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+/**
+ * GET /api/v1/autopool/my/upgrade-ids
+ * Get logged-in user's upgrade/alias IDs
+ */
+export const getMyUpgradeIds = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const upgradeIds = await UpgradeAliasId.find({ userId }).sort({ createdAt: -1 });
+
+  res.json(
+    new ApiResponse({
+      message: "My autopool upgrade IDs fetched successfully",
+      data: upgradeIds,
+    })
+  );
+});
+
+/**
+ * GET /api/v1/autopool/admin/user-funds/:userId
+ * Admin: Get specific user's isolated autopool funds
+ */
+export const getUserFundsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  let fund = await AutopoolUserFund.findOne({ userId });
+  if (!fund) {
+    fund = {
+      userId,
+      completedAutopoolLevel: null,
+      poolFundTotal: 0,
+      reinvestmentFundTotal: 0,
+      withdrawableAutopoolFund: 0,
+      upgradeIdCount: 0,
+      upgradeDeductionTotal: 0,
+      lastCompletedRound: -1,
+    };
+  }
+
+  res.json(
+    new ApiResponse({
+      message: "User autopool funds fetched successfully by admin",
+      data: fund,
+    })
+  );
+});
+
+/**
+ * GET /api/v1/autopool/admin/user-fund-transactions/:userId
+ * Admin: Get specific user's autopool fund transactions ledger
+ */
+export const getUserFundTransactionsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const transactions = await AutopoolFundTransaction.find({ userId }).sort({ createdAt: -1 });
+
+  res.json(
+    new ApiResponse({
+      message: "User autopool fund transactions fetched successfully by admin",
+      data: transactions,
+    })
+  );
+});
+
+/**
+ * GET /api/v1/autopool/admin/user-upgrade-ids/:userId
+ * Admin: Get specific user's upgrade/alias IDs
+ */
+export const getUserUpgradeIdsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const upgradeIds = await UpgradeAliasId.find({ userId }).sort({ createdAt: -1 });
+
+  res.json(
+    new ApiResponse({
+      message: "User autopool upgrade IDs fetched successfully by admin",
+      data: upgradeIds,
+    })
+  );
+});
+
 export default {
   getAutoPoolTree,
   getQueueNodes,
@@ -361,4 +484,10 @@ export default {
   getIndividualAutopoolSummary,
   getIndividualAutopoolDetails,
   getIndividualAutopoolTree,
+  getMyFunds,
+  getMyFundTransactions,
+  getMyUpgradeIds,
+  getUserFundsAdmin,
+  getUserFundTransactionsAdmin,
+  getUserUpgradeIdsAdmin,
 };

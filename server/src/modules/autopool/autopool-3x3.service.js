@@ -5,6 +5,7 @@
  * Features:
  * - FIFO queue placement
  * - Node completion on 3 direct children
+            queueIndex: 0,
  * - Automatic rebirth generation for completed nodes
  * - Duplicate prevention
  * - Concurrent safety with MongoDB transactions
@@ -20,13 +21,129 @@ import { AdminModel } from "../admin/admin.model.js";
 import { AutoPoolLevelCompletion } from "./autopool-level-completion.model.js";
 import { env } from "../../config/env.js";
 import { autopoolFundService } from "./autopool-fund.service.js";
+import {
+  calculateAutopoolFundSummary,
+  UPGRADE_ID_COST,
+} from "./autopool-fund-new.service.js";
+import { AutopoolFundTransaction } from "./autopool-fund-transaction.model.js";
+import { isAutopoolRepairLocked } from "./autopool-repair-lock.service.js";
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 100;
+const MAX_RETRIES = 10;
+const RETRY_DELAY_MS = 150;
 let isProcessing3x3Queue = false;
 
 const escapeRegExp = (value = "") =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export function getCompletedLevelFromCompletedRebirths(completedCount) {
+  const count = Number(completedCount) || 0;
+  if (count < 2) return null;
+  if (count < 6) return 0;
+  if (count < 14) return 1;
+  if (count < 30) return 2;
+  if (count < 62) return 3;
+  if (count < 126) return 4;
+  if (count < 254) return 5;
+  if (count < 510) return 6;
+  if (count < 1022) return 7;
+  if (count < 2046) return 8;
+  return 9;
+}
+
+export function getCurrentActiveLevelFromCompletedRebirths(completedCount) {
+  const completedLevel = getCompletedLevelFromCompletedRebirths(completedCount);
+  return completedLevel === null ? 0 : Math.min(9, completedLevel + 1);
+}
+
+const getResolvedCompletedAutopoolLevel = (latestCompletedLevel, fundRecord) => {
+  if (Number.isFinite(latestCompletedLevel) && latestCompletedLevel >= 0) {
+    return latestCompletedLevel;
+  }
+
+  const storedRound = Number(fundRecord?.lastCompletedRound);
+  if (Number.isFinite(storedRound) && storedRound >= 0) {
+    return storedRound;
+  }
+
+  const storedLevel = Number(fundRecord?.completedAutopoolLevel);
+  if (Number.isFinite(storedLevel) && storedLevel > 0) {
+    return storedLevel;
+  }
+
+  return null;
+};
+
+const getCompletedLevelFromCompletedCount = (completedCount) =>
+  getCompletedLevelFromCompletedRebirths(completedCount);
+
+const getCurrentActiveLevelFromCompletedCount = (completedCount) =>
+  getCurrentActiveLevelFromCompletedRebirths(completedCount);
+
+async function reconcileAutopoolFundSummary({
+  userId,
+  completedLevel,
+  fundRecord = null,
+  session = null,
+}) {
+  const calculatedSummary = calculateAutopoolFundSummary(completedLevel);
+  let currentFund = fundRecord;
+
+  if (completedLevel === null) {
+    return {
+      fundRecord: currentFund,
+      summary: calculatedSummary,
+    };
+  }
+
+  const { AutopoolUserFund } = await import("./autopool-user-fund.model.js");
+
+  if (!currentFund) {
+    currentFund = await AutopoolUserFund.findOne({ userId }).session(session);
+    if (!currentFund) {
+      currentFund = new AutopoolUserFund({ userId });
+    }
+  } else if (typeof currentFund.save !== "function") {
+    currentFund = AutopoolUserFund.hydrate(currentFund);
+  }
+
+  const currentValues = {
+    completedAutopoolLevel: Number(currentFund.completedAutopoolLevel || 0),
+    poolFundTotal: Number(currentFund.poolFundTotal || 0),
+    reinvestmentFundTotal: Number(currentFund.reinvestmentFundTotal || 0),
+    withdrawableAutopoolFund: Number(currentFund.withdrawableAutopoolFund || 0),
+    upgradeIdCount: Number(currentFund.upgradeIdCount || 0),
+    upgradeDeductionTotal: Number(currentFund.upgradeDeductionTotal || 0),
+  };
+
+  const summaryValues = {
+    completedAutopoolLevel: Number(calculatedSummary.completedAutopoolLevel || 0),
+    poolFundTotal: Number(calculatedSummary.poolFundTotal || 0),
+    reinvestmentFundTotal: Number(calculatedSummary.reinvestmentFundTotal || 0),
+    withdrawableAutopoolFund: Number(calculatedSummary.withdrawableAutopoolFund || 0),
+    upgradeIdCount: Number(calculatedSummary.upgradeIdCount || 0),
+    upgradeDeductionTotal: Number(calculatedSummary.upgradeDeductionTotal || 0),
+  };
+
+  const needsSync = Object.keys(summaryValues).some(
+    (key) => currentValues[key] !== summaryValues[key],
+  );
+
+  if (needsSync) {
+    currentFund.completedAutopoolLevel = summaryValues.completedAutopoolLevel;
+    currentFund.poolFundTotal = summaryValues.poolFundTotal;
+    currentFund.reinvestmentFundTotal = summaryValues.reinvestmentFundTotal;
+    currentFund.withdrawableAutopoolFund = summaryValues.withdrawableAutopoolFund;
+    currentFund.upgradeIdCount = summaryValues.upgradeIdCount;
+    currentFund.upgradeDeductionTotal = summaryValues.upgradeDeductionTotal;
+    currentFund.lastCompletedRound = summaryValues.completedAutopoolLevel;
+    await currentFund.save({ session });
+  }
+
+  return {
+    fundRecord: currentFund,
+    summary: calculatedSummary,
+  };
+}
 
 // ─── Retry Wrapper for Transient Errors ────────────────────────────────────────
 async function withTransactionRetry(fn, retries = MAX_RETRIES) {
@@ -190,6 +307,7 @@ async function ensureAdminInitialRebirths(session = null) {
             levelNumber: 0,
             levelSequence: i,
             status: "PENDING", // Enqueued as per rules
+            queueIndex: i,
             queueTimestamp: new Date("2000-01-01T00:00:00Z"), // Old timestamp to ensure priority
           },
         ],
@@ -336,6 +454,32 @@ export const autopool3x3Service = {
         // Atomic check/create to prevent duplicates
         let node = await AutoPoolNode.findOne({ displayCode }).session(s);
         if (!node) {
+          // Keep RebirthId model synchronized
+          let rebirthDoc = await RebirthId.findOne({ displayCode }).session(s);
+          if (!rebirthDoc) {
+            const rebirthResults = await RebirthId.create(
+              [
+                {
+                  ownerUserId: userId,
+                  ownerMemberId: memberId,
+                  rebirthCode: displayCode,
+                  displayCode: displayCode,
+                  depositId,
+                  sourceType: "INITIAL",
+                  sequenceNumber: i,
+                  generation: 0,
+                  levelNumber: 0,
+                  levelSequence: i,
+                  isInitialRebirth: true,
+                  usedInAutoPool: true,
+                  status: "PENDING",
+                },
+              ],
+              { session: s }
+            );
+            rebirthDoc = rebirthResults[0];
+          }
+
           const results = await AutoPoolNode.create(
             [
               {
@@ -345,6 +489,7 @@ export const autopool3x3Service = {
                 displayCode: displayCode,
                 nodeId: displayCode,
                 nodeType: "REBIRTH",
+                rebirthId: rebirthDoc._id,
                 levelNumber: 0,
                 levelSequence: i,
                 depositId: depositId,
@@ -500,11 +645,15 @@ export const autopool3x3Service = {
       directChildrenCount: { $lt: 3 },
       nodeType: "REBIRTH",
     })
-      .sort({ queueTimestamp: 1 })
+      .sort({ createdAt: 1, queueIndex: 1, _id: 1 })
       .session(session);
   },
 
   processAutoPoolQueue: async (session = null) => {
+    if (await isAutopoolRepairLocked(session)) {
+      return { processedCount: 0, skipped: true, repairLocked: true };
+    }
+
     if (!session) {
       if (isProcessing3x3Queue) {
         console.log("[AutoPool] 3x3 Queue already processing, skipping.");
@@ -527,7 +676,7 @@ export const autopool3x3Service = {
           const pendingNode = await AutoPoolNode.findOne({
             status: "PENDING",
           })
-            .sort({ queueTimestamp: 1 })
+            .sort({ createdAt: 1, queueIndex: 1, _id: 1 })
             .session(s);
 
           if (!pendingNode) break;
@@ -608,30 +757,63 @@ export const autopool3x3Service = {
 
   /**
    * Complete an AutoPool node
+   * Uses atomic findOneAndUpdate to prevent double-completion race conditions
+   * from the background 10-second job and concurrent deposit processing.
    */
   completeAutoPoolNode: async (nodeId, session = null) => {
     const fn = async (s) => {
-      const node = await AutoPoolNode.findById(nodeId).session(s);
+      // ─── Atomic completion guard ────────────────────────────────────────────
+      // Only marks PLACED → COMPLETED. If already COMPLETED (another transaction
+      // beat us), we still proceed to check rebirth generation in case it was missed.
+      const atomicResult = await AutoPoolNode.findOneAndUpdate(
+        { _id: nodeId, status: "PLACED" }, // Only transition from PLACED
+        { $set: { status: "COMPLETED", completedAt: new Date() } },
+        { new: true, session: s }
+      );
+
+      // Fetch current node state regardless of whether we just completed it
+      const node = atomicResult || await AutoPoolNode.findById(nodeId).session(s);
       if (!node) throw new Error(`Node ${nodeId} not found`);
 
-      if (node.status === "COMPLETED") {
-        return node;
+      if (atomicResult) {
+        // We just completed it — run all downstream hooks
+        console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
+
+        // Sync RebirthId collection status
+        if (node.rebirthId) {
+          await RebirthId.findByIdAndUpdate(
+            node.rebirthId,
+            { $set: { status: "COMPLETED" } },
+            { session: s }
+          );
+        } else {
+          await RebirthId.findOneAndUpdate(
+            { rebirthCode: node.nodeCode },
+            { $set: { status: "COMPLETED" } },
+            { session: s }
+          );
+        }
+      } else {
+        // Node was already COMPLETED by another transaction
+        console.log(`[AutoPool] Node ${node.nodeCode} already COMPLETED (concurrent), verifying rebirth generation...`);
       }
 
-      // Mark as completed
-      node.status = "COMPLETED";
-      node.completedAt = new Date();
-      await node.save({ session: s });
-
-      console.log(`[AutoPool] Completed node: ${node.nodeCode}`);
-
-      // --- FUND MANAGEMENT HOOK ---
-      // Process individual rebirth completion payout ($60)
+      // Always ensure rebirth generation and level checks happen,
+      // even if completion was done by another transaction (repair path).
       if (node.nodeType === "REBIRTH") {
+        // Fund processing is idempotent (checks for existing ledger entry)
         await autopoolFundService.processRebirthCompletionFund(node._id, s);
+
+        // Rebirth generation is idempotent via rebirthGenerated flag
+        await autopool3x3Service.generateNextLevelRebirthsForCompletedRebirthNode(
+          node.ownerUserId,
+          node.levelNumber,
+          node.levelSequence,
+          s
+        );
       }
 
-      // Check User Level Completion
+      // Level completion check is idempotent (checks AutoPoolLevelCompletion record)
       await autopool3x3Service.checkUserAutoPoolLevelCompletion(
         node.ownerUserId,
         node.levelNumber,
@@ -645,11 +827,17 @@ export const autopool3x3Service = {
   },
 
   /**
-   * Generate next level rebirth IDs for a completed level (Round N -> Round N+1)
+   * Generate next level rebirth IDs deterministically for a completed rebirth node
+   * Formula: Sequence S completes -> generates sequence 2*S - 1 and 2*S at level L+1
+   *
+   * IDEMPOTENCY: Uses atomic findOneAndUpdate on the completed node's rebirthGenerated
+   * flag so that concurrent calls (from the 10-second background job vs. deposit
+   * processor) never create duplicate rebirths.
    */
-  generateNextLevelRebirthsForCompletedLevel: async (
+  generateNextLevelRebirthsForCompletedRebirthNode: async (
     ownerUserId,
     completedLevel,
+    completedSequence,
     session = null,
   ) => {
     const fn = async (s) => {
@@ -665,21 +853,76 @@ export const autopool3x3Service = {
       }
 
       const memberId = user.memberId;
-      // Formula for next round rebirth count: 2^(nextLevel + 1)
-      const nextLevelRebirthCount = Math.pow(2, nextLevel + 1);
+      // Deterministic children sequences
+      const sequencesToCreate = [2 * completedSequence - 1, 2 * completedSequence];
 
-      console.log(`[AutoPool] Generating ${nextLevelRebirthCount} rebirth nodes for ${memberId} for Level ${nextLevel}`);
+      // ─── Atomic idempotency guard ─────────────────────────────────────────
+      // Atomically mark the COMPLETED parent node as rebirthGenerated=true.
+      // If another concurrent transaction already did this, the update returns null
+      // and we skip generation entirely (the other transaction already created them).
+      const guardResult = await AutoPoolNode.findOneAndUpdate(
+        {
+          ownerUserId,
+          levelNumber: completedLevel,
+          levelSequence: completedSequence,
+          status: "COMPLETED",
+          rebirthGenerated: false, // Only proceed if NOT already generated
+        },
+        {
+          $set: {
+            rebirthGenerated: true,
+            rebirthGeneratedAt: new Date(),
+          },
+        },
+        { new: true, session: s }
+      );
+
+      if (!guardResult) {
+        // Another transaction already generated rebirths for this node — skip
+        console.log(
+          `[AutoPool] Rebirth generation for ${memberId} L${completedLevel}S${completedSequence} already done, skipping.`
+        );
+        return;
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      console.log(`[AutoPool] Generating rebirth sequences ${sequencesToCreate.join(", ")} for ${memberId} at Level ${nextLevel} from parent seq ${completedSequence}`);
 
       const rebirthNodes = [];
-      for (let i = 1; i <= nextLevelRebirthCount; i++) {
+      for (const seq of sequencesToCreate) {
         const displayCode = generateRebirthCode({
           memberId,
           level: nextLevel,
-          sequence: i,
+          sequence: seq,
         });
 
         let newNode = await AutoPoolNode.findOne({ nodeCode: displayCode }).session(s);
         if (!newNode) {
+          // Keep RebirthId model synchronized
+          let rebirthDoc = await RebirthId.findOne({ displayCode }).session(s);
+          if (!rebirthDoc) {
+            const rebirthResults = await RebirthId.create(
+              [
+                {
+                  ownerUserId,
+                  ownerMemberId: memberId,
+                  rebirthCode: displayCode,
+                  displayCode: displayCode,
+                  sourceType: "AUTOPool_COMPLETION",
+                  sequenceNumber: seq,
+                  generation: nextLevel,
+                  levelNumber: nextLevel,
+                  levelSequence: seq,
+                  isInitialRebirth: false,
+                  usedInAutoPool: true,
+                  status: "PENDING",
+                },
+              ],
+              { session: s }
+            );
+            rebirthDoc = rebirthResults[0];
+          }
+
           const results = await AutoPoolNode.create(
             [
               {
@@ -689,16 +932,18 @@ export const autopool3x3Service = {
                 displayCode: displayCode,
                 nodeId: displayCode,
                 nodeType: "REBIRTH",
+                rebirthId: rebirthDoc._id,
                 levelNumber: nextLevel,
-                levelSequence: i,
+                levelSequence: seq,
                 status: "PENDING",
+                queueIndex: seq,
                 queueTimestamp: new Date(),
               },
             ],
             { session: s },
           );
           newNode = results[0];
-          console.log(`[AutoPool] Created level-wide rebirth node ${displayCode}`);
+          console.log(`[AutoPool] Created rebirth node ${displayCode}`);
         }
         rebirthNodes.push(newNode);
       }
@@ -766,20 +1011,33 @@ export const autopool3x3Service = {
             `[AutoPool] User ${user.memberId} completed Level ${levelNumber} (AutoPool ${levelNumber + 1})`,
           );
 
-          // --- FUND MANAGEMENT HOOK ---
-          // Process full level distribution (Withdrawal, Reinvest, Sponsor, etc.)
+          // Get list of completed rebirth display codes for this round
+          const completedRebirths = await AutoPoolNode.find({
+            ownerUserId,
+            levelNumber,
+            status: "COMPLETED",
+          }).select("nodeCode").session(s);
+          const sourceRebirthIds = completedRebirths.map((r) => r.nodeCode);
+
+          // --- NEW FUND MANAGEMENT HOOK ---
+          // Credit isolated Pool, Reinvestment, Withdrawable funds & handle Upgrade deductions.
+          // IMPORTANT: Pass `levelNumber` directly (NOT +1).
+          // Fund maps: POOL_FUND_MAP[0]=0, POOL_FUND_MAP[1]=120, etc.
+          // Round 0 completion generates Level 1 rebirths but releases NO funds.
+          // Round 1 completion releases Level 1 funds ($120 Pool / $100 Reinvest / $20 Withdrawable).
+          const { applyAutopoolFundCompletion } = await import("./autopool-fund-new.service.js");
+          await applyAutopoolFundCompletion(ownerUserId, levelNumber, sourceRebirthIds, s);
+
+          // --- LEGACY DISTRIBUTION HOOK ---
+          // Process standard sponsor referral ($2.5 per next round rebirth) and company fees
           await autopoolFundService.processLevelDistribution(
             ownerUserId,
             levelNumber,
             s,
           );
 
-          // Generate next-level rebirth nodes (level-wide)
-          await autopool3x3Service.generateNextLevelRebirthsForCompletedLevel(
-            ownerUserId,
-            levelNumber,
-            s,
-          );
+          // [MODIFIED] Skipped level-wide generateNextLevelRebirthsForCompletedLevel
+          // because deterministic rebirth IDs are created immediately node-by-node!
         }
       } else {
         // Update progress if not completed
@@ -810,7 +1068,7 @@ export const autopool3x3Service = {
       .populate("matrixParentId", "nodeCode nodeType status")
       .populate("directChildren", "nodeCode nodeType status")
       .populate("rebirthId", "displayCode")
-      .sort({ createdAt: 1 });
+      .sort({ queueIndex: 1, createdAt: 1, _id: 1 });
 
     return nodes;
   },
@@ -876,7 +1134,7 @@ export const autopool3x3Service = {
           select: "memberId fullName",
         },
       })
-      .sort({ createdAt: 1 })
+      .sort({ queueIndex: 1, createdAt: 1, _id: 1 })
       .lean();
 
     const rootNode = allScopedCandidates.find(
@@ -1068,7 +1326,7 @@ export const autopool3x3Service = {
       .populate("matrixParentId", "nodeCode")
       .populate("userId", "memberId")
       .populate("rebirthId", "displayCode")
-      .sort({ queueTimestamp: 1 });
+      .sort({ queueIndex: 1, createdAt: 1, _id: 1 });
 
     if (limit > 0) {
       query = query.limit(limit);
@@ -1137,7 +1395,7 @@ export const autopool3x3Service = {
     let query = AutoPoolNode.find(filter)
       .populate("ownerUserId", "fullName memberId")
       .populate("matrixParentId", "nodeCode")
-      .sort({ queueTimestamp: 1 });
+      .sort({ queueIndex: 1, createdAt: 1, _id: 1 });
 
     if (limit > 0) {
       query = query.skip(skip).limit(limit);
@@ -1216,45 +1474,33 @@ export const autopool3x3Service = {
       .select("memberId fullName email sponsorId phone createdAt isAliasAccount aliasOfUserId aliasOfAccountId rootOwnerUserId rootOwnerAccountId createdFromAutopoolLevel")
       .lean();
 
+    const { AutopoolUserFund } = await import("./autopool-user-fund.model.js");
+    const userIds = allUsers.map((u) => u._id);
+    const autopoolFunds = await AutopoolUserFund.find({ userId: { $in: userIds } }).lean();
+    const fundMap = new Map(autopoolFunds.map((f) => [f.userId.toString(), f]));
+
     const results = [];
     for (const user of allUsers) {
       const nodes = await AutoPoolNode.find({ ownerUserId: user._id })
         .select("levelNumber status")
         .lean();
 
-      let latestCompletedLevel = -1;
-      let currentLevel = 0;
       const hasAnyRebirth = nodes.length > 0;
+      const totalCompletedRebirths = nodes.filter((n) => n.status === "COMPLETED").length;
+      const latestCompletedLevel = getCompletedLevelFromCompletedCount(totalCompletedRebirths);
+      const currentLevel = getCurrentActiveLevelFromCompletedCount(totalCompletedRebirths);
 
-      for (let r = 0; r <= 9; r++) {
-        const required = Math.pow(2, r + 1);
-        const roundNodes = nodes.filter((n) => n.levelNumber === r);
-        const completedCount = roundNodes.filter((n) => n.status === "COMPLETED").length;
-        const isCompleted = roundNodes.length === required && completedCount === required;
-
-        if (isCompleted) {
-          latestCompletedLevel = r;
-        }
-      }
-
-      for (let r = 0; r <= 9; r++) {
-        const required = Math.pow(2, r + 1);
-        const roundNodes = nodes.filter((n) => n.levelNumber === r);
-        const completedCount = roundNodes.filter((n) => n.status === "COMPLETED").length;
-        const isCompleted = roundNodes.length === required && completedCount === required;
-        if (!isCompleted) {
-          currentLevel = r;
-          break;
-        }
-        if (r === 9 && isCompleted) {
-          currentLevel = 9;
-        }
-      }
+      const fundRecord = fundMap.get(user._id.toString());
+      const completedAutopoolLevel =
+        latestCompletedLevel ?? getResolvedCompletedAutopoolLevel(-1, fundRecord);
+      const autopoolFundSummary = calculateAutopoolFundSummary(
+        completedAutopoolLevel ?? 0,
+      );
 
       let userStatus = "Pending";
-      if (latestCompletedLevel === 9) {
+      if (completedAutopoolLevel === 9) {
         userStatus = "Completed";
-      } else if (hasAnyRebirth) {
+      } else if (completedAutopoolLevel !== null || hasAnyRebirth) {
         userStatus = "In Progress";
       }
 
@@ -1266,10 +1512,11 @@ export const autopool3x3Service = {
         sponsorId: user.sponsorId || "N/A",
         phone: user.phone || "N/A",
         totalRebirths: nodes.length,
-        completedRebirthsCount: nodes.filter((n) => n.status === "COMPLETED").length,
+        completedRebirthsCount: totalCompletedRebirths,
         pendingRebirthsCount: nodes.filter((n) => n.status !== "COMPLETED").length,
         currentLevel,
-        latestCompletedLevel: latestCompletedLevel === -1 ? null : latestCompletedLevel,
+        latestCompletedLevel: completedAutopoolLevel,
+        completedAutopoolLevel,
         status: userStatus,
         isAliasAccount: user.isAliasAccount || false,
         aliasOfUserId: user.aliasOfUserId || null,
@@ -1277,6 +1524,16 @@ export const autopool3x3Service = {
         rootOwnerUserId: user.rootOwnerUserId || null,
         rootOwnerAccountId: user.rootOwnerAccountId || null,
         createdFromAutopoolLevel: user.createdFromAutopoolLevel ?? null,
+        poolFundTotal: autopoolFundSummary.poolFundTotal,
+        reinvestmentFundTotal: autopoolFundSummary.reinvestmentFundTotal,
+        withdrawableAutopoolFund: autopoolFundSummary.withdrawableAutopoolFund,
+        upgradeIdCount: autopoolFundSummary.upgradeIdCount,
+        upgradeDeductionTotal: autopoolFundSummary.upgradeDeductionTotal,
+        autopoolFundSummary,
+        isolatedWithdrawableAutopoolFund: autopoolFundSummary.withdrawableAutopoolFund,
+        isolatedPoolFundTotal: autopoolFundSummary.poolFundTotal,
+        isolatedReinvestmentFundTotal: autopoolFundSummary.reinvestmentFundTotal,
+        isolatedUpgradeIdCount: autopoolFundSummary.upgradeIdCount,
       });
     }
 
@@ -1311,11 +1568,13 @@ export const autopool3x3Service = {
    */
   getIndividualAutopoolDetails: async (userId) => {
     const { WalletModel } = await import("../user/wallet.model.js");
+    const { AutopoolUserFund } = await import("./autopool-user-fund.model.js");
 
     const user = await User.findById(userId).lean();
     if (!user) throw new Error("User not found");
 
     const wallet = await WalletModel.findOne({ userRef: userId }).lean();
+    const autopoolFund = await AutopoolUserFund.findOne({ userId }).lean();
     const allUserNodes = await AutoPoolNode.find({ ownerUserId: userId })
       .populate("matrixParentId", "nodeCode")
       .lean();
@@ -1350,8 +1609,11 @@ export const autopool3x3Service = {
     });
 
     const levelWiseStatus = [];
-    let latestCompletedLevel = -1;
-    let currentActiveLevel = 0;
+    const totalCompletedRebirths = allUserNodes.filter(
+      (n) => n.status === "COMPLETED"
+    ).length;
+    const latestCompletedLevel = getCompletedLevelFromCompletedCount(totalCompletedRebirths);
+    const currentActiveLevel = getCurrentActiveLevelFromCompletedCount(totalCompletedRebirths);
 
     for (let r = 0; r <= 9; r++) {
       const required = Math.pow(2, r + 1);
@@ -1362,8 +1624,13 @@ export const autopool3x3Service = {
       let status = "Pending";
       if (generatedCount === required && completedCount === required) {
         status = "Completed";
-        latestCompletedLevel = r;
       } else if (generatedCount > 0 || completedCount > 0) {
+        status = "In Progress";
+      }
+
+      if (latestCompletedLevel !== null && r <= latestCompletedLevel) {
+        status = "Completed";
+      } else if (r === currentActiveLevel && (generatedCount > 0 || completedCount > 0)) {
         status = "In Progress";
       }
 
@@ -1415,21 +1682,95 @@ export const autopool3x3Service = {
       });
     }
 
-    for (let r = 0; r <= 9; r++) {
-      if (levelWiseStatus[r].status !== "Completed") {
-        currentActiveLevel = r;
-        break;
-      }
-      if (r === 9 && levelWiseStatus[r].status === "Completed") {
-        currentActiveLevel = 9;
-      }
-    }
-
     const totalRebirths = allUserNodes.length;
-    const totalCompletedRebirths = allUserNodes.filter(
-      (n) => n.status === "COMPLETED"
-    ).length;
     const totalPendingRebirths = totalRebirths - totalCompletedRebirths;
+
+    const resolvedCompletedLevel = latestCompletedLevel;
+    const { summary: autopoolFundSummary } =
+      await reconcileAutopoolFundSummary({
+        userId,
+        completedLevel: resolvedCompletedLevel,
+        fundRecord: autopoolFund,
+      });
+
+    const completedLevelForLedger = resolvedCompletedLevel ?? -1;
+
+    const transactions = await AutopoolFundTransaction.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          completedLevel: { $lte: completedLevelForLedger },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          transactionCount: { $sum: 1 },
+          poolFundTotal: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "POOL_FUND_CREDIT"] },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          reinvestmentFundTotal: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "REINVESTMENT_FUND_CREDIT"] },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          withdrawableAutopoolFund: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "WITHDRAWABLE_AUTOPOOL_CREDIT"] },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          upgradeDeductionTotal: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "UPGRADE_ID_DEDUCTION"] },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          upgradeIdCount: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "UPGRADE_ID_DEDUCTION"] },
+                { $divide: ["$amount", UPGRADE_ID_COST] },
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    const ledgerSummary = transactions[0] || null;
+    const ledgerMatchesSummary = ledgerSummary
+      ? [
+          ["poolFundTotal", ledgerSummary.poolFundTotal],
+          ["reinvestmentFundTotal", ledgerSummary.reinvestmentFundTotal],
+          ["withdrawableAutopoolFund", ledgerSummary.withdrawableAutopoolFund],
+          ["upgradeIdCount", ledgerSummary.upgradeIdCount],
+          ["upgradeDeductionTotal", ledgerSummary.upgradeDeductionTotal],
+        ].every(([key, value]) => Number(value || 0) === Number(autopoolFundSummary[key] || 0))
+      : false;
+
+    if (!ledgerMatchesSummary) {
+      console.warn(
+        `[AutoPool] Reconciled autopool fund summary for ${userId} at level ${resolvedCompletedLevel}. Ledger matches: ${ledgerSummary ? "no" : "n/a"}`,
+      );
+    }
 
     const rebirthDetails = [];
     levelWiseStatus.forEach((lws) => {
@@ -1448,9 +1789,22 @@ export const autopool3x3Service = {
         currentActiveLevel,
         totalCompletedRebirths,
         totalPendingRebirths,
-        latestCompletedLevel: latestCompletedLevel === -1 ? null : latestCompletedLevel,
+        latestCompletedLevel: resolvedCompletedLevel,
+        completedAutopoolLevel: resolvedCompletedLevel,
         withdrawableWalletAmount: wallet?.withdrawableFund || 0,
         poolFundAmount: wallet?.fundWallet || 0,
+        // NEW ISOLATED WALLETS
+        poolFundTotal: autopoolFundSummary.poolFundTotal,
+        reinvestmentFundTotal: autopoolFundSummary.reinvestmentFundTotal,
+        withdrawableAutopoolFund: autopoolFundSummary.withdrawableAutopoolFund,
+        upgradeIdCount: autopoolFundSummary.upgradeIdCount,
+        upgradeDeductionTotal: autopoolFundSummary.upgradeDeductionTotal,
+        autopoolFundSummary,
+        isolatedWithdrawableAutopoolFund: autopoolFundSummary.withdrawableAutopoolFund,
+        isolatedPoolFundTotal: autopoolFundSummary.poolFundTotal,
+        isolatedReinvestmentFundTotal: autopoolFundSummary.reinvestmentFundTotal,
+        isolatedUpgradeIdCount: autopoolFundSummary.upgradeIdCount,
+        isolatedUpgradeDeductionTotal: autopoolFundSummary.upgradeDeductionTotal,
       },
       levelWiseStatus,
       rebirthDetails,
@@ -1502,5 +1856,7 @@ export const autopool3x3Service = {
     return mappedNodes;
   },
 };
+
+export { calculateAutopoolFundSummary, UPGRADE_ID_COST };
 
 export default autopool3x3Service;

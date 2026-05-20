@@ -20,6 +20,12 @@ import {
   getIndividualAutopoolSummary,
   getIndividualAutopoolDetails,
   getIndividualAutopoolTree,
+  getMyFunds,
+  getMyFundTransactions,
+  getMyUpgradeIds,
+  getUserFundsAdmin,
+  getUserFundTransactionsAdmin,
+  getUserUpgradeIdsAdmin,
 } from "./autopool-3x3.controller.js";
 import {
   getPoolFundSummary,
@@ -166,6 +172,36 @@ autopool3x3Router.get(
   getUserPoolFund,
 );
 
+/**
+ * Admin: Get specific user's isolated autopool funds
+ */
+autopool3x3Router.get(
+  "/admin/user-funds/:userId",
+  authMiddleware,
+  adminOnly,
+  getUserFundsAdmin,
+);
+
+/**
+ * Admin: Get specific user's autopool fund transactions ledger
+ */
+autopool3x3Router.get(
+  "/admin/user-fund-transactions/:userId",
+  authMiddleware,
+  adminOnly,
+  getUserFundTransactionsAdmin,
+);
+
+/**
+ * Admin: Get specific user's upgrade/alias IDs
+ */
+autopool3x3Router.get(
+  "/admin/user-upgrade-ids/:userId",
+  authMiddleware,
+  adminOnly,
+  getUserUpgradeIdsAdmin,
+);
+
 // ─── User Routes ────────────────────────────────────────────────────────────
 
 /**
@@ -187,5 +223,20 @@ autopool3x3Router.get("/my/summary", authMiddleware, getMyAutoPoolSummary);
  * User: Get my pool fund ledger
  */
 autopool3x3Router.get("/my/pool-fund", authMiddleware, getUserPoolFund);
+
+/**
+ * User: Get my isolated autopool funds
+ */
+autopool3x3Router.get("/my/funds", authMiddleware, getMyFunds);
+
+/**
+ * User: Get my autopool fund transactions ledger
+ */
+autopool3x3Router.get("/my/fund-transactions", authMiddleware, getMyFundTransactions);
+
+/**
+ * User: Get my upgrade/alias IDs
+ */
+autopool3x3Router.get("/my/upgrade-ids", authMiddleware, getMyUpgradeIds);
 
 export default autopool3x3Router;

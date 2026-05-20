@@ -14,6 +14,10 @@ function formatDate(dateStr) {
   });
 }
 
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`;
+}
+
 const TYPE_LABELS = {
   RB_INCOME: "Rebirth Wallet",
   SPONSOR_INCOME: "Sponsor Income",
@@ -70,6 +74,33 @@ export default function WalletIncomePage() {
   }, [page]);
 
   const w = wallet || {};
+  const walletCards = [
+    {
+      label: "AUTOPOOL WITHDRAWABLE",
+      value: formatMoney(w.autopoolWithdrawableFund),
+      accent: "text-emerald-300",
+    },
+    {
+      label: "POOL FUND",
+      value: formatMoney(w.poolFundTotal),
+      accent: "text-cyan-300",
+    },
+    {
+      label: "REINVESTMENT FUND",
+      value: formatMoney(w.reinvestmentFundTotal),
+      accent: "text-teal-300",
+    },
+    {
+      label: "DIRECT REFERRAL",
+      value: formatMoney(w.directReferralIncome),
+      accent: "text-amber-300",
+    },
+    {
+      label: "LEVEL INCOME",
+      value: formatMoney(w.levelIncome),
+      accent: "text-purple-300",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -83,23 +114,20 @@ export default function WalletIncomePage() {
       ) : (
         <>
           {/* Wallet Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Card className="bg-[linear-gradient(170deg,rgba(15,33,88,0.92),rgba(10,24,67,0.95))]">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Withdrawable Fund</p>
-              <h3 className="mt-2 text-3xl font-bold text-emerald-300">$ {(w.withdrawableFund || 0).toFixed(2)}</h3>
-            </Card>
-            <Card className="bg-[linear-gradient(170deg,rgba(15,33,88,0.92),rgba(10,24,67,0.95))]">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Fund Wallet</p>
-              <h3 className="mt-2 text-3xl font-bold text-cyan-300">$ {(w.fundWallet || 0).toFixed(2)}</h3>
-            </Card>
-            <Card className="bg-[linear-gradient(170deg,rgba(15,33,88,0.92),rgba(10,24,67,0.95))]">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Main Wallet</p>
-              <h3 className="mt-2 text-3xl font-bold text-blue-300">$ {(w.mainWallet || 0).toFixed(2)}</h3>
-            </Card>
-            <Card className="bg-[linear-gradient(170deg,rgba(15,33,88,0.92),rgba(10,24,67,0.95))]">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Total Rebirth Balance</p>
-              <h3 className="mt-2 text-3xl font-bold text-purple-300">$ {(w.totalRebirthBalance || 0).toFixed(2)}</h3>
-            </Card>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {walletCards.map((card) => (
+              <Card
+                key={card.label}
+                className="bg-[linear-gradient(170deg,rgba(15,33,88,0.92),rgba(10,24,67,0.95))]"
+              >
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
+                  {card.label}
+                </p>
+                <h3 className={`mt-2 text-3xl font-bold ${card.accent}`}>
+                  {card.value}
+                </h3>
+              </Card>
+            ))}
           </div>
 
           {/* Rebirth IDs */}
@@ -168,7 +196,7 @@ export default function WalletIncomePage() {
                           {log.level ? `Level ${log.level}` : "—"}
                         </td>
                         <td className="px-3 py-3 text-sm font-bold text-emerald-300">${log.amount}</td>
-                        <td className="px-3 py-3 text-xs text-slate-400 max-w-[200px] truncate">{log.remarks || "—"}</td>
+                        <td className="px-3 py-3 text-xs text-slate-400 max-w-50 truncate">{log.remarks || "—"}</td>
                       </tr>
                     ))
                   )}

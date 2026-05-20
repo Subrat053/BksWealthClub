@@ -132,6 +132,8 @@ const formatDate = (dateStr) => {
   });
 };
 
+const formatAmount = (value) => Number(value || 0).toFixed(2);
+
 export default function IndividualAutoPoolPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +149,16 @@ export default function IndividualAutoPoolPage() {
   const [poolFundHistory, setPoolFundHistory] = useState([]);
   const [showPoolFundModal, setShowPoolFundModal] = useState(false);
   const [poolFundLoading, setPoolFundLoading] = useState(false);
+
+  // Isolated Fund Ledger state
+  const [isolatedLedger, setIsolatedLedger] = useState([]);
+  const [showIsolatedLedgerModal, setShowIsolatedLedgerModal] = useState(false);
+  const [isolatedLedgerLoading, setIsolatedLedgerLoading] = useState(false);
+
+  // Upgrade IDs state
+  const [upgradeIds, setUpgradeIds] = useState([]);
+  const [showUpgradeIdsModal, setShowUpgradeIdsModal] = useState(false);
+  const [upgradeIdsLoading, setUpgradeIdsLoading] = useState(false);
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -235,6 +247,38 @@ export default function IndividualAutoPoolPage() {
       console.error("Failed to load pool fund history", error);
     } finally {
       setPoolFundLoading(false);
+    }
+  };
+
+  const handleOpenIsolatedLedger = async () => {
+    if (!selectedUser) return;
+    setIsolatedLedgerLoading(true);
+    setShowIsolatedLedgerModal(true);
+    try {
+      const response = await autopoolService.getUserFundTransactions(
+        selectedUser.userSummary.userId
+      );
+      setIsolatedLedger(response);
+    } catch (error) {
+      console.error("Failed to load isolated fund transactions", error);
+    } finally {
+      setIsolatedLedgerLoading(false);
+    }
+  };
+
+  const handleOpenUpgradeIds = async () => {
+    if (!selectedUser) return;
+    setUpgradeIdsLoading(true);
+    setShowUpgradeIdsModal(true);
+    try {
+      const response = await autopoolService.getUserUpgradeIds(
+        selectedUser.userSummary.userId
+      );
+      setUpgradeIds(response);
+    } catch (error) {
+      console.error("Failed to load user upgrade IDs", error);
+    } finally {
+      setUpgradeIdsLoading(false);
     }
   };
 
@@ -391,6 +435,7 @@ export default function IndividualAutoPoolPage() {
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sponsor</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Level</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rebirths (Comp / Total)</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Isolated Funds</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
                   </tr>
@@ -398,13 +443,13 @@ export default function IndividualAutoPoolPage() {
                 <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-12 text-center text-slate-400 font-medium">
+                      <td colSpan="9" className="px-6 py-12 text-center text-slate-400 font-medium">
                         Loading autopool summaries...
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-12 text-center text-slate-400 font-medium">
+                      <td colSpan="9" className="px-6 py-12 text-center text-slate-400 font-medium">
                         No users match the search criteria.
                       </td>
                     </tr>
@@ -422,6 +467,13 @@ export default function IndividualAutoPoolPage() {
                         <td className="px-6 py-4 text-sm text-slate-600">
                           <span className="font-bold text-slate-800">{u.completedRebirthsCount}</span>
                           <span className="text-slate-400"> / {u.totalRebirths}</span>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex flex-col gap-0.5 text-[11px] font-bold">
+                            <span className="text-emerald-600">Wallet: ${formatAmount(u.withdrawableAutopoolFund)}</span>
+                            <span className="text-blue-600">Pool: ${formatAmount(u.poolFundTotal)}</span>
+                            <span className="text-amber-600">Reinvest: ${formatAmount(u.reinvestmentFundTotal)}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-sm">{getStatusBadge(u.status)}</td>
                         <td className="px-6 py-4 text-sm">
@@ -472,84 +524,137 @@ export default function IndividualAutoPoolPage() {
       ) : (
         /* Selected User Detailed View */
         <div className="space-y-6 animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSelectedUser(null)}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Individual Autopool Report</p>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                {selectedUser.userSummary.fullName} ({selectedUser.userSummary.memberId})
-              </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition"
+              >
+                <ArrowLeft size={18} />
+              </button>
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Individual Autopool Report</p>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                  {selectedUser.userSummary.fullName} ({selectedUser.userSummary.memberId})
+                </h2>
+              </div>
             </div>
+            <button
+              onClick={handleOpenTree}
+              className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-100"
+            >
+              <Network size={16} /> View Subtree Visualizer
+            </button>
           </div>
 
           {/* User Summary Grid Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <User size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">User ID</p>
-                <p className="text-lg font-bold text-slate-900 mt-0.5">
-                  {selectedUser.userSummary.memberId}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <Wallet size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Withdrawable Balance</p>
-                <p className="text-lg font-black text-slate-900 mt-0.5">
-                  ${selectedUser.userSummary.withdrawableWalletAmount.toFixed(2)}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+            {/* User ID */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                  <Award size={24} />
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <User size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-medium">Pool Fund / Reinvested</p>
-                  <p className="text-lg font-black text-slate-900 mt-0.5">
-                    ${selectedUser.userSummary.poolFundAmount.toFixed(2)}
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">User ID</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">
+                    {selectedUser.userSummary.memberId}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                <span>Sponsor:</span>
+                <span className="text-indigo-600 font-bold">{selectedUser.userSummary.sponsorId}</span>
+              </div>
+            </div>
+
+            {/* Primary Wallet (Sponsor & Level Income) */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                  <Wallet size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Primary Wallet</p>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">
+                    ${selectedUser.userSummary.withdrawableWalletAmount.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <span className="mt-4 text-[10px] text-slate-400 font-bold">Sponsor/Level Income Wallet</span>
+            </div>
+
+            {/* Isolated Autopool Withdrawable */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col justify-between h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+                  <Wallet size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-emerald-600 font-bold uppercase tracking-wider">Autopool Wallet</p>
+                  <p className="text-sm font-black text-emerald-800 mt-0.5">
+                    ${formatAmount(selectedUser.userSummary.withdrawableAutopoolFund)}
                   </p>
                 </div>
               </div>
               <button
-                onClick={handleOpenPoolFund}
-                className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 font-bold transition text-[10px]"
+                onClick={handleOpenIsolatedLedger}
+                className="mt-4 w-full px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold transition text-[10px] text-center shadow-md shadow-emerald-100"
               >
-                View History
+                View Ledger
               </button>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white flex items-center justify-between gap-4">
+            {/* Isolated Pool Fund */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-                  <Network size={24} />
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Award size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-indigo-400 font-medium">Subtree Nodes</p>
-                  <p className="text-lg font-bold text-slate-900 mt-0.5">
-                    {selectedUser.userSummary.totalRebirthsCreated} Rebirths
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Pool Fund</p>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">
+                    ${formatAmount(selectedUser.userSummary.poolFundTotal)}
+                  </p>
+                </div>
+              </div>
+              <span className="mt-4 text-[10px] text-slate-400 font-bold">Accumulated pool allocations</span>
+            </div>
+
+            {/* Isolated Reinvestment Fund */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                  <Award size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Reinvestment Fund</p>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">
+                    ${formatAmount(selectedUser.userSummary.reinvestmentFundTotal)}
+                  </p>
+                </div>
+              </div>
+              <span className="mt-4 text-[10px] text-slate-400 font-bold">Autopool rebirth balance</span>
+            </div>
+
+            {/* Upgrade/Alias IDs */}
+            <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm border-indigo-200/50 flex flex-col justify-between h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <Network size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Upgrade/Alias IDs</p>
+                  <p className="text-sm font-black text-slate-900 mt-0.5">
+                    {selectedUser.userSummary.upgradeIdCount} IDs
                   </p>
                 </div>
               </div>
               <button
-                onClick={handleOpenTree}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition text-xs shadow-md shadow-indigo-100"
+                onClick={handleOpenUpgradeIds}
+                className="mt-4 w-full px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-bold transition text-[10px] text-center"
               >
-                View Tree
+                List Alias IDs
               </button>
             </div>
           </div>
@@ -563,7 +668,9 @@ export default function IndividualAutoPoolPage() {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
               <p className="text-xs text-slate-400 font-medium">Latest Completed Level</p>
               <p className="text-xl font-bold text-slate-800 mt-1">
-                {selectedUser.userSummary.latestCompletedLevel !== null ? `Level ${selectedUser.userSummary.latestCompletedLevel}` : "None"}
+                {selectedUser.userSummary.completedAutopoolLevel !== null
+                  ? `Level ${selectedUser.userSummary.completedAutopoolLevel}`
+                  : "None"}
               </p>
             </div>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
@@ -890,6 +997,174 @@ export default function IndividualAutoPoolPage() {
                                 : "bg-amber-100 text-amber-700"
                             }`}>
                               {txn.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Isolated Fund Ledger Modal */}
+      {showIsolatedLedgerModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-5xl h-[80vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Wallet size={18} className="text-emerald-600" />
+                  Isolated Autopool Ledger
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Detailed transactions log for {selectedUser?.userSummary.fullName} ({selectedUser?.userSummary.memberId})
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowIsolatedLedgerModal(false);
+                  setIsolatedLedger([]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 rounded-xl transition shadow-sm border border-slate-200"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto bg-slate-50 p-6">
+              {isolatedLedgerLoading ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm">
+                  Loading isolated fund ledger...
+                </div>
+              ) : isolatedLedger.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm italic">
+                  No isolated fund transactions found for this user.
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Source Rebirth</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Amount</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Balance After</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-6">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {isolatedLedger.map((txn) => (
+                        <tr key={txn._id} className="hover:bg-slate-50/50 transition">
+                          <td className="px-4 py-3 text-slate-500">
+                            {formatDate(txn.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                              txn.type === "POOL_FUND_CREDIT" ? "bg-blue-100 text-blue-700 border-blue-200" :
+                              txn.type === "REINVESTMENT_FUND_CREDIT" ? "bg-amber-100 text-amber-700 border-amber-200" :
+                              txn.type === "WITHDRAWABLE_AUTOPOOL_CREDIT" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                              "bg-rose-100 text-rose-700 border-rose-200"
+                            }`}>
+                              {txn.type.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex flex-col">
+                              <span className="font-mono font-bold text-slate-700">{txn.sourceRebirthId || "—"}</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Level {txn.completedLevel}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className={`font-black ${txn.type === "UPGRADE_ID_DEDUCTION" ? "text-rose-600" : "text-emerald-600"}`}>
+                              {txn.type === "UPGRADE_ID_DEDUCTION" ? "-" : "+"}${txn.amount.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-slate-600">
+                            ${txn.balanceAfter.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 pl-6 text-slate-600 font-medium">
+                            {txn.description}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Alias IDs Modal */}
+      {showUpgradeIdsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-3xl h-[70vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Network size={18} className="text-indigo-600" />
+                  Upgrade & Alias IDs
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Listing generated alias accounts for {selectedUser?.userSummary.fullName} ({selectedUser?.userSummary.memberId})
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUpgradeIdsModal(false);
+                  setUpgradeIds([]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 rounded-xl transition shadow-sm border border-slate-200"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto bg-slate-50 p-6">
+              {upgradeIdsLoading ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm">
+                  Loading upgrade IDs...
+                </div>
+              ) : upgradeIds.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm italic">
+                  No upgrade alias accounts created for this user yet.
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date Created</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alias ID</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Source Autopool Level</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Deduction Amount</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {upgradeIds.map((item) => (
+                        <tr key={item._id} className="hover:bg-slate-50/50 transition">
+                          <td className="px-4 py-3 text-slate-500">
+                            {formatDate(item.createdAt)}
+                          </td>
+                          <td className="px-4 py-3 font-mono font-bold text-indigo-600">
+                            {item.aliasId}
+                          </td>
+                          <td className="px-4 py-3 text-center text-slate-700 font-bold">
+                            Level {item.sourceAutopoolLevel}
+                          </td>
+                          <td className="px-4 py-3 text-right font-black text-rose-600">
+                            -${item.deductionAmount?.toFixed(2) || "75.00"}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              {item.status}
                             </span>
                           </td>
                         </tr>

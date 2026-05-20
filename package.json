@@ -13,6 +13,17 @@
     "dev:server": "npm --workspace server run dev",
     "build:user": "npm --workspace apps/user-web run build",
     "build:admin": "npm --workspace apps/admin-web run build",
-    "build:server": "npm --workspace server run build"
+    "build:server": "npm --workspace server run build",
+    "autopool:repair": "npm --workspace server run autopool:repair --",
+    "autopool:recalculate-funds": "npm --workspace server run autopool:recalculate-funds --",
+    "autopool:refresh-summaries": "npm --workspace server run autopool:refresh-summaries --",
+    "autopool:repair-replay": "npm --workspace server run autopool:repair-replay --",
+    "autopool:repair-replay:dry-run": "npm --workspace server run autopool:repair-replay:dry-run --",
+    "autopool:repair-replay:apply": "npm --workspace server run autopool:repair-replay:apply --",
+    "autopool:validate": "npm --workspace server run autopool:validate --",
+    "seed:fresh": "npm --workspace server run seed:fresh",
+    "seed:bulk": "npm --workspace server run seed:bulk --",
+    "seed:any": "npm --workspace server run seed:any --",
+    "repair:rebirths": "npm --workspace server run repair:rebirths"
   }
 }

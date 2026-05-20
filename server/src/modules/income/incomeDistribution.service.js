@@ -762,6 +762,9 @@ export async function getUserRebirthIds(userId) {
  * Get user's wallet including withdrawableFund.
  */
 export async function getUserWallet(userId) {
+  const { AutopoolUserFund } = await import("../autopool/autopool-user-fund.model.js");
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   let wallet = await WalletModel.findOne({ userRef: userId }).lean();
   if (!wallet) {
     wallet = {
@@ -773,6 +776,19 @@ export async function getUserWallet(userId) {
     };
   }
 
+  const autopoolFund = await AutopoolUserFund.findOne({ userId }).lean();
+
+  const [sponsorIncome, levelIncome] = await Promise.all([
+    IncomeLedgerModel.aggregate([
+      { $match: { userRef: userObjectId, incomeType: "sponsor", entryType: "credit" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+    IncomeLedgerModel.aggregate([
+      { $match: { userRef: userObjectId, incomeType: "representative", entryType: "credit" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+  ]);
+
   // Also get rebirth wallet totals
   const rebirths = await RebirthModel.find({ userId }).lean();
   const totalRebirthBalance = rebirths.reduce(
@@ -782,6 +798,11 @@ export async function getUserWallet(userId) {
 
   return {
     ...wallet,
+    autopoolWithdrawableFund: autopoolFund?.withdrawableAutopoolFund || 0,
+    poolFundTotal: autopoolFund?.poolFundTotal || 0,
+    reinvestmentFundTotal: autopoolFund?.reinvestmentFundTotal || 0,
+    directReferralIncome: sponsorIncome[0]?.total || 0,
+    levelIncome: levelIncome[0]?.total || 0,
     rebirthWallets: rebirths.map((r) => ({
       rebirthCode: r.rebirthCode,
       sequenceNo: r.sequenceNo,

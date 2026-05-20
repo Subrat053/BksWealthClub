@@ -5,6 +5,7 @@ import { AutoPoolCounter } from "./autopool-counter.model.js";
 import { RebirthId } from "./rebirth.model.js";
 import { AutoPoolLog } from "./autopool-log.model.js";
 import { User } from "../user/user.model.js";
+import { isAutopoolRepairLocked } from "./autopool-repair-lock.service.js";
 
 let isQueueProcessing = false;
 
@@ -557,6 +558,10 @@ export const autoPoolNewService = {
   // ──────────────────────────────────────────────────────────────────────────
 
   processAutoPoolQueue: async () => {
+    if (await isAutopoolRepairLocked()) {
+      return { processedCount: 0, skipped: true, repairLocked: true };
+    }
+
     if (isQueueProcessing) {
       return { processedCount: 0, skipped: true };
     }

@@ -119,6 +119,75 @@ const rebirthSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Canonical replay metadata
+    mainUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    round: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    sequence: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    sourceParentRebirthId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RebirthId",
+      default: null,
+      index: true,
+    },
+    originalCreatedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    replayedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    repairVersion: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    seedBatchId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    seedSource: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    isDuplicate: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    duplicateOfCode: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
     // NEW: Display code in format: BKS12345-1.5
     displayCode: {
       type: String,
@@ -145,6 +214,11 @@ rebirthSchema.index(
   { depositId: 1, ownerUserId: 1, sequenceNumber: 1 },
   { sparse: true },
 );
+// NOTE: Removed stale { mainUserId, round, sequence } unique index — these fields
+// are null in new-style RebirthId docs (schema now uses ownerUserId/levelNumber/levelSequence).
+// The unique constraint on null values caused E11000 duplicate key errors for all seeded users.
+// Duplicate prevention is now handled by the displayCode unique index and the nodeCode index
+// on AutoPoolNode (ownerUserId + levelNumber + levelSequence compound unique index).
 
 export const RebirthId =
   mongoose.models.RebirthId || mongoose.model("RebirthId", rebirthSchema);

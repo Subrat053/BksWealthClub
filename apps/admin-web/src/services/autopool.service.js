@@ -172,4 +172,28 @@ export const autopoolService = {
       return [];
     }
   },
+
+  getUserFundTransactions: async (userId) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/user-fund-transactions/${userId}`
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching user isolated fund transactions:", error);
+      return [];
+    }
+  },
+
+  getUserUpgradeIds: async (userId) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/user-upgrade-ids/${userId}`
+      );
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching user upgrade/alias IDs:", error);
+      return [];
+    }
+  },
 };

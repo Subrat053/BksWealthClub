@@ -88,6 +88,66 @@ const autopoolNodeSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Canonical replay identifiers
+    mainUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    round: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    sequence: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    childSlot: {
+      type: Number,
+      default: null,
+      index: true,
+    },
+    queueOrder: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    placementOrder: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    placedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isDuplicate: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    duplicateOfCode: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Stable queue ordering tie-breaker for seeded or same-timestamp nodes
+    queueIndex: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+
     // Flag for main user nodes (though new rules say they don't enter AutoPool)
     isMainUserNode: {
       type: Boolean,
@@ -186,6 +246,7 @@ const autopoolNodeSchema = new mongoose.Schema(
 
 // Index for finding pending nodes by queue timestamp
 autopoolNodeSchema.index({ status: 1, queueTimestamp: 1 });
+autopoolNodeSchema.index({ status: 1, queueIndex: 1, createdAt: 1, _id: 1 });
 
 // Index for finding placed nodes available for children
 autopoolNodeSchema.index({ status: 1, directChildrenCount: 1, queueTimestamp: 1 });
@@ -195,6 +256,7 @@ autopoolNodeSchema.index({ ownerUserId: 1, nodeType: 1 });
 
 // Compound index for duplicate prevention of rebirths within a level
 autopoolNodeSchema.index({ ownerUserId: 1, levelNumber: 1, levelSequence: 1 }, { unique: true, sparse: true });
+autopoolNodeSchema.index({ mainUserId: 1, round: 1, sequence: 1 }, { unique: true, sparse: true });
 
 export const AutoPoolNode =
   mongoose.models.AutoPoolNode ||

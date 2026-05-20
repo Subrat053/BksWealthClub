@@ -39,4 +39,50 @@ export const autopoolService = {
       return [];
     }
   },
+
+  getMyFunds: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/funds");
+      return response.data?.data || {
+        completedAutopoolLevel: 0,
+        poolFundTotal: 0,
+        reinvestmentFundTotal: 0,
+        withdrawableAutopoolFund: 0,
+        upgradeIdCount: 0,
+        upgradeDeductionTotal: 0,
+        lastCompletedRound: -1,
+      };
+    } catch (error) {
+      console.error("Error fetching my isolated funds:", error);
+      return {
+        completedAutopoolLevel: 0,
+        poolFundTotal: 0,
+        reinvestmentFundTotal: 0,
+        withdrawableAutopoolFund: 0,
+        upgradeIdCount: 0,
+        upgradeDeductionTotal: 0,
+        lastCompletedRound: -1,
+      };
+    }
+  },
+
+  getMyFundTransactions: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/fund-transactions");
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching my fund transactions:", error);
+      return [];
+    }
+  },
+
+  getMyUpgradeIds: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/upgrade-ids");
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching my upgrade IDs:", error);
+      return [];
+    }
+  },
 };

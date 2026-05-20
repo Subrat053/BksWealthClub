@@ -56,7 +56,11 @@ async function clearAndSeed() {
       "passwordresets",
       "poolfundledgers",
       "companyfunds",
-      "companyfundentries"
+      "companyfundentries",
+      // ─── Isolated AutoPool Fund Collections ───
+      "autopooluserfunds",
+      "autopooluserfundtransactions",
+      "upgradealiasids",
     ];
 
     for (const col of collections) {

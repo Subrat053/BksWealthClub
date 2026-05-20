@@ -7,7 +7,18 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "build": "node -e \"console.log('No build step for server scaffold')\"",
-    "seed:fresh": "node src/scripts/fresh-seed.js"
+    "seed:fresh": "node src/scripts/fresh-seed.js",
+    "seed:new": "node src/scripts/seed-50-users.js",
+    "seed:any": "node src/scripts/seed-users.js",
+    "seed:bulk": "node src/scripts/seed-bulk-users.js",
+    "repair:rebirths": "node src/scripts/repair-missing-rebirths.js",
+    "autopool:repair": "node src/scripts/repairAutopoolState.js",
+    "autopool:recalculate-funds": "node src/scripts/repairAutopoolState.js --recalculate-funds",
+    "autopool:refresh-summaries": "node src/scripts/repairAutopoolState.js --refresh-summaries",
+    "autopool:repair-replay": "node src/scripts/repairAutopoolByChronologicalReplay.js",
+    "autopool:repair-replay:dry-run": "node src/scripts/repairAutopoolByChronologicalReplay.js --dry-run",
+    "autopool:repair-replay:apply": "node src/scripts/repairAutopoolByChronologicalReplay.js --apply",
+    "autopool:validate": "node src/scripts/repairAutopoolByChronologicalReplay.js --validate"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

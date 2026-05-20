@@ -190,6 +190,16 @@ export default function AutopoolTreePage() {
     summary: {},
   });
   const [wallet, setWallet] = useState(null);
+  const [isolatedFunds, setIsolatedFunds] = useState({
+    completedAutopoolLevel: null,
+    poolFundTotal: 0,
+    reinvestmentFundTotal: 0,
+    withdrawableAutopoolFund: 0,
+    upgradeIdCount: 0,
+    upgradeDeductionTotal: 0,
+    lastCompletedRound: -1,
+  });
+  const [upgradeIds, setUpgradeIds] = useState([]);
   const [poolFundHistory, setPoolFundHistory] = useState([]);
   const [showPoolFundModal, setShowPoolFundModal] = useState(false);
   const [poolFundLoading, setPoolFundLoading] = useState(false);
@@ -216,12 +226,16 @@ export default function AutopoolTreePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [treeRes, walletRes] = await Promise.all([
+      const [treeRes, walletRes, fundsRes, upgradesRes] = await Promise.all([
         autopoolService.getOperationalAdminMyTree(),
         incomeService.getMyWallet(),
+        autopoolService.getMyFunds(),
+        autopoolService.getMyUpgradeIds(),
       ]);
       setData(treeRes);
       setWallet(walletRes?.data || null);
+      setIsolatedFunds(fundsRes);
+      setUpgradeIds(upgradesRes);
     } catch (e) {
       console.error("Failed to fetch tree:", e);
     } finally {
@@ -452,12 +466,13 @@ export default function AutopoolTreePage() {
         </div>
       </div>
 
+      {/* Rebirth stats at top */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 px-4 md:px-0">
         <div className="bg-[#091a39]/95 p-2.5 md:p-3 rounded-xl border border-amber-500/10">
           <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
             Total Nodes
           </p>
-          <p className="text-lg font-black text-white mt-0.5">
+          <p className="text-sm font-black text-white mt-0.5">
             {data.summary.totalNodes ?? data.nodes.length}
           </p>
         </div>
@@ -465,7 +480,7 @@ export default function AutopoolTreePage() {
           <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
             Completed
           </p>
-          <p className="text-lg font-black text-emerald-400 mt-0.5">
+          <p className="text-sm font-black text-emerald-400 mt-0.5">
             {data.summary.completedNodes ??
               data.nodes.filter((n) => n.status === "COMPLETED").length}
           </p>
@@ -474,7 +489,7 @@ export default function AutopoolTreePage() {
           <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
             Pending/Placed
           </p>
-          <p className="text-lg font-black text-amber-400 mt-0.5">
+          <p className="text-sm font-black text-amber-400 mt-0.5">
             {data.summary.pendingPlacedNodes ??
               data.nodes.filter(
                 (n) => n.status === "PENDING" || n.status === "PLACED",
@@ -485,46 +500,156 @@ export default function AutopoolTreePage() {
           <p className="text-[8px] font-bold text-amber-200/50 uppercase tracking-widest">
             Rebirths
           </p>
-          <p className="text-lg font-black text-indigo-400 mt-0.5">
+          <p className="text-sm font-black text-indigo-400 mt-0.5">
             {data.summary.activeRebirths ?? data.completions.length}
           </p>
         </div>
       </div>
 
-      {/* Financial Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 px-4 md:px-0">
-        <div className="bg-[#091a39]/95 p-4 rounded-xl border border-emerald-500/20 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <Wallet size={24} />
+      {/* 4 Isolated Fund Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 px-4 md:px-0">
+        {/* Card 1: Withdrawable Autopool Fund */}
+        <div className="relative bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-[#091a39]/95 p-4 rounded-2xl border border-emerald-500/20 shadow-lg backdrop-blur-md overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Wallet size={20} />
             </div>
             <div>
-              <p className="text-[10px] text-emerald-200/50 uppercase tracking-widest font-bold">Withdrawable Balance</p>
-              <p className="text-2xl font-black text-emerald-400 mt-0.5">
-                ${(wallet?.withdrawableFund || 0).toFixed(2)}
+              <p className="text-[10px] text-emerald-200/50 uppercase tracking-widest font-bold">Withdrawable Autopool</p>
+              <p className="text-xl font-black text-emerald-400 mt-0.5">
+                ${(isolatedFunds?.withdrawableAutopoolFund || 0).toFixed(2)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#091a39]/95 p-4 rounded-xl border border-amber-500/20 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
-              <Award size={24} />
+        {/* Card 2: Pool Fund */}
+        <div className="relative bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-[#091a39]/95 p-4 rounded-2xl border border-amber-500/20 shadow-lg backdrop-blur-md overflow-hidden group flex items-center justify-between">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+              <Award size={20} />
             </div>
             <div>
-              <p className="text-[10px] text-amber-200/50 uppercase tracking-widest font-bold">Pool Fund / Reinvested</p>
-              <p className="text-2xl font-black text-amber-400 mt-0.5">
-                ${(wallet?.fundWallet || 0).toFixed(2)}
+              <p className="text-[10px] text-amber-200/50 uppercase tracking-widest font-bold">Pool Fund Total</p>
+              <p className="text-xl font-black text-amber-300 mt-0.5">
+                ${(isolatedFunds?.poolFundTotal || 0).toFixed(2)}
               </p>
             </div>
           </div>
           <button
             onClick={handleOpenPoolFund}
-            className="px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20 hover:bg-amber-500/20 font-bold transition text-[10px]"
+            className="px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20 hover:bg-amber-500/20 font-bold transition text-[9px] z-10 cursor-pointer"
           >
-            View History
+            History
           </button>
+        </div>
+
+        {/* Card 3: Reinvestment Fund */}
+        <div className="relative bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-[#091a39]/95 p-4 rounded-2xl border border-blue-500/20 shadow-lg backdrop-blur-md overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+              <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-[10px] text-blue-200/50 uppercase tracking-widest font-bold">Reinvestment Fund</p>
+              <p className="text-xl font-black text-blue-300 mt-0.5">
+                ${(isolatedFunds?.reinvestmentFundTotal || 0).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Sponsor + Level Income */}
+        <div className="relative bg-gradient-to-br from-fuchsia-500/10 via-violet-500/5 to-[#091a39]/95 p-4 rounded-2xl border border-fuchsia-500/20 shadow-lg backdrop-blur-md overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
+              <svg className="w-5 h-5 text-fuchsia-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.25z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-[10px] text-fuchsia-200/50 uppercase tracking-widest font-bold">Sponsor + Level Income</p>
+              <p className="text-xl font-black text-fuchsia-400 mt-0.5">
+                ${(wallet?.withdrawableFund || 0).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Level Progress & Upgrade IDs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 px-4 md:px-0">
+        {/* Progress Bar Column */}
+        <div className="lg:col-span-2 bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg backdrop-blur-md flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-200/60">Active Autopool Level Progress</h3>
+            <p className="text-[10px] text-amber-100/40 mt-0.5">Track your progress toward completing your active autopool levels.</p>
+            <p className="text-[10px] text-cyan-200/60 mt-1 font-semibold">
+              Latest completed level: {isolatedFunds.completedAutopoolLevel !== null ? `Level ${isolatedFunds.completedAutopoolLevel}` : "None"}
+            </p>
+          </div>
+          
+          <div className="mt-4 space-y-3">
+            {data.completions && data.completions.length > 0 ? (
+              data.completions.slice(0, 3).map((comp) => {
+                const percent = Math.min(Math.round((comp.completedNodeCount / comp.expectedNodeCount) * 100), 100);
+                return (
+                  <div key={comp._id || comp.autoPoolNumber} className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="font-bold text-amber-200/90">Autopool Level {comp.autoPoolNumber}</span>
+                      <span className="font-mono text-amber-400">{comp.completedNodeCount}/{comp.expectedNodeCount} Rebirths ({percent}%)</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-[#050b1d] overflow-hidden p-px border border-white/5">
+                      <div 
+                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500" 
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-4 text-xs text-amber-100/30">
+                No active level progress available. Complete standard deposits to begin.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Upgrade/Alias IDs Column */}
+        <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg backdrop-blur-md flex flex-col">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-200/60">Upgrade/Alias IDs</h3>
+              <p className="text-[9px] text-amber-100/40 mt-0.5">Created starting from Level 4+ completion</p>
+            </div>
+            <span className="px-2 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">
+              Total: {upgradeIds.length}
+            </span>
+          </div>
+
+          <div className="mt-3 flex-1 max-h-[120px] overflow-auto pr-1 space-y-1.5 scrollbar-thin">
+            {upgradeIds && upgradeIds.length > 0 ? (
+              upgradeIds.map((item) => (
+                <div key={item._id} className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-black/20 border border-white/5">
+                  <span className="text-[10px] font-mono text-cyan-400 font-bold">{item.aliasId}</span>
+                  <span className="text-[9px] font-bold text-emerald-400 uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    Level {item.sourceAutopoolLevel} Complete
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex items-center justify-center py-6 text-center text-[10px] text-amber-100/30 font-medium">
+                No upgrade/alias IDs generated yet.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
