@@ -40,6 +40,13 @@ const autopoolNodeSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Rebirth Type: DEPOSIT_REBIRTH or AUTOPOOL_GENERATED_REBIRTH
+    rebirthType: {
+      type: String,
+      enum: ["DEPOSIT_REBIRTH", "AUTOPOOL_GENERATED_REBIRTH"],
+      index: true,
+    },
+
     // Reference to the user (for MAIN nodes)
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -239,6 +246,83 @@ const autopoolNodeSchema = new mongoose.Schema(
     isOperationalRoot: {
       type: Boolean,
       default: false,
+    },
+
+    // Chronological Queue & Placement Fields
+    queueSerialNo: {
+      type: Number,
+      default: null,
+      index: true,
+    },
+    queueEnteredAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    originalCreatedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    placementSerialNo: {
+      type: Number,
+      default: null,
+      index: true,
+    },
+    isPlaced: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    // Repair and Replay Tracking
+    isActiveInAutopool: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    repairStatus: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    repairBatchId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    excludedFromQueue: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    excludedFromLevelCalculation: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    excludedFromFundCalculation: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    originalParentNodeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AutoPoolNode",
+      default: null,
+    },
+    replayedParentNodeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AutoPoolNode",
+      default: null,
+    },
+    originalQueueSerialNo: {
+      type: Number,
+      default: null,
+    },
+    replayedQueueSerialNo: {
+      type: Number,
+      default: null,
     },
   },
   { timestamps: true },

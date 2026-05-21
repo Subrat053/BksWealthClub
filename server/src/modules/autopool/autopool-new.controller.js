@@ -5,11 +5,12 @@ import { AutoPoolNode, AutopoolMatrix } from "./autopool-matrix.model.js";
 import { AutoPoolLevelCompletion } from "./autopool-level-completion.model.js";
 
 export const getQueue = asyncHandler(async (req, res) => {
-  // Return ONLY rebirth nodes for the queue
+  // Return ONLY active rebirth nodes for the queue
   const pendingNodes = await AutopoolMatrix.find({ 
-    nodeType: "REBIRTH" 
+    nodeType: "REBIRTH",
+    isActiveInAutopool: true,
   })
-    .sort({ queueTimestamp: 1 })
+    .sort({ queueSerialNo: 1, queueEnteredAt: 1, _id: 1 })
     .populate("ownerUserId", "fullName memberId")
     .populate("matrixParentId", "nodeCode displayCode")
     .lean();
@@ -22,7 +23,7 @@ export const getQueue = asyncHandler(async (req, res) => {
       displayId: node.displayCode || node.nodeCode,
       poolNodeId: node.displayCode || node.nodeCode,
       ownerDetails: node.ownerUserId,
-      queueTimestamp: node.queueTimestamp || node.createdAt,
+      queueTimestamp: node.queueEnteredAt || node.queueTimestamp || node.createdAt,
       parentPoolNodeId: node.matrixParentId 
         ? { poolNodeId: node.matrixParentId.displayCode || node.matrixParentId.nodeCode } 
         : null,
@@ -34,13 +35,23 @@ export const getQueue = asyncHandler(async (req, res) => {
 });
 
 export const getTree = asyncHandler(async (req, res) => {
-  // Show only rebirth IDs and the admin root
-  const nodes = await AutopoolMatrix.find({
+  const showAll = req.query.showAll === "true";
+
+  const query = {
     $or: [
       { nodeType: "REBIRTH" },
-      { nodeCode: "BKS000000" }
+      { nodeType: "ROOT" }
     ]
-  })
+  };
+
+  // Exclude legacy BKS000000 main admin node from active tree
+  query.nodeCode = { $ne: "BKS000000" };
+
+  if (!showAll) {
+    query.isActiveInAutopool = true;
+  }
+
+  const nodes = await AutopoolMatrix.find(query)
     .populate({
       path: "ownerUserId",
       select: "fullName memberId"
@@ -49,7 +60,7 @@ export const getTree = asyncHandler(async (req, res) => {
       path: "matrixParentId",
       select: "nodeCode displayCode"
     })
-    .sort({ createdAt: 1 })
+    .sort({ queueSerialNo: 1, queueEnteredAt: 1, _id: 1 })
     .lean();
 
   const data = nodes.map((node) => {
@@ -75,11 +86,11 @@ export const getStats = asyncHandler(async (req, res) => {
     totalRebirths,
     queueWaiting,
   ] = await Promise.all([
-    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH" }),
-    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "PLACED" }),
-    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "COMPLETED" }),
-    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH" }),
-    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "PENDING" }),
+    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", isActiveInAutopool: true }),
+    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "PLACED", isActiveInAutopool: true }),
+    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "COMPLETED", isActiveInAutopool: true }),
+    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", isActiveInAutopool: true }),
+    AutopoolMatrix.countDocuments({ nodeType: "REBIRTH", status: "PENDING", isActiveInAutopool: true }),
   ]);
 
   res.json(
@@ -101,7 +112,7 @@ export const getStats = asyncHandler(async (req, res) => {
 export const getUserDetail = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const [entries, completions] = await Promise.all([
-    AutoPoolNode.find({ ownerUserId: userId, nodeType: "REBIRTH" }).sort({
+    AutoPoolNode.find({ ownerUserId: userId, nodeType: "REBIRTH", isActiveInAutopool: true }).sort({
       levelNumber: 1,
       levelSequence: 1
     }),
@@ -119,7 +130,7 @@ export const getUserDetail = asyncHandler(async (req, res) => {
 export const getMyAutoPool = asyncHandler(async (req, res) => {
   const userId = req.auth.sub;
   const [nodes, completions] = await Promise.all([
-    AutopoolMatrix.find({ ownerUserId: userId, nodeType: "REBIRTH" })
+    AutopoolMatrix.find({ ownerUserId: userId, nodeType: "REBIRTH", isActiveInAutopool: true })
       .populate("matrixParentId", "nodeCode displayCode")
       .sort({ levelNumber: 1, levelSequence: 1 })
       .lean(),
@@ -130,7 +141,7 @@ export const getMyAutoPool = asyncHandler(async (req, res) => {
     _id: node._id,
     displayId: node.displayCode || node.nodeCode,
     status: node.status,
-    queueTimestamp: node.queueTimestamp,
+    queueTimestamp: node.queueEnteredAt || node.queueTimestamp || node.createdAt,
     levelNumber: node.levelNumber,
     levelSequence: node.levelSequence,
     matrixParentEntryId: node.matrixParentId

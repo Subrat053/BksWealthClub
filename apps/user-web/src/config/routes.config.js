@@ -17,7 +17,7 @@ export const memberRouteMeta = [
   { path: "team/report", title: "Level Report" },
   { path: "team/direct", title: "Direct Team" },
   { path: "team/generation", title: "Generation Team" },
-  { path: "team/autopool", title: "Autopool Community" },
+  { path: "team/autopool", title: "My Autopool" },
   { path: "income/sponsor", title: "Sponsor Income" },
   { path: "income/level", title: "Level Income" },
   { path: "withdrawal/make", title: "Make Withdrawal" },

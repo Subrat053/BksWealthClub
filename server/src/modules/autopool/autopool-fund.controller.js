@@ -115,7 +115,7 @@ export const getCompanyFundSummary = asyncHandler(async (req, res) => {
  * Get User Pool Fund (Admin/User)
  */
 export const getUserPoolFund = asyncHandler(async (req, res) => {
-  const userId = req.params.userId || req.user?._id;
+  const userId = req.params.userId || req.auth?.userId || req.auth?.sub;
 
   const ledger = await PoolFundLedger.find({ mainUserId: userId })
     .populate("completedRebirthId", "nodeCode")

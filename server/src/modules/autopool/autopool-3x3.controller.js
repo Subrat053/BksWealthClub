@@ -8,9 +8,23 @@ import { asyncHandler } from "../../core/asyncHandler.js";
 import { ApiError } from "../../core/ApiError.js";
 import { ApiResponse } from "../../core/ApiResponse.js";
 import autopool3x3Service from "./autopool-3x3.service.js";
+import { User } from "../user/user.model.js";
 import { AutopoolUserFund } from "./autopool-user-fund.model.js";
 import { AutopoolFundTransaction } from "./autopool-fund-transaction.model.js";
 import { UpgradeAliasId } from "./upgrade-alias-id.model.js";
+
+const getAuthenticatedUserId = (req) => req.auth?.userId || req.auth?.sub || null;
+const isNodeCompletedForReport = (node = {}) =>
+  node.status === "COMPLETED" ||
+  node.isCompleted === true ||
+  Boolean(node.completedAt) ||
+  Number(node.directChildrenCount || 0) >= 3;
+
+const getNodeDisplayStatus = (node = {}) => {
+  if (isNodeCompletedForReport(node)) return "COMPLETED";
+  if (node.status === "PLACED") return "PLACED";
+  return "PENDING";
+};
 
 // ─── Admin Routes ────────────────────────────────────────────────────────────
 
@@ -19,8 +33,12 @@ import { UpgradeAliasId } from "./upgrade-alias-id.model.js";
  * Get complete AutoPool tree
  */
 export const getAutoPoolTree = asyncHandler(async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit) : 100;
-  const nodes = await autopool3x3Service.getAutoPoolTree(limit);
+  const { limit, root, depth } = req.query;
+  const nodes = await autopool3x3Service.getAutoPoolTree({
+    limit: limit ? parseInt(limit) : 100,
+    root: root || undefined,
+    depth: depth !== undefined ? parseInt(depth) : undefined,
+  });
 
   const mappedNodes = nodes.map((node) => {
     const leanNode = node.toObject ? node.toObject() : node;
@@ -161,6 +179,39 @@ export const processQueueManually = asyncHandler(async (req, res) => {
   );
 });
 
+export const getAutoPoolNodeChildren = asyncHandler(async (req, res) => {
+  const { rebirthCode } = req.params;
+  const { page, limit } = req.query;
+  const result = await autopool3x3Service.getAutoPoolNodeChildren(rebirthCode, {
+    page,
+    limit,
+  });
+
+  res.json(
+    new ApiResponse({
+      message: "AutoPool node children fetched",
+      data: result,
+    }),
+  );
+});
+
+export const getQueueAudit = asyncHandler(async (req, res) => {
+  const { fromSerial, toSerial, page, limit } = req.query;
+  const result = await autopool3x3Service.getQueueAudit({
+    fromSerial,
+    toSerial,
+    page,
+    limit,
+  });
+
+  res.json(
+    new ApiResponse({
+      message: "AutoPool queue audit fetched",
+      data: result,
+    }),
+  );
+});
+
 /**
  * GET /api/v1/autopool/3x3/operational-admin/my-tree
  * Get authenticated operational admin's scoped AutoPool tree
@@ -189,7 +240,11 @@ export const getOperationalAdminMyTree = asyncHandler(async (req, res) => {
  * Get user's AutoPool nodes
  */
 export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
+
+  const user = await User.findById(userId).select("memberId fullName").lean();
+  if (!user) throw new ApiError(404, "User not found");
 
   const nodes = await autopool3x3Service.getUserAutoPoolTree(userId);
 
@@ -197,6 +252,7 @@ export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
     const leanNode = node.toObject ? node.toObject() : node;
     return {
       ...leanNode,
+      status: getNodeDisplayStatus(leanNode),
       displayId: leanNode.nodeCode,
       poolNodeId: leanNode.nodeCode,
       parentPoolNodeId: leanNode.matrixParentId
@@ -204,8 +260,8 @@ export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
         : null,
       linkedRebirthNodeId: {
         ownerUserId: {
-          fullName: req.user.fullName,
-          memberId: req.user.memberId,
+          fullName: user.fullName,
+          memberId: user.memberId,
         },
       },
       autopoolChildrenCount: leanNode.directChildrenCount || 0,
@@ -220,8 +276,7 @@ export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
     completedNodeCount:
       nodes.find((n) => n.nodeCode === r.displayCode)?.directChildrenCount || 0,
     expectedNodeCount: 3,
-    isCompleted:
-      nodes.find((n) => n.nodeCode === r.displayCode)?.status === "COMPLETED",
+    isCompleted: isNodeCompletedForReport(nodes.find((n) => n.nodeCode === r.displayCode)),
     completedAt: nodes.find((n) => n.nodeCode === r.displayCode)?.completedAt,
   }));
 
@@ -241,7 +296,8 @@ export const getMyAutoPoolNodes = asyncHandler(async (req, res) => {
  * Get user's rebirth IDs
  */
 export const getMyRebirths = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
 
   const rebirths = await autopool3x3Service.getUserRebirths(userId);
 
@@ -258,14 +314,15 @@ export const getMyRebirths = asyncHandler(async (req, res) => {
  * Get user's AutoPool summary
  */
 export const getMyAutoPoolSummary = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
 
   const nodes = await autopool3x3Service.getUserAutoPoolTree(userId);
   const rebirths = await autopool3x3Service.getUserRebirths(userId);
 
-  const pendingCount = nodes.filter((n) => n.status === "PENDING").length;
-  const placedCount = nodes.filter((n) => n.status === "PLACED").length;
-  const completedCount = nodes.filter((n) => n.status === "COMPLETED").length;
+  const pendingCount = nodes.filter((n) => getNodeDisplayStatus(n) === "PENDING").length;
+  const placedCount = nodes.filter((n) => getNodeDisplayStatus(n) === "PLACED").length;
+  const completedCount = nodes.filter((n) => getNodeDisplayStatus(n) === "COMPLETED").length;
 
   res.json(
     new ApiResponse({
@@ -284,7 +341,7 @@ export const getMyAutoPoolSummary = asyncHandler(async (req, res) => {
         nodes: nodes.map((n) => ({
           nodeCode: n.nodeCode,
           nodeType: n.nodeType,
-          status: n.status,
+          status: getNodeDisplayStatus(n),
           childrenCount: n.directChildrenCount,
           createdAt: n.createdAt,
           completedAt: n.completedAt,
@@ -355,7 +412,8 @@ export const getIndividualAutopoolTree = asyncHandler(async (req, res) => {
  * Get logged-in user's isolated autopool funds
  */
 export const getMyFunds = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
   let fund = await AutopoolUserFund.findOne({ userId });
   if (!fund) {
     fund = {
@@ -383,7 +441,8 @@ export const getMyFunds = asyncHandler(async (req, res) => {
  * Get logged-in user's autopool fund transactions ledger
  */
 export const getMyFundTransactions = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
   const transactions = await AutopoolFundTransaction.find({ userId }).sort({ createdAt: -1 });
 
   res.json(
@@ -399,7 +458,8 @@ export const getMyFundTransactions = asyncHandler(async (req, res) => {
  * Get logged-in user's upgrade/alias IDs
  */
 export const getMyUpgradeIds = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
   const upgradeIds = await UpgradeAliasId.find({ userId }).sort({ createdAt: -1 });
 
   res.json(
@@ -470,6 +530,40 @@ export const getUserUpgradeIdsAdmin = asyncHandler(async (req, res) => {
   );
 });
 
+/**
+ * GET /api/v1/autopool/my/details
+ * Get logged-in user's detailed individual autopool progress
+ */
+export const getMyAutoPoolDetails = asyncHandler(async (req, res) => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
+  const result = await autopool3x3Service.getIndividualAutopoolDetails(userId);
+
+  res.json(
+    new ApiResponse({
+      message: "My individual autopool details fetched successfully",
+      data: result,
+    }),
+  );
+});
+
+/**
+ * GET /api/v1/autopool/my/tree
+ * Get logged-in user's isolated individual tree structure
+ */
+export const getMyAutoPoolTree = asyncHandler(async (req, res) => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) throw new ApiError(401, "Unauthorized.");
+  const result = await autopool3x3Service.getIndividualAutopoolTree(userId);
+
+  res.json(
+    new ApiResponse({
+      message: "My individual autopool tree fetched successfully",
+      data: result,
+    }),
+  );
+});
+
 export default {
   getAutoPoolTree,
   getQueueNodes,
@@ -487,6 +581,8 @@ export default {
   getMyFunds,
   getMyFundTransactions,
   getMyUpgradeIds,
+  getMyAutoPoolDetails,
+  getMyAutoPoolTree,
   getUserFundsAdmin,
   getUserFundTransactionsAdmin,
   getUserUpgradeIdsAdmin,

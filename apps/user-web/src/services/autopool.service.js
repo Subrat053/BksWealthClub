@@ -11,6 +11,16 @@ export const autopoolService = {
     }
   },
 
+  getMyAutoPoolSummary: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/summary");
+      return response.data?.data || { stats: {}, rebirths: { count: 0, rebirths: [] }, nodes: [] };
+    } catch (error) {
+      console.error("Error fetching my autopool summary:", error);
+      return { stats: {}, rebirths: { count: 0, rebirths: [] }, nodes: [] };
+    }
+  },
+
   getOperationalAdminMyTree: async () => {
     try {
       const response = await userAxios.get(
@@ -82,6 +92,26 @@ export const autopoolService = {
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching my upgrade IDs:", error);
+      return [];
+    }
+  },
+
+  getMyAutoPoolDetails: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/details");
+      return response.data?.data || null;
+    } catch (error) {
+      console.error("Error fetching my autopool details:", error);
+      return null;
+    }
+  },
+
+  getMyAutoPoolTree: async () => {
+    try {
+      const response = await userAxios.get("/autopool/3x3/my/tree");
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching my autopool tree:", error);
       return [];
     }
   },

@@ -14,6 +14,8 @@ import {
   getOperationalAdminMyTree,
   getUserAutoPoolDetails,
   processQueueManually,
+  getAutoPoolNodeChildren,
+  getQueueAudit,
   getMyAutoPoolNodes,
   getMyRebirths,
   getMyAutoPoolSummary,
@@ -23,6 +25,8 @@ import {
   getMyFunds,
   getMyFundTransactions,
   getMyUpgradeIds,
+  getMyAutoPoolDetails,
+  getMyAutoPoolTree,
   getUserFundsAdmin,
   getUserFundTransactionsAdmin,
   getUserUpgradeIdsAdmin,
@@ -103,6 +107,13 @@ autopool3x3Router.get(
   getIndividualAutopoolSummary,
 );
 
+autopool3x3Router.get(
+  "/admin/users",
+  authMiddleware,
+  adminOnly,
+  getIndividualAutopoolSummary,
+);
+
 /**
  * Admin: Individual Autopool detailed report per user
  */
@@ -121,6 +132,20 @@ autopool3x3Router.get(
   authMiddleware,
   adminOnly,
   getIndividualAutopoolTree,
+);
+
+autopool3x3Router.get(
+  "/admin/node/:rebirthCode/children",
+  authMiddleware,
+  adminOnly,
+  getAutoPoolNodeChildren,
+);
+
+autopool3x3Router.get(
+  "/admin/queue-audit",
+  authMiddleware,
+  adminOnly,
+  getQueueAudit,
 );
 
 /**
@@ -238,5 +263,15 @@ autopool3x3Router.get("/my/fund-transactions", authMiddleware, getMyFundTransact
  * User: Get my upgrade/alias IDs
  */
 autopool3x3Router.get("/my/upgrade-ids", authMiddleware, getMyUpgradeIds);
+
+/**
+ * User: Get my detailed individual autopool progress
+ */
+autopool3x3Router.get("/my/details", authMiddleware, getMyAutoPoolDetails);
+
+/**
+ * User: Get my isolated individual tree structure
+ */
+autopool3x3Router.get("/my/tree", authMiddleware, getMyAutoPoolTree);
 
 export default autopool3x3Router;

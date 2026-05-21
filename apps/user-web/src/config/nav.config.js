@@ -21,7 +21,7 @@ export const memberNav = [
       { label: "Level Report", path: "/member/team/report" },
       { label: "Direct", path: "/member/team/direct" },
       { label: "Generation", path: "/member/team/generation" },
-      { label: "Autopool Tree", path: "/member/team/autopool" },
+      { label: "My Autopool", path: "/member/team/autopool" },
       { label: "Autopool Ledger", path: "/member/team/autopool-ledger" },
     ],
   },

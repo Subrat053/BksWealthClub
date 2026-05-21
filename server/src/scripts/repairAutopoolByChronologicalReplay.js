@@ -31,6 +31,9 @@ const flags = new Set(args.filter((arg) => arg.startsWith("--")));
 const applyMode = flags.has("--apply");
 const dryRun = flags.has("--dry-run") || !applyMode;
 const validateOnly = flags.has("--validate");
+const useDepositRebirthOnly =
+  flags.has("--deposit-rebirth-only") || args.includes("--source=deposit-rebirth");
+const discardInvalidGenerated = flags.has("--discard-invalid-generated");
 const repairLabel = "chronological-replay";
 const actor = `script:${repairLabel}`;
 
@@ -123,6 +126,16 @@ function getCode(node) {
   return node?.displayCode || node?.rebirthCode || node?.nodeCode || null;
 }
 
+function isDepositInitialRebirth(rebirth) {
+  const round = normalizeRound(rebirth);
+  const sequence = normalizeSequence(rebirth);
+  return (
+    round === 0 &&
+    (rebirth?.rebirthType === "DEPOSIT_REBIRTH" || rebirth?.sourceType === "INITIAL") &&
+    (sequence === 1 || sequence === 2)
+  );
+}
+
 function getCompletedCount(nodes) {
   return nodes.filter((node) => node.isCompleted || node.status === "COMPLETED").length;
 }
@@ -165,6 +178,8 @@ async function main() {
   console.log("==================================================");
   console.log("Chronological AutoPool replay repair");
   console.log(`Mode: ${dryRun ? "dry-run" : "apply"}`);
+  console.log(`Source: ${useDepositRebirthOnly ? "DEPOSIT REBIRTH IDs" : "DEPOSITS + REPLAY GENERATION"}`);
+  console.log(`Discard invalid generated IDs: ${discardInvalidGenerated ? "yes" : "no"}`);
   console.log(`Repair version: ${AUTOPOOL_REPAIR_VERSION}`);
   console.log("==================================================");
 
@@ -199,7 +214,7 @@ async function main() {
       .lean();
     const userById = new Map(users.map((user) => [String(user._id), user]));
 
-    const deposits = await DepositModel.find({})
+    const deposits = await DepositModel.find({ status: "approved" })
       .sort({ createdAt: 1, _id: 1 })
       .lean();
     const rebirthDocs = await RebirthId.find({})
@@ -243,6 +258,7 @@ async function main() {
     const pending = [];
     const duplicateCandidates = [];
     const userReplayState = new Map();
+    const seededUsers = new Set();
 
     const rootRecord = rootNode
       ? {
@@ -297,32 +313,78 @@ async function main() {
       pending.sort(compareCandidates);
     };
 
-    for (const deposit of deposits) {
-      const user = userById.get(String(deposit.userRef));
-      if (!user) continue;
-      stats.users += 1;
+    if (useDepositRebirthOnly) {
+      const initialRebirths = rebirthDocs
+        .filter((rebirth) => isDepositInitialRebirth(rebirth))
+        .sort((a, b) => {
+          const aUser = userById.get(String(a.ownerUserId));
+          const bUser = userById.get(String(b.ownerUserId));
+          const aTs = resolveSortTimestamp(a, aUser);
+          const bTs = resolveSortTimestamp(b, bUser);
+          const diffTs = aTs.getTime() - bTs.getTime();
+          if (diffTs !== 0) return diffTs;
+          const diffSeq = normalizeSequence(a) - normalizeSequence(b);
+          if (diffSeq !== 0) return diffSeq;
+          return String(a._id).localeCompare(String(b._id));
+        });
 
-      const baseTimestamp = resolveSortTimestamp(deposit, user, deposit);
-      for (const sequence of [1, 2]) {
-        const code = generateCode(user.memberId, 0, sequence);
+      for (const rebirth of initialRebirths) {
+        const user = userById.get(String(rebirth.ownerUserId));
+        if (!user) continue;
+        const code = getCode(rebirth);
+        if (!code) continue;
+
+        seededUsers.add(String(user._id));
+        const round = normalizeRound(rebirth);
+        const sequence = normalizeSequence(rebirth);
         const existing = existingByCode.get(code) || {};
+        const sortTimestamp = resolveSortTimestamp(rebirth, user);
 
         addPending({
           code,
           ownerUserId: user._id,
           memberId: user.memberId,
-          round: 0,
+          round,
           sequence,
           queueIndex: sequence,
-          sortTimestamp: baseTimestamp,
+          sortTimestamp,
           source: "initial",
-          sourceDepositId: deposit._id,
+          sourceDepositId: null,
           existingNode: existing.node || null,
           existingRebirth: existing.rebirth || null,
           sourceParentCode: null,
         });
       }
+    } else {
+      for (const deposit of deposits) {
+        const user = userById.get(String(deposit.userRef));
+        if (!user) continue;
+        seededUsers.add(String(user._id));
+
+        const baseTimestamp = resolveSortTimestamp(deposit, user, deposit);
+        for (const sequence of [1, 2]) {
+          const code = generateCode(user.memberId, 0, sequence);
+          const existing = existingByCode.get(code) || {};
+
+          addPending({
+            code,
+            ownerUserId: user._id,
+            memberId: user.memberId,
+            round: 0,
+            sequence,
+            queueIndex: sequence,
+            sortTimestamp: baseTimestamp,
+            source: "initial",
+            sourceDepositId: deposit._id,
+            existingNode: existing.node || null,
+            existingRebirth: existing.rebirth || null,
+            sourceParentCode: null,
+          });
+        }
+      }
     }
+
+    stats.users = seededUsers.size;
 
     let queueOrder = 0;
     let placementOrder = 0;
@@ -477,7 +539,7 @@ async function main() {
         if (!existingNode) return true;
         return (
           String(existingNode.parentNodeId || existingNode.matrixParentId || "") !== String(node.parentDbId || "") ||
-          Number(existingNode.queueIndex || 0) !== Number(node.queueOrder || 0) ||
+          Number(existingNode.queueSerialNo || existingNode.queueIndex || 0) !== Number(node.queueOrder || 0) ||
           Number(existingNode.levelNumber || 0) !== Number(node.round || 0) ||
           Number(existingNode.levelSequence || 0) !== Number(node.sequence || 0) ||
           Boolean(existingNode.isCompleted) !== Boolean(node.isCompleted)
@@ -486,7 +548,10 @@ async function main() {
 
       summary.queueIndexChanges = summary.nodes.filter((node) => {
         const existingNode = node.existingNode;
-        return existingNode && Number(existingNode.queueIndex || 0) !== Number(node.queueOrder || 0);
+        return (
+          existingNode &&
+          Number(existingNode.queueSerialNo || existingNode.queueIndex || 0) !== Number(node.queueOrder || 0)
+        );
       }).length;
 
       summary.missingRebirths = summary.nodes.filter((node) => !node.existingRebirth).length;
@@ -569,7 +634,10 @@ async function main() {
             levelSequence: node.sequence,
             queueIndex: node.queueOrder,
             queueOrder: node.queueOrder,
+            queueSerialNo: node.queueOrder,
             placementOrder: node.placementOrder,
+            placementSerialNo: node.placementOrder,
+            queueEnteredAt: node.sortTimestamp,
             placedAt: node.placedAt,
             childSlot: node.childSlot,
             parentNodeId: parentDbId,
@@ -594,23 +662,28 @@ async function main() {
             ownerMemberId: user.memberId,
             rebirthCode: node.code,
             displayCode: node.code,
-            sourceType: node.source === "initial" ? "INITIAL" : "AUTOPool_COMPLETION",
             sequenceNumber: node.sequence,
             generation: node.round,
             mainUserId: summary.userId,
             round: node.round,
             sequence: node.sequence,
+            queueSerialNo: node.queueOrder,
+            placementSerialNo: node.placementOrder,
+            queueEnteredAt: node.sortTimestamp,
+            placedAt: node.placedAt,
             parentRebirthId: node.sourceParentCode ? (replayedByCode.get(node.sourceParentCode)?.dbRebirthId || null) : null,
             sourceParentRebirthId: node.sourceParentCode ? (replayedByCode.get(node.sourceParentCode)?.dbRebirthId || null) : null,
             generatedFromNodeId: node.sourceParentCode ? (replayedByCode.get(node.sourceParentCode)?.dbId || null) : null,
             isInitialRebirth: node.round === 0,
             usedInAutoPool: true,
-            status: node.isCompleted ? "COMPLETED" : "PENDING",
+            status: node.isCompleted ? "COMPLETED" : "PLACED",
             originalCreatedAt: node.sortTimestamp,
             replayedAt: new Date(),
             repairVersion: AUTOPOOL_REPAIR_VERSION,
             seedSource: node.source,
             seedBatchId: node.sourceDepositId ? String(node.sourceDepositId) : null,
+            rebirthType: "DEPOSIT_REBIRTH",
+            sourceType: node.source === "initial" ? "INITIAL" : "AUTOPOOL_COMPLETION",
             isCompleted: Boolean(node.isCompleted),
             completedAt: node.completedAt,
             isDuplicate: false,
@@ -631,6 +704,59 @@ async function main() {
 
           node.dbId = updatedNode?._id || node.dbId;
           node.dbRebirthId = updatedRebirth?._id || node.dbRebirthId;
+        }
+
+        // Second pass: ensure parent references and child arrays are reconstructed using final dbIds.
+        for (const node of summary.nodes) {
+          if (!node.dbId) continue;
+
+          const parentRecord = node.parentCode ? replayedByCode.get(node.parentCode) : null;
+          const parentDbId = parentRecord?.dbId || null;
+          const childIds = (node.children || []).map((child) => child.dbId).filter(Boolean);
+          const isCompleted = childIds.length >= 3;
+
+          await AutoPoolNode.updateOne(
+            { _id: node.dbId },
+            {
+              $set: {
+                parentNodeId: parentDbId,
+                matrixParentId: parentDbId,
+                directChildren: childIds,
+                directChildrenCount: childIds.length,
+                status: isCompleted ? "COMPLETED" : "PLACED",
+                isCompleted,
+                completedAt: isCompleted ? node.completedAt || node.placedAt : null,
+                rebirthGenerated: isCompleted,
+                rebirthGeneratedAt: isCompleted ? node.completedAt || node.placedAt : null,
+                queueSerialNo: node.queueOrder,
+                placementSerialNo: node.placementOrder,
+              },
+            },
+            { session },
+          );
+
+          await RebirthId.updateOne(
+            { rebirthCode: node.code },
+            {
+              $set: {
+                parentRebirthId: node.sourceParentCode
+                  ? replayedByCode.get(node.sourceParentCode)?.dbRebirthId || null
+                  : null,
+                sourceParentRebirthId: node.sourceParentCode
+                  ? replayedByCode.get(node.sourceParentCode)?.dbRebirthId || null
+                  : null,
+                generatedFromNodeId: node.sourceParentCode
+                  ? replayedByCode.get(node.sourceParentCode)?.dbId || null
+                  : null,
+                status: isCompleted ? "COMPLETED" : "PLACED",
+                isCompleted,
+                completedAt: isCompleted ? node.completedAt || node.placedAt : null,
+                queueSerialNo: node.queueOrder,
+                placementSerialNo: node.placementOrder,
+              },
+            },
+            { session },
+          );
         }
 
         for (const duplicate of duplicateCandidates) {
@@ -709,6 +835,42 @@ async function main() {
           },
           { session },
         );
+
+        if (discardInvalidGenerated) {
+          const validCodes = summary.nodes.map((node) => node.code);
+          await AutoPoolNode.updateMany(
+            {
+              ownerUserId: summary.userId,
+              nodeType: "REBIRTH",
+              nodeCode: { $nin: validCodes },
+            },
+            {
+              $set: {
+                isDuplicate: true,
+                isActiveInAutopool: false,
+                replayedAt: new Date(),
+                repairVersion: AUTOPOOL_REPAIR_VERSION,
+              },
+            },
+            { session },
+          );
+
+          await RebirthId.updateMany(
+            {
+              ownerUserId: summary.userId,
+              rebirthCode: { $nin: validCodes },
+            },
+            {
+              $set: {
+                isDuplicate: true,
+                usedInAutoPool: false,
+                replayedAt: new Date(),
+                repairVersion: AUTOPOOL_REPAIR_VERSION,
+              },
+            },
+            { session },
+          );
+        }
 
         await session.commitTransaction();
       } catch (error) {

@@ -4,16 +4,21 @@
  * Seeds N users one-by-one and processes the AutoPool queue immediately
  * after each user so chronological placement order is always maintained.
  *
- * Usage:
- *   node src/scripts/seed-bulk-users.js 200
- *   node src/scripts/seed-bulk-users.js --count=50
+ * FULLY ADDITIVE — safe to run multiple times on the same DB.
+ * Each run picks up from where the tree left off, placing new nodes
+ * in available slots of the existing tree.
  *
- * Key differences from seed-users.js:
- *   - processAutoPoolQueue() is called AFTER EACH user (not once at the end)
- *   - After all users are seeded, runs repair-missing-rebirths to patch any
- *     race-condition gaps caused by the background 10-second queue job.
- *   - Uses exponential backoff for transient transaction errors (up to 5 retries).
- *   - Prints a live summary table after every 10 users.
+ * Usage:
+ *   node src/scripts/seed-bulk-users.js 200   ← seed 200 more users
+ *   node src/scripts/seed-bulk-users.js 50    ← seed 50 more users
+ *   node src/scripts/seed-bulk-users.js --count=100
+ *
+ * Design:
+ *   1. processAutoPoolQueue() called after EVERY user (strict chronological order)
+ *   2. Mid-seed repair every 50 users (catches background-job race conditions early)
+ *   3. Final repair pass at end (catches any remaining stragglers)
+ *   4. Exponential backoff (up to 5 retries) on transient errors
+ *   5. Progress bar + live stats every 10 users
  */
 
 import mongoose from "mongoose";
@@ -42,8 +47,9 @@ const FIRST_NAMES = [
   "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael",
   "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan",
   "Thomas", "Sarah", "Charles", "Karen", "Mark", "Lisa", "Matthew", "Nancy",
-  "Donald", "Sandra", "Mark", "Jessica", "Alex", "Emma", "Ryan", "Sophia",
+  "Donald", "Sandra", "Jessica", "Alex", "Emma", "Ryan", "Sophia",
   "Liam", "Olivia", "Noah", "Ava", "Ethan", "Mia", "Lucas", "Charlotte",
+  "Yusuf", "Fatima", "Aditya", "Zara", "Rajesh", "Simran", "Kabir", "Tanya",
 ];
 const LAST_NAMES = [
   "Sharma", "Gupta", "Patel", "Singh", "Kumar", "Joshi", "Mehta", "Shah",
@@ -53,29 +59,37 @@ const LAST_NAMES = [
   "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
   "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark",
   "Lewis", "Robinson", "Walker", "Young", "Allen", "King", "Wright",
+  "Iyer", "Menon", "Rao", "Das", "Bose", "Chandra", "Tiwari", "Saxena",
 ];
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
-
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// ─── Find best sponsor (fewest direct referrals) ───────────────────────────────
+// ─── Find best sponsor (fewest direct referrals) — fast with aggregation ───────
 async function findBestSponsor() {
-  const activeUsers = await User.find({ status: "active" }).select("_id memberId").lean();
-  if (activeUsers.length === 0) throw new Error("No active users found for sponsoring");
+  // Use aggregation pipeline for O(1) DB query instead of N queries
+  const result = await User.aggregate([
+    { $match: { status: "active" } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "sponsorUserId",
+        as: "referrals",
+      },
+    },
+    { $addFields: { referralCount: { $size: "$referrals" } } },
+    { $sort: { referralCount: 1 } },
+    { $limit: 1 },
+    { $project: { _id: 1, memberId: 1 } },
+  ]);
 
-  const counts = await Promise.all(
-    activeUsers.map(async (u) => ({
-      user: u,
-      count: await User.countDocuments({ sponsorUserId: u._id }),
-    }))
-  );
-  counts.sort((a, b) => a.count - b.count);
-  return counts[0].user;
+  if (!result.length) throw new Error("No active users found for sponsoring");
+  return result[0];
 }
 
 // ─── Seed a single user (within its own transaction) ─────────────────────────
@@ -172,7 +186,6 @@ async function seedOneUser(adminUser, index, total) {
       });
 
       await session.commitTransaction();
-
       return { memberId, fullName, sponsorMemberId: sponsorUser.memberId };
     } catch (err) {
       await session.abortTransaction().catch(() => {});
@@ -180,17 +193,18 @@ async function seedOneUser(adminUser, index, total) {
       const isTransient =
         err.hasErrorLabel?.("TransientTransactionError") ||
         err.code === 112 ||
-        /write conflict/i.test(err.message || "");
+        /write conflict/i.test(err.message || "") ||
+        /catalog changes/i.test(err.message || "");
 
       if (isTransient && attempt < MAX_RETRIES - 1) {
         attempt++;
-        const delay = Math.pow(2, attempt) * 150; // 300ms, 600ms, 1.2s, 2.4s
+        const delay = Math.pow(2, attempt) * 150;
         console.warn(
-          `  ⚠️  [${index}/${total}] Transient error, retry ${attempt}/${MAX_RETRIES - 1} in ${delay}ms...`
+          `\n  ⚠️  [${index}/${total}] Transient error, retry ${attempt}/${MAX_RETRIES - 1} in ${delay}ms...`
         );
         await sleep(delay);
       } else {
-        console.error(`  ❌ [${index}/${total}] Failed permanently:`, err.message);
+        console.error(`\n  ❌ [${index}/${total}] Failed permanently:`, err.message);
         throw err;
       }
     } finally {
@@ -201,24 +215,27 @@ async function seedOneUser(adminUser, index, total) {
 
 // ─── Process queue with retry ──────────────────────────────────────────────────
 async function processQueue(label = "") {
-  const MAX_Q_RETRIES = 3;
+  const MAX_Q_RETRIES = 4;
   for (let r = 1; r <= MAX_Q_RETRIES; r++) {
     try {
       const result = await autopool3x3Service.processAutoPoolQueue();
       if (result.placedCount > 0) {
-        process.stdout.write(` → placed ${result.placedCount} node(s)\n`);
+        process.stdout.write(` → placed ${result.placedCount}\n`);
+      } else {
+        process.stdout.write(`\n`);
       }
       return result;
     } catch (err) {
       const isTransient =
         err.hasErrorLabel?.("TransientTransactionError") ||
         err.code === 112 ||
-        /write conflict/i.test(err.message || "");
+        /write conflict|catalog changes/i.test(err.message || "");
 
       if (isTransient && r < MAX_Q_RETRIES) {
-        await sleep(r * 200);
+        await sleep(r * 300);
       } else {
-        console.warn(`  ⚠️  Queue ${label} error (non-fatal): ${err.message}`);
+        process.stdout.write(`\n`);
+        console.warn(`  ⚠️  Queue [${label}] error (non-fatal): ${err.message}`);
         return { placedCount: 0 };
       }
     }
@@ -226,8 +243,8 @@ async function processQueue(label = "") {
   return { placedCount: 0 };
 }
 
-// ─── Run repair for any missed rebirths ─────────────────────────────────────
-async function runRepair() {
+// ─── Run repair for any missed rebirths ──────────────────────────────────────
+async function runRepair(label = "post-seed") {
   const { AutoPoolNode } = await import("../modules/autopool/autopool-matrix.model.js");
 
   const brokenNodes = await AutoPoolNode.find({
@@ -242,16 +259,15 @@ async function runRepair() {
     .lean();
 
   if (brokenNodes.length === 0) {
-    console.log("  ✅ No missing rebirths found.");
+    console.log(`  ✅ [${label}] No missing rebirths — all clear.`);
     return 0;
   }
 
-  console.log(`  🔧 Repairing ${brokenNodes.length} completed node(s) with missing rebirths...`);
+  console.log(`  🔧 [${label}] Repairing ${brokenNodes.length} node(s) with missing rebirths...`);
   let repaired = 0;
 
   for (const node of brokenNodes) {
     if (node.levelNumber >= 9) {
-      // Mark as generated (no level 10)
       await AutoPoolNode.findByIdAndUpdate(node._id, {
         $set: { rebirthGenerated: true, rebirthGeneratedAt: new Date() },
       });
@@ -271,15 +287,15 @@ async function runRepair() {
   }
 
   if (repaired > 0) {
-    console.log(`  ✅ Repaired ${repaired} nodes. Processing queue for new rebirths...`);
-    await processQueue("post-repair");
+    process.stdout.write(`  ✅ Repaired ${repaired}. Flushing queue...`);
+    await processQueue(`repair-${label}`);
   }
 
   return repaired;
 }
 
-// ─── Print live summary ────────────────────────────────────────────────────────
-async function printSummary(seededSoFar, total) {
+// ─── Print live summary ───────────────────────────────────────────────────────
+async function printSummary(seededSoFar, totalToSeed) {
   const { AutoPoolNode } = await import("../modules/autopool/autopool-matrix.model.js");
 
   const [pending, placed, completed] = await Promise.all([
@@ -289,15 +305,16 @@ async function printSummary(seededSoFar, total) {
   ]);
 
   const totalNodes = pending + placed + completed;
-  const pct = Math.round((seededSoFar / total) * 100);
-  const bar = "█".repeat(Math.round(pct / 5)) + "░".repeat(20 - Math.round(pct / 5));
+  const pct = Math.round((seededSoFar / totalToSeed) * 100);
+  const filled = Math.round(pct / 5);
+  const bar = "█".repeat(filled) + "░".repeat(20 - filled);
 
-  console.log(`\n  ┌─ Progress [${bar}] ${pct}% (${seededSoFar}/${total} users)`);
-  console.log(`  │  AutoPool nodes → PENDING: ${pending} | PLACED: ${placed} | COMPLETED: ${completed} | Total: ${totalNodes}`);
-  console.log(`  └─────────────────────────────────────────────────────────────────\n`);
+  console.log(`\n  ┌─ Progress [${bar}] ${pct}% (${seededSoFar}/${totalToSeed} this run)`);
+  console.log(`  │  Nodes: PENDING=${pending} | PLACED=${placed} | COMPLETED=${completed} | TOTAL=${totalNodes}`);
+  console.log(`  └${"─".repeat(67)}\n`);
 }
 
-// ─── Main ──────────────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2);
   let count = 200;
@@ -314,72 +331,95 @@ async function main() {
 
   console.log("══════════════════════════════════════════════════════");
   console.log(`  🚀 BULK USER SEEDING  —  ${count} users`);
-  console.log("  Strategy: queue processed after EVERY user");
-  console.log("  Repair   : runs after all users are seeded");
+  console.log("  ✔  Fully additive — syncs with existing DB data");
+  console.log("  ✔  Queue flushed after EVERY user (chronological)");
+  console.log("  ✔  Mid-seed repair every 50 users");
+  console.log("  ✔  Final repair pass at end");
   console.log("══════════════════════════════════════════════════════\n");
 
   if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI missing in .env");
 
   await mongoose.connect(process.env.MONGODB_URI);
-  console.log("✅ Connected to MongoDB\n");
+  console.log("✅ Connected to MongoDB");
+
+  // Count existing users so the user knows the starting point
+  const existingCount = await User.countDocuments();
+  console.log(`ℹ️  Existing users in DB: ${existingCount}`);
 
   // Ensure admin exists
   let adminUser = await User.findOne({ isOperationalAdmin: true }).lean();
   if (!adminUser) {
-    console.log("ℹ️ Operational Admin not found — seeding now...");
+    console.log("ℹ️  Operational Admin not found — seeding now...");
     await seedOperationalAdmin();
     adminUser = await User.findOne({ isOperationalAdmin: true }).lean();
   }
   console.log(`ℹ️  Admin: ${adminUser.fullName} (${adminUser.memberId})\n`);
 
-  const stats = { seeded: 0, failed: 0, totalQueuePlaced: 0 };
+  const stats = { seeded: 0, failed: 0, totalQueuePlaced: 0, totalRepaired: 0 };
   const startTime = Date.now();
 
   for (let i = 1; i <= count; i++) {
     // ── 1. Seed the user
-    process.stdout.write(`  [${String(i).padStart(3, "0")}/${count}] Seeding user...`);
+    process.stdout.write(`  [${String(i).padStart(3, "0")}/${count}] `);
     try {
       const result = await seedOneUser(adminUser, i, count);
-      process.stdout.write(` ✅ ${result.memberId} (${result.fullName}) ← ${result.sponsorMemberId}`);
+      process.stdout.write(`✅ ${result.memberId} (${result.fullName}) ← ${result.sponsorMemberId}`);
       stats.seeded++;
     } catch (err) {
-      process.stdout.write(` ❌ FAILED\n`);
+      process.stdout.write(`❌ FAILED\n`);
       stats.failed++;
-      continue; // Skip queue for this user, move to next
+      continue;
     }
 
-    // ── 2. Process queue immediately after this user (chronological ordering)
-    process.stdout.write(`  ⚙️  queue...`);
-    const qr = await processQueue(`user-${i}`);
+    // ── 2. Flush queue immediately (chronological ordering)
+    process.stdout.write(`  ⚙️ `);
+    const qr = await processQueue(`u${i}`);
     stats.totalQueuePlaced += qr.placedCount ?? 0;
 
-    // ── 3. Print summary every 10 users
+    // ── 3. Progress summary every 10 users
     if (i % 10 === 0 || i === count) {
       await printSummary(i, count);
     }
+
+    // ── 4. Mid-seed repair every 50 users (catch background-job race gaps early)
+    if (i % 50 === 0 && i < count) {
+      console.log(`\n  ── Mid-seed repair check at user ${i}/${count} ──`);
+      const r = await runRepair(`mid-${i}`);
+      stats.totalRepaired += r;
+      console.log();
+    }
   }
 
-  // ── 4. Final repair pass (catch any race-condition missed rebirths)
+  // ── 5. Final repair pass
   console.log("══════════════════════════════════════════════════════");
-  console.log("  🔧 POST-SEED REPAIR PASS");
+  console.log("  🔧 FINAL REPAIR PASS");
   console.log("══════════════════════════════════════════════════════");
-  const repaired = await runRepair();
+  const finalRepaired = await runRepair("final");
+  stats.totalRepaired += finalRepaired;
 
-  // ── 5. One final queue flush
-  console.log("\n⚙️  Final queue flush...");
+  // ── 6. Final queue flush
+  process.stdout.write("\n  ⚙️  Final queue flush... ");
   const finalQ = await processQueue("final");
   stats.totalQueuePlaced += finalQ.placedCount ?? 0;
 
-  // ── 6. Final summary
+  // ── 7. Summary
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const totalNow = await User.countDocuments();
+
   console.log("\n══════════════════════════════════════════════════════");
   console.log("  🎉 BULK SEEDING COMPLETE");
   console.log("══════════════════════════════════════════════════════");
-  console.log(`  ✅ Users seeded     : ${stats.seeded}`);
-  console.log(`  ❌ Users failed     : ${stats.failed}`);
-  console.log(`  🔧 Rebirths repaired: ${repaired}`);
-  console.log(`  📦 Total nodes placed: ${stats.totalQueuePlaced}`);
-  console.log(`  ⏱️  Time elapsed     : ${elapsed}s`);
+  console.log(`  ✅ Users seeded this run : ${stats.seeded}`);
+  console.log(`  ❌ Users failed          : ${stats.failed}`);
+  console.log(`  👥 Total users in DB now : ${totalNow}`);
+  console.log(`  🔧 Rebirths repaired     : ${stats.totalRepaired}`);
+  console.log(`  📦 Queue nodes placed    : ${stats.totalQueuePlaced}`);
+  console.log(`  ⏱️  Time elapsed          : ${elapsed}s`);
+  if (stats.failed === 0) {
+    console.log("  🟢 STATUS: CLEAN — no failures");
+  } else {
+    console.log(`  🟡 STATUS: PARTIAL — ${stats.failed} user(s) failed`);
+  }
   console.log("══════════════════════════════════════════════════════\n");
 
   await mongoose.disconnect();

@@ -222,7 +222,7 @@ export const depositService = {
     });
 
     if (shouldProcessAutoPoolQueue) {
-      setImmediate(() => autopool3x3Service.processAutoPoolQueue());
+      await autopool3x3Service.processAutopoolUntilStable();
     }
 
     return result;

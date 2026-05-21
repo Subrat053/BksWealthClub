@@ -12,9 +12,9 @@ const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
       <div
         className={`group relative p-2 rounded-2xl border transition-all duration-300 hover:scale-105 ${
           node.status === "COMPLETED"
-            ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
+            ? "bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
             : "bg-white border-slate-200 shadow-slate-100"
-        } shadow-xl min-w-[200px] text-center z-20 hover:shadow-2xl hover:border-indigo-300`}
+        } shadow-xl min-w-50 text-center z-20 hover:shadow-2xl hover:border-indigo-300`}
       >
         {/* Connection Dot - Top */}
         {depth > 0 && (
@@ -42,7 +42,7 @@ const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
               {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) ||
                 "U"}
             </div> */}
-            <p className="text-xs text-slate-600 font-semibold truncate max-w-[120px]">
+            <p className="text-xs text-slate-600 font-semibold truncate max-w-30">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
             </p>
           </div>
@@ -58,7 +58,7 @@ const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
               key={i}
               className={`w-3 h-3 rounded-full border-2 border-white shadow-sm transition-all duration-500 ${
                 i <= (node.autopoolChildrenCount || 0)
-                  ? "bg-gradient-to-tr from-emerald-400 to-teal-500 scale-110"
+                  ? "bg-linear-to-tr from-emerald-400 to-teal-500 scale-110"
                   : "bg-slate-100"
               }`}
               title={`Position ${i}: ${i <= (node.autopoolChildrenCount || 0) ? "Filled" : "Empty"}`}
@@ -76,7 +76,7 @@ const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
       {children.length > 0 && depth < maxDepth && (
         <div className="flex flex-col items-center w-full mt-12 relative">
           {/* Vertical line from parent to horizontal bar */}
-          <div className="w-0.5 h-12 bg-gradient-to-b from-indigo-500 to-slate-300 absolute -top-12" />
+          <div className="w-0.5 h-12 bg-linear-to-b from-indigo-500 to-slate-300 absolute -top-12" />
 
           <div className="flex justify-center gap-24 relative w-full pt-6">
             {/* Horizontal connection bar */}
@@ -113,6 +113,7 @@ const AutoPoolTreePage = () => {
   const [nodes, setNodes] = useState([]);
   const [treeMeta, setTreeMeta] = useState({ admin: null, summary: {} });
   const [loading, setLoading] = useState(true);
+  const [rootCode, setRootCode] = useState("BKS000000-0.1");
   const scrollContainerRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -125,7 +126,7 @@ const AutoPoolTreePage = () => {
 
   useEffect(() => {
     fetchTree();
-  }, []);
+  }, [maxDepth]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -152,7 +153,11 @@ const AutoPoolTreePage = () => {
         setNodes(scopedTree.nodes || []);
         setTreeMeta(scopedTree);
       } else {
-        const data = await autopoolService.getTree(0); // 0 retrieves the entire tree
+        const data = await autopoolService.getTree({
+          root: rootCode,
+          depth: maxDepth,
+          limit: 10000,
+        });
         setNodes(data);
         setTreeMeta({ admin: null, summary: {} });
       }
@@ -222,6 +227,17 @@ const AutoPoolTreePage = () => {
           }
         />
         <div className="flex items-center gap-3">
+          {admin?.role && admin.role.toLowerCase() === "superadmin" && (
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Root:</span>
+              <input
+                value={rootCode}
+                onChange={(e) => setRootCode(e.target.value.trim())}
+                className="w-40 text-xs font-bold text-indigo-700 bg-transparent outline-none"
+                placeholder="BKS000000-0.1"
+              />
+            </div>
+          )}
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Depth:</span>
             <select 
@@ -248,7 +264,7 @@ const AutoPoolTreePage = () => {
             >
               —
             </button>
-            <span className="text-[10px] font-bold text-slate-500 min-w-[36px] text-center select-none">
+            <span className="text-[10px] font-bold text-slate-500 min-w-9 text-center select-none">
               {Math.round(zoom * 100)}%
             </span>
             <button
@@ -350,7 +366,7 @@ const AutoPoolTreePage = () => {
                   : "The global 3x3 matrix hasn't started yet. Once the first rebirth node is processed, the tree visualization will appear here."}
               </p>
               <div className="mt-8 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-start gap-4 text-left">
-                <div className="w-10 h-10 rounded-xl bg-white flex-shrink-0 flex items-center justify-center text-indigo-600 shadow-sm font-bold text-lg">
+                <div className="w-10 h-10 rounded-xl bg-white shrink-0 flex items-center justify-center text-indigo-600 shadow-sm font-bold text-lg">
                   !
                 </div>
                 <p className="text-sm text-indigo-900/70 font-medium">
@@ -374,7 +390,7 @@ const AutoPoolTreePage = () => {
               {roots.map((root, index) => (
                 <div key={root._id} className="flex flex-col items-center">
                   {index > 0 && (
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-16" />
+                    <div className="w-full h-px bg-linear-to-r from-transparent via-slate-200 to-transparent my-16" />
                   )}
                   <TreeNode node={root} childrenMap={childrenMap} maxDepth={maxDepth} />
                 </div>

@@ -169,6 +169,7 @@ async function seed() {
           });
 
           await session.commitTransaction();
+          await autopool3x3Service.processAutopoolUntilStable();
           console.log(`  ✨ [${i}/${count}] Seeded User: ${fullName} (${memberId}) | Sponsored by: ${sponsorUser.memberId}`);
           success = true;
         } catch (err) {
@@ -189,9 +190,9 @@ async function seed() {
       }
     }
 
-    console.log("\n⚙️  Processing AutoPool queue to place all nodes in the tree...");
-    const queueResult = await autopool3x3Service.processAutoPoolQueue();
-    console.log(`✅ Queue processed. Placed ${queueResult.placedCount} nodes successfully!`);
+    console.log("\n⚙️  Final AutoPool stabilization pass...");
+    const queueResult = await autopool3x3Service.processAutopoolUntilStable();
+    console.log(`✅ Queue stabilized. Placed ${queueResult.placedCount || 0} nodes successfully!`);
 
     console.log("\n==================================================");
     console.log("🎉 SEEDING COMPLETE: Database successfully populated!");

@@ -39,6 +39,7 @@ async function clearAndSeed() {
       "autopoollocks",
       "autopoolcounters",
       "autopoollevelcounters",
+      "autopoolqueuecounters",
       "autopoollevelcompletions",
       "rebirthids",
       "rebirths",

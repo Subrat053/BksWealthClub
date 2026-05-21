@@ -778,7 +778,7 @@ export async function getUserWallet(userId) {
 
   const autopoolFund = await AutopoolUserFund.findOne({ userId }).lean();
 
-  const [sponsorIncome, levelIncome] = await Promise.all([
+  const [sponsorLedger, levelLedger, sponsorTxns, levelTxns] = await Promise.all([
     IncomeLedgerModel.aggregate([
       { $match: { userRef: userObjectId, incomeType: "sponsor", entryType: "credit" } },
       { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -787,7 +787,22 @@ export async function getUserWallet(userId) {
       { $match: { userRef: userObjectId, incomeType: "representative", entryType: "credit" } },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
+    IncomeTransactionModel.aggregate([
+      { $match: { userId: userObjectId, type: INCOME_TYPES.SPONSOR_INCOME, status: "CREDITED" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+    IncomeTransactionModel.aggregate([
+      { $match: { userId: userObjectId, type: INCOME_TYPES.LEVEL_INCOME, status: "CREDITED" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
   ]);
+
+  const totalDirectReferralIncome = round2(
+    (sponsorLedger[0]?.total || 0) + (sponsorTxns[0]?.total || 0)
+  );
+  const totalLevelIncome = round2(
+    (levelLedger[0]?.total || 0) + (levelTxns[0]?.total || 0)
+  );
 
   // Also get rebirth wallet totals
   const rebirths = await RebirthModel.find({ userId }).lean();
@@ -801,8 +816,8 @@ export async function getUserWallet(userId) {
     autopoolWithdrawableFund: autopoolFund?.withdrawableAutopoolFund || 0,
     poolFundTotal: autopoolFund?.poolFundTotal || 0,
     reinvestmentFundTotal: autopoolFund?.reinvestmentFundTotal || 0,
-    directReferralIncome: sponsorIncome[0]?.total || 0,
-    levelIncome: levelIncome[0]?.total || 0,
+    directReferralIncome: totalDirectReferralIncome,
+    levelIncome: totalLevelIncome,
     rebirthWallets: rebirths.map((r) => ({
       rebirthCode: r.rebirthCode,
       sequenceNo: r.sequenceNo,

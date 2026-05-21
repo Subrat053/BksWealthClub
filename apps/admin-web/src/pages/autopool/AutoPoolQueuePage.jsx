@@ -70,15 +70,19 @@ const AutoPoolQueuePage = () => {
         return;
       }
 
-      // Map rows with type text
+      // Map rows for Excel with meaningful type text
       const formattedRows = data.map((entry) => ({
         ...entry,
-        generationText: entry.generation === 0 ? "ROOT" : `GEN ${entry.generation}`,
+        generationText:
+          entry.nodeType === "ROOT"
+            ? "ROOT"
+            : `LEVEL ${entry.generation}`,
       }));
 
       // Define columns to export
       const columns = [
         { header: "Pool ID", key: "rebirthCode" },
+        { header: "Placement Serial No.", key: "placementSerialNo" },
         { header: "Owner Name", key: "ownerUserId.fullName" },
         { header: "Owner Member ID", key: "ownerUserId.memberId" },
         { header: "Type", key: "generationText" },
@@ -149,6 +153,7 @@ const AutoPoolQueuePage = () => {
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Serial No.</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pool ID</th>
+                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Placement Serial No.</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Owner</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gen / Level</th>
@@ -162,24 +167,31 @@ const AutoPoolQueuePage = () => {
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-10 text-center text-slate-400">Loading queue...</td>
+                  <td colSpan="11" className="px-6 py-10 text-center text-slate-400">Loading queue...</td>
                 </tr>
               ) : queue.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-10 text-center text-slate-400">No entries in queue</td>
+                  <td colSpan="11" className="px-6 py-10 text-center text-slate-400">No entries in queue</td>
                 </tr>
               ) : (
                 queue.map((entry, index) => (
                   <tr key={entry._id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-slate-600">{(currentPage - 1) * 100 + index + 1}</td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">{entry.rebirthCode}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{entry.placementSerialNo ?? "-"}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       <div>{entry.ownerUserId?.fullName || "N/A"}</div>
                       <div className="text-xs text-slate-400">{entry.ownerUserId?.memberId}</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${entry.generation === 0 ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
-                        {entry.generation === 0 ? "ROOT" : `GEN ${entry.generation}`}
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        entry.nodeType === "ROOT"
+                          ? "bg-orange-100 text-orange-700 ring-1 ring-orange-300"
+                          : entry.generation === 0
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}>
+                        {entry.nodeType === "ROOT" ? "ROOT" : `LEVEL ${entry.generation}`}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{entry.generation}</td>

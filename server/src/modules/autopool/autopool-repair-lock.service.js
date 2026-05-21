@@ -5,10 +5,19 @@ export const AUTOPOOL_REPAIR_VERSION = "chronological-replay-v1";
 
 export async function acquireAutopoolRepairLock({ lockedBy, mode, session = null }) {
   const now = new Date();
+  
+  // First ensure document exists using only the unique key in filter to prevent upsert collision.
+  await AutopoolRepairLock.findOneAndUpdate(
+    { key: AUTOPOOL_REPAIR_LOCK_KEY },
+    { $setOnInsert: { key: AUTOPOOL_REPAIR_LOCK_KEY, isLocked: false, startedAt: null } },
+    { upsert: true, new: true, session }
+  );
+
+  // Now, try to acquire it atomically if it's currently unlocked.
   const lock = await AutopoolRepairLock.findOneAndUpdate(
     {
       key: AUTOPOOL_REPAIR_LOCK_KEY,
-      $or: [{ isLocked: false }, { startedAt: null }],
+      isLocked: false,
     },
     {
       $set: {
@@ -19,12 +28,11 @@ export async function acquireAutopoolRepairLock({ lockedBy, mode, session = null
         repairVersion: AUTOPOOL_REPAIR_VERSION,
         releasedAt: null,
       },
-      $setOnInsert: { key: AUTOPOOL_REPAIR_LOCK_KEY },
     },
-    { upsert: true, new: true, session },
+    { new: true, session }
   );
 
-  return lock && lock.isLocked ? lock : null;
+  return lock;
 }
 
 export async function releaseAutopoolRepairLock({ lockedBy, session = null }) {

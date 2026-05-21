@@ -16,15 +16,40 @@ export const autopoolService = {
     }
   },
 
-  getTree: async (limit = 100) => {
+  getTree: async (params = {}) => {
     try {
       const response = await axiosInstance.get("/autopool/3x3/admin/tree", {
-        params: { limit }
+        params: typeof params === "number" ? { limit: params } : params,
       });
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching autopool tree:", error);
       return [];
+    }
+  },
+
+  getNodeChildren: async (rebirthCode, params = {}) => {
+    try {
+      const response = await axiosInstance.get(
+        `/autopool/3x3/admin/node/${rebirthCode}/children`,
+        { params },
+      );
+      return response.data?.data || { parent: null, children: [], pagination: {} };
+    } catch (error) {
+      console.error("Error fetching autopool node children:", error);
+      return { parent: null, children: [], pagination: {} };
+    }
+  },
+
+  getQueueAudit: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get("/autopool/3x3/admin/queue-audit", {
+        params,
+      });
+      return response.data?.data || { entries: [], pagination: {} };
+    } catch (error) {
+      console.error("Error fetching autopool queue audit:", error);
+      return { entries: [], pagination: {} };
     }
   },
 

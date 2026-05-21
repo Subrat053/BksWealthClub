@@ -29,9 +29,9 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
       <div
         className={`group relative p-5 rounded-2xl border transition-all duration-300 hover:scale-105 ${
           node.status === "COMPLETED"
-            ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
+            ? "bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
             : "bg-white border-slate-200 shadow-slate-100"
-        } shadow-xl min-w-[200px] text-center z-20 hover:shadow-2xl hover:border-indigo-300`}
+        } shadow-xl min-w-50 text-center z-20 hover:shadow-2xl hover:border-indigo-300`}
       >
         {/* Connection Dot - Top */}
         {depth > 0 && (
@@ -58,7 +58,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
             <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) || "U"}
             </div>
-            <p className="text-[11px] text-slate-600 font-semibold truncate max-w-[110px]">
+            <p className="text-[11px] text-slate-600 font-semibold truncate max-w-27.5">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
             </p>
           </div>
@@ -74,7 +74,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
               key={i}
               className={`w-3 h-3 rounded-full border-2 border-white shadow-sm transition-all duration-500 ${
                 i <= (node.autopoolChildrenCount || 0)
-                  ? "bg-gradient-to-tr from-emerald-400 to-teal-500 scale-110"
+                  ? "bg-linear-to-tr from-emerald-400 to-teal-500 scale-110"
                   : "bg-slate-100"
               }`}
               title={`Position ${i}: ${i <= (node.autopoolChildrenCount || 0) ? "Filled" : "Empty"}`}
@@ -91,7 +91,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
       {/* Recursive Children Rendering */}
       {children.length > 0 && (
         <div className="flex flex-col items-center w-full mt-12 relative">
-          <div className="w-0.5 h-12 bg-gradient-to-b from-indigo-500 to-slate-300 absolute -top-12" />
+          <div className="w-0.5 h-12 bg-linear-to-b from-indigo-500 to-slate-300 absolute -top-12" />
 
           <div className="flex justify-center gap-16 relative w-full pt-6">
             {children.length > 1 && (
@@ -518,7 +518,7 @@ export default function IndividualAutoPoolPage() {
           </div>
         </>
       ) : detailsLoading ? (
-        <div className="h-[400px] flex items-center justify-center text-slate-400 font-medium">
+        <div className="h-100 flex items-center justify-center text-slate-400 font-medium">
           Loading detailed user progress...
         </div>
       ) : (
@@ -585,7 +585,7 @@ export default function IndividualAutoPoolPage() {
             </div>
 
             {/* Isolated Autopool Withdrawable */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col justify-between h-full">
+            <div className="bg-linear-to-br from-emerald-50 to-teal-50/50 p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
                   <Wallet size={20} />
@@ -638,7 +638,7 @@ export default function IndividualAutoPoolPage() {
             </div>
 
             {/* Upgrade/Alias IDs */}
-            <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm border-indigo-200/50 flex flex-col justify-between h-full">
+            <div className="bg-white p-5 rounded-2xl border border-indigo-200/50 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                   <Network size={20} />
@@ -851,7 +851,7 @@ export default function IndividualAutoPoolPage() {
 
       {/* Visual Subtree Modal Panel */}
       {showTreeModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-[#020d2e] w-full max-w-6xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
             
             {/* Modal Header */}
@@ -925,7 +925,7 @@ export default function IndividualAutoPoolPage() {
 
       {/* Pool Fund History Modal */}
       {showPoolFundModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white w-full max-w-4xl h-[80vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div>
@@ -1012,7 +1012,7 @@ export default function IndividualAutoPoolPage() {
 
       {/* Isolated Fund Ledger Modal */}
       {showIsolatedLedgerModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white w-full max-w-5xl h-[80vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div>
@@ -1103,7 +1103,7 @@ export default function IndividualAutoPoolPage() {
 
       {/* Upgrade Alias IDs Modal */}
       {showUpgradeIdsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white w-full max-w-3xl h-[70vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div>

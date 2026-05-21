@@ -69,12 +69,14 @@ async function syncAll() {
       const result =
         await autopool3x3Service.processDepositSuccessForAutoPool(dep);
       console.log(`Synced: ${dep._id} -> Main: ${result.mainNodeId}`);
+
+      await autopool3x3Service.processAutopoolUntilStable();
     }
 
     // 4. Run queue processing
     console.log("Processing AutoPool Queue...");
-    const result = await autopool3x3Service.processAutoPoolQueue();
-    console.log(`Rebuild complete. Placed ${result.placedCount} nodes.`);
+    const result = await autopool3x3Service.processAutopoolUntilStable();
+    console.log(`Rebuild complete. Placed ${result.placedCount || 0} nodes.`);
 
     process.exit(0);
   } catch (err) {
