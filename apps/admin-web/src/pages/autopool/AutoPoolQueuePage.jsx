@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { autopoolService } from "../../services/autopool.service";
 import AdminPageHeader from "../../components/layout/AdminPageHeader";
+import { Download } from "lucide-react";
+import { exportToExcel } from "../../utils/exportToExcel";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -44,6 +46,8 @@ const AutoPoolQueuePage = () => {
     setLoading(false);
   };
 
+  const [downloading, setDownloading] = useState(false);
+
   const handleProcessQueue = async () => {
     try {
       setLoading(true);
@@ -56,6 +60,50 @@ const AutoPoolQueuePage = () => {
     }
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      setDownloading(true);
+      // Fetch all entries in the queue matching the active search query (using limit = 0)
+      const { data } = await autopoolService.getQueue(1, 0, searchQuery);
+      if (!data || data.length === 0) {
+        alert("No entries in queue to download.");
+        return;
+      }
+
+      // Map rows with type text
+      const formattedRows = data.map((entry) => ({
+        ...entry,
+        generationText: entry.generation === 0 ? "ROOT" : `GEN ${entry.generation}`,
+      }));
+
+      // Define columns to export
+      const columns = [
+        { header: "Pool ID", key: "rebirthCode" },
+        { header: "Owner Name", key: "ownerUserId.fullName" },
+        { header: "Owner Member ID", key: "ownerUserId.memberId" },
+        { header: "Type", key: "generationText" },
+        { header: "Generation / Level", key: "generation" },
+        { header: "Timestamp", key: "queueTimestamp", format: "date" },
+        { header: "Status", key: "status" },
+        { header: "Matrix Parent", key: "parentPoolNodeId.poolNodeId" },
+        { header: "Children Count", key: "rebirthChildrenCount" },
+        { header: "Completed At", key: "completedAt", format: "date" },
+      ];
+
+      exportToExcel({
+        rows: formattedRows,
+        columns,
+        fileName: "autopool-queue-report",
+        sheetName: "Queue",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export queue: " + error.message);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -63,13 +111,23 @@ const AutoPoolQueuePage = () => {
           title="Auto Pool Queue" 
           subtitle="Manage and monitor the Auto Pool FIFO queue"
         />
-        <button 
-          onClick={handleProcessQueue}
-          disabled={loading}
-          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 font-semibold"
-        >
-          Process Queue Now
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleDownloadExcel}
+            disabled={downloading || loading}
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 disabled:opacity-50 font-semibold cursor-pointer"
+          >
+            <Download size={18} />
+            {downloading ? "Exporting..." : "Download Excel"}
+          </button>
+          <button 
+            onClick={handleProcessQueue}
+            disabled={loading || downloading}
+            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 font-semibold"
+          >
+            Process Queue Now
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
