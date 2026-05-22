@@ -17,6 +17,7 @@ import {
 import { sendOtpEmail } from "../../common/service/email.service.js";
 import { twoFactorService } from "../twofactor/twofactor.service.js";
 import { referralService } from "../referral/referral.service.js";
+import { UpgradeAliasId } from "../autopool/upgrade-alias-id.model.js";
 
 // 👁️ Get All Users
 // 👁️ Get Admin Summary
@@ -36,6 +37,7 @@ export const getAllUsers = async (req, res) => {
     const users = await getAllUsersService({
       status: req.query?.status,
       search: req.query?.search,
+      type: req.query?.type,
     });
     return res.status(200).json({
       success: true,
@@ -466,7 +468,31 @@ export const getUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json(user);
+    const aliases = await UpgradeAliasId.find({ originalMainUserId: user._id }).sort({ createdAt: -1 });
+
+    return res.json({
+      ...user.toObject(),
+      aliases,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getUserAliases = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select("_id memberId fullName");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const aliases = await UpgradeAliasId.find({ originalMainUserId: user._id }).sort({ createdFromAutopoolLevel: -1, aliasSequence: 1 });
+    return res.json({
+      success: true,
+      message: "User aliases fetched successfully",
+      data: aliases,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

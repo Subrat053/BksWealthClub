@@ -6,6 +6,17 @@ const depositSchema = new mongoose.Schema(
     amount: { type: Number, required: true },
     walletType: { type: String, default: "USDT" },
     txHash: { type: String, default: "" },
+    type: { type: String, default: "USER_DEPOSIT", index: true },
+    paymentStatus: { type: String, default: "pending", index: true },
+    approvalType: { type: String, default: null, index: true },
+    originalMainUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    source: { type: String, default: null, index: true },
+    createdFromAutopoolLevel: { type: Number, default: null, index: true },
     proof: {
       url: { type: String, default: "" },
       publicId: { type: String, default: "" },

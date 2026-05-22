@@ -230,7 +230,7 @@ export default function AutopoolTreePage() {
         autopoolService.getOperationalAdminMyTree(),
         incomeService.getMyWallet(),
         autopoolService.getMyFunds(),
-        autopoolService.getMyUpgradeIds(),
+        autopoolService.getMyAliases(),
       ]);
       setData(treeRes);
       setWallet(walletRes?.data || null);
@@ -626,8 +626,8 @@ export default function AutopoolTreePage() {
         <div className="bg-[#091a39]/95 p-4 rounded-2xl border border-amber-500/10 shadow-lg backdrop-blur-md flex flex-col">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-200/60">Upgrade/Alias IDs</h3>
-              <p className="text-[9px] text-amber-100/40 mt-0.5">Created starting from Level 4+ completion</p>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-200/60">My Alias / Upgrade IDs</h3>
+              <p className="text-[9px] text-amber-100/40 mt-0.5">Created automatically from Level 4+ completion</p>
             </div>
             <span className="px-2 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">
               Total: {upgradeIds.length}
@@ -638,9 +638,9 @@ export default function AutopoolTreePage() {
             {upgradeIds && upgradeIds.length > 0 ? (
               upgradeIds.map((item) => (
                 <div key={item._id} className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-black/20 border border-white/5">
-                  <span className="text-[10px] font-mono text-cyan-400 font-bold">{item.aliasId}</span>
+                  <span className="text-[10px] font-mono text-cyan-400 font-bold">{item.aliasMemberId || item.aliasId}</span>
                   <span className="text-[9px] font-bold text-emerald-400 uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                    Level {item.sourceAutopoolLevel} Complete
+                    Level {item.createdFromAutopoolLevel ?? item.sourceAutopoolLevel} Complete
                   </span>
                 </div>
               ))

@@ -7,6 +7,7 @@ import {
   completeUserInvite,
   deleteUser,
   getUserDetails,
+  getUserAliases,
   resetUserTwoFactor,
   updateUserStatus,
   resetUserPassword,
@@ -34,6 +35,7 @@ adminRouter.post("/users/invite/complete", completeUserInvite);
 adminRouter.get("/users", getAllUsers);
 adminRouter.post("/create-user", createUserByAdmin);
 adminRouter.get("/users/:userId", getUserDetails);
+adminRouter.get("/users/:userId/aliases", getUserAliases);
 adminRouter.get("/users/:userId/password", getUserPassword);
 adminRouter.post("/users/:userId/send-verification-link", sendVerificationLink);
 adminRouter.patch("/users/:userId/status", updateUserStatus);

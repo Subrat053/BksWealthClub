@@ -103,6 +103,9 @@ export default function DashboardPage() {
                 >
                   Deposit
                 </Button>
+                <Button variant="muted" onClick={() => navigate("/member/aliases") }>
+                  Open Alias Page
+                </Button>
               </div>
             </div>
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5 text-center">

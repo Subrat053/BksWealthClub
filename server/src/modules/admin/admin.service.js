@@ -1,7 +1,7 @@
 import { User } from "../user/user.model.js";
 
 // 👉 Get All Users
-export const getAllUsers = async ({ status, search } = {}) => {
+export const getAllUsers = async ({ status, search, type } = {}) => {
   const query = {};
 
   if (status?.trim()) {
@@ -20,6 +20,15 @@ export const getAllUsers = async ({ status, search } = {}) => {
       { memberId: regex },
       { phone: regex },
     ];
+  }
+
+  if (type?.trim()) {
+    const normalizedType = type.trim().toLowerCase();
+    if (normalizedType === "alias") {
+      query.isAliasAccount = true;
+    } else if (normalizedType === "main") {
+      query.isAliasAccount = { $ne: true };
+    }
   }
 
   const users = await User.find(query)

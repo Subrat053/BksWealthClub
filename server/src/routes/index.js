@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import authRoutes from "../modules/auth/auth.routes.js";
 import { userRouter } from "../modules/user/user.routes.js";
+import memberRouter from "../modules/member/member.routes.js";
 import { referralRouter } from "../modules/referral/referral.routes.js";
 import { teamRouter } from "../modules/team/team.routes.js";
 import { autopoolRouter } from "../modules/autopool/autopool.routes.js";
@@ -27,6 +28,7 @@ export const apiRouter = Router();
 */
 apiRouter.use("/auth", authRoutes);
 apiRouter.use("/users", userRouter);
+apiRouter.use("/member", memberRouter);
 
 /*
 |--------------------------------------------------------------------------

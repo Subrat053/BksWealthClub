@@ -42,10 +42,20 @@ const LEVEL_CONFIGS = {
 /**
  * Create a system-generated Alias Account for a user upon AutoPool Level completion
  */
-async function createAliasAccount(originalUserId, level, aliasIndex, session) {
+export async function createAliasAccount(originalUserId, level, aliasIndex, session) {
   // 1. Fetch original owner
   const originalUser = await User.findById(originalUserId).session(session);
   if (!originalUser) throw new Error(`Original user ${originalUserId} not found`);
+
+  const sponsorUser = originalUser.referredByUserId
+    ? await User.findById(originalUser.referredByUserId).session(session)
+    : originalUser.sponsorUserId
+      ? await User.findById(originalUser.sponsorUserId).session(session)
+      : originalUser.sponsorId
+        ? await User.findOne({ memberId: String(originalUser.sponsorId).trim().toUpperCase() }).session(session)
+        : null;
+  const sponsorUserId = sponsorUser?._id || null;
+  const sponsorMemberId = sponsorUser?.memberId || String(originalUser.sponsorId || "").trim().toUpperCase() || originalUser.memberId;
 
   // 2. Generate new unique Member ID (e.g. BKS76438)
   const newMemberId = await generateMemberId();
@@ -62,9 +72,9 @@ async function createAliasAccount(originalUserId, level, aliasIndex, session) {
     [
       {
         memberId: newMemberId,
-        sponsorId: originalUser.memberId,
-        sponsorUserId: originalUser._id,
-        referredByUserId: originalUser._id,
+        sponsorId: sponsorMemberId,
+        sponsorUserId,
+        referredByUserId: sponsorUserId,
         fullName: `${originalUser.fullName} (Alias)`,
         email: newEmail,
         phone: originalUser.phone || "",
@@ -81,13 +91,18 @@ async function createAliasAccount(originalUserId, level, aliasIndex, session) {
         activatedAt: new Date(),
         // Internal alias tracking fields
         isAliasAccount: true,
+        isAlias: true,
         aliasOfUserId: originalUser._id,
         aliasOfAccountId: originalUser.memberId,
+        originalMainUserId: originalUser._id,
+        aliasOwnerUserId: originalUser._id,
         rootOwnerUserId: originalUser.rootOwnerUserId || originalUser._id,
         rootOwnerAccountId: originalUser.rootOwnerAccountId || originalUser.memberId,
         createdFromAutopoolLevel: level,
+        aliasSequence: aliasIndex,
         source: "autopool_completion",
         autoCreatedDepositAmount: 75,
+        autoDepositAmount: 75,
       },
     ],
     { session }
@@ -140,7 +155,13 @@ async function createAliasAccount(originalUserId, level, aliasIndex, session) {
         amount: 75,
         walletType: "USDT",
         txHash: `ALIAS_AUTO_${newMemberId}_L${level}_I${aliasIndex}`,
+        type: "ALIAS_AUTO_DEPOSIT",
         status: "approved",
+        paymentStatus: "approved",
+        approvalType: "AUTO",
+        originalMainUserId: originalUser._id,
+        source: "AUTOPOOL_UPGRADE_ALIAS",
+        createdFromAutopoolLevel: level,
         processingStatus: "COMPLETED",
         activationProcessed: true,
         rebirthProcessed: true,
@@ -167,10 +188,16 @@ async function createAliasAccount(originalUserId, level, aliasIndex, session) {
 
   // 11. Run autopool success setup for alias
   const { autopool3x3Service } = await import("./autopool-3x3.service.js");
-  await autopool3x3Service.processDepositSuccessForAutoPool(deposit, session);
+  const autopoolResult = await autopool3x3Service.processDepositSuccessForAutoPool(deposit, session);
 
   console.log(`[AutoPoolFund] Generated Alias Account ${newMemberId} successfully for ${originalUser.memberId} at Level ${level}`);
-  return aliasUser;
+  return {
+    aliasUser,
+    deposit,
+    rebirthNodeIds: autopoolResult?.rebirthNodeIds || [],
+    sponsorUserId,
+    sponsorMemberId,
+  };
 }
 
 /**

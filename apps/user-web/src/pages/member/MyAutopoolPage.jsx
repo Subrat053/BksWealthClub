@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { autopoolService } from "../../services/autopool.service";
 import { incomeService } from "../../services/income.service";
@@ -147,6 +148,7 @@ const statCardClass =
 
 export default function MyAutopoolPage() {
   const { user } = useContext(AuthContext) || {};
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -165,11 +167,6 @@ export default function MyAutopoolPage() {
   const [isolatedLedger, setIsolatedLedger] = useState([]);
   const [showIsolatedLedgerModal, setShowIsolatedLedgerModal] = useState(false);
   const [isolatedLedgerLoading, setIsolatedLedgerLoading] = useState(false);
-
-  // Upgrade IDs state
-  const [upgradeIds, setUpgradeIds] = useState([]);
-  const [showUpgradeIdsModal, setShowUpgradeIdsModal] = useState(false);
-  const [upgradeIdsLoading, setUpgradeIdsLoading] = useState(false);
 
   // Expanded levels state
   const [expandedLevels, setExpandedLevels] = useState({ 0: true });
@@ -239,19 +236,6 @@ export default function MyAutopoolPage() {
       console.error("Failed to load self isolated fund transactions:", error);
     } finally {
       setIsolatedLedgerLoading(false);
-    }
-  };
-
-  const handleOpenUpgradeIds = async () => {
-    setUpgradeIdsLoading(true);
-    setShowUpgradeIdsModal(true);
-    try {
-      const response = await autopoolService.getMyUpgradeIds();
-      setUpgradeIds(response || []);
-    } catch (error) {
-      console.error("Failed to load self upgrade alias IDs:", error);
-    } finally {
-      setUpgradeIdsLoading(false);
     }
   };
 
@@ -361,6 +345,12 @@ export default function MyAutopoolPage() {
         >
           <Network size={16} /> View Subtree Visualizer
         </button>
+        <button
+          onClick={() => navigate("/member/aliases")}
+          className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 text-white rounded-xl font-bold transition duration-300 text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 border border-cyan-500/20"
+        >
+          <BadgeIndianRupee size={16} /> Open Alias Page
+        </button>
       </div>
 
       {/* User Summary Grid Cards */}
@@ -463,7 +453,7 @@ export default function MyAutopoolPage() {
           <span className="mt-4 text-[10px] text-slate-400 font-semibold relative z-10">Rebirth reserved balance</span>
         </div>
 
-        {/* Upgrade / Alias IDs count Card */}
+        {/* Alias Page CTA Card */}
         <div className="rounded-2xl border border-white/15 bg-[linear-gradient(165deg,rgba(16,37,103,0.88)_0%,rgba(12,28,76,0.94)_100%)] p-5 shadow-[0_16px_36px_rgba(5,10,35,0.45)] backdrop-blur-sm flex flex-col justify-between h-full relative overflow-hidden">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/10 to-transparent" />
           <div className="flex items-center gap-4 relative z-10">
@@ -471,17 +461,15 @@ export default function MyAutopoolPage() {
               <BadgeIndianRupee size={20} />
             </div>
             <div>
-              <p className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Upgrade IDs</p>
-              <p className="text-sm font-black text-white mt-0.5">
-                {uSummary.upgradeIdCount || 0} IDs
-              </p>
+              <p className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Alias / Upgrade IDs</p>
+              <p className="text-sm font-black text-white mt-0.5">Open dedicated view</p>
             </div>
           </div>
           <button
-            onClick={handleOpenUpgradeIds}
+            onClick={() => navigate("/member/aliases")}
             className="mt-4 w-full px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 rounded-lg font-bold transition text-[10px] text-center border border-cyan-500/30 relative z-10"
           >
-            List Upgrade IDs
+            Open Alias Page
           </button>
         </div>
       </div>
@@ -933,82 +921,6 @@ export default function MyAutopoolPage() {
         </div>
       )}
 
-      {/* Upgrade Alias IDs Modal */}
-      {showUpgradeIdsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#020d2e] w-full max-w-3xl h-[70vh] rounded-3xl border border-white/15 shadow-2xl flex flex-col overflow-hidden relative">
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Network size={18} className="text-cyan-400" />
-                  Upgrade & Alias Accounts
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  List of generated alias IDs triggered by matrix cycle completions
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowUpgradeIdsModal(false);
-                  setUpgradeIds([]);
-                }}
-                className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto p-6 bg-[#010924]">
-              {upgradeIdsLoading ? (
-                <div className="h-full flex items-center justify-center text-slate-300 font-medium text-sm">
-                  Loading upgrade accounts...
-                </div>
-              ) : upgradeIds.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-slate-400 font-medium text-sm italic">
-                  No upgrade alias accounts created for your pool yet.
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/15 shadow-lg overflow-hidden bg-white/5">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-white/5 border-b border-white/10">
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider">Date Created</th>
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider">Alias ID</th>
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider text-center">Source Level</th>
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider text-right">Deduction Amount</th>
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-xs text-slate-200">
-                      {upgradeIds.map((item) => (
-                        <tr key={item._id} className="hover:bg-white/5 transition duration-150">
-                          <td className="px-4 py-3 text-slate-400">
-                            {formatDate(item.createdAt)}
-                          </td>
-                          <td className="px-4 py-3 font-mono font-bold text-cyan-300">
-                            {item.aliasId}
-                          </td>
-                          <td className="px-4 py-3 text-center text-white font-bold">
-                            Level {item.sourceAutopoolLevel}
-                          </td>
-                          <td className="px-4 py-3 text-right font-black text-rose-400">
-                            -{formatCurrency(item.deductionAmount || 75)}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              {item.status || "ACTIVE"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

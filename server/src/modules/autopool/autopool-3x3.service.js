@@ -1960,6 +1960,7 @@ export const autopool3x3Service = {
           level: n.levelNumber,
           sequence: n.levelSequence,
           parentCode: n.matrixParentId?.nodeCode || "None",
+          parentNodeId: n.parentNodeId || null,
           childrenCount: n.directChildrenCount || 0,
           childCodes: directChildrenList,
           newRebirthCodes: generatedMap.get(n._id.toString()) || [],
@@ -1969,6 +1970,8 @@ export const autopool3x3Service = {
             ? "Active"
             : "In Queue",
           completedAt: n.completedAt,
+          queueSerialNo: n.queueSerialNo ?? null,
+          queueEnteredAt: n.queueEnteredAt ?? null,
         };
       });
 
@@ -2038,7 +2041,12 @@ export const autopool3x3Service = {
           upgradeDeductionTotal: {
             $sum: {
               $cond: [
-                { $eq: ["$type", "UPGRADE_ID_DEDUCTION"] },
+                {
+                  $in: [
+                    "$type",
+                    ["UPGRADE_ID_DEDUCTION", "AUTOPOOL_WITHDRAWABLE_ALIAS_DEDUCTION"],
+                  ],
+                },
                 "$amount",
                 0,
               ],
@@ -2047,7 +2055,12 @@ export const autopool3x3Service = {
           upgradeIdCount: {
             $sum: {
               $cond: [
-                { $eq: ["$type", "UPGRADE_ID_DEDUCTION"] },
+                {
+                  $in: [
+                    "$type",
+                    ["UPGRADE_ID_DEDUCTION", "AUTOPOOL_WITHDRAWABLE_ALIAS_DEDUCTION"],
+                  ],
+                },
                 { $divide: ["$amount", UPGRADE_ID_COST] },
                 0,
               ],

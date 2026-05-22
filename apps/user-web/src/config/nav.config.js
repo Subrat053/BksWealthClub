@@ -22,6 +22,7 @@ export const memberNav = [
       { label: "Direct", path: "/member/team/direct" },
       { label: "Generation", path: "/member/team/generation" },
       { label: "My Autopool", path: "/member/team/autopool" },
+      { label: "My Aliases", path: "/member/aliases" },
       { label: "Autopool Ledger", path: "/member/team/autopool-ledger" },
     ],
   },

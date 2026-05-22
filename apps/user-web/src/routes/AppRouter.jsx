@@ -20,6 +20,7 @@ import ActivationPage from "../pages/member/ActivationPage";
 import DirectTeamPage from "../pages/member/DirectTeamPage";
 import GenerationTeamPage from "../pages/member/GenerationTeamPage";
 import MyAutopoolPage from "../pages/member/MyAutopoolPage";
+import AliasPage from "../pages/member/AliasPage";
 import SponsorIncomePage from "../pages/member/SponsorIncomePage";
 import LevelIncomePage from "../pages/member/LevelIncomePage";
 import MakeWithdrawalPage from "../pages/member/MakeWithdrawalPage";
@@ -71,6 +72,8 @@ export const router = createBrowserRouter([
           { path: "team/direct", element: <DirectTeamPage /> },
           { path: "team/generation", element: <GenerationTeamPage /> },
           { path: "team/autopool", element: <MyAutopoolPage /> },
+          { path: "aliases", element: <AliasPage /> },
+          { path: "team/aliases", element: <AliasPage /> },
           { path: "team/autopool-ledger", element: <AutoPoolLedgerPage /> },
           { path: "team/referrals", element: <DirectTeamPage /> },
           { path: "income/sponsor", element: <SponsorIncomePage /> },

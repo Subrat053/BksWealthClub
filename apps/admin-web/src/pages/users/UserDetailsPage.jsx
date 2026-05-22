@@ -87,6 +87,7 @@ export default function UserDetailsPage() {
   const incomeByType = incomeSummary?.incomeByType || {};
   const recentLogs = incomeSummary?.recentLogs || [];
   const summaryUserProfile = incomeSummary?.userProfile || {};
+  const aliases = user.aliases || [];
 
   const sponsoredByUser = user.referredByUserId || user.sponsorUserId || null;
   const sponsoredByName =
@@ -120,6 +121,10 @@ export default function UserDetailsPage() {
               Profile Information
             </h3>
             <StatusBadge status={user.status} />
+          </div>
+
+          <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+            {user.isAliasAccount ? "ALIAS USER" : "MAIN USER"}
           </div>
 
           <div className="grid gap-y-4 text-sm md:grid-cols-2">
@@ -249,6 +254,60 @@ export default function UserDetailsPage() {
           </div>
         </section>
       </div>
+
+      {aliases.length > 0 && (
+        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Alias / Upgrade IDs</h3>
+            <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+              {aliases.length} alias record(s)
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {aliases.map((alias) => (
+              <div key={alias._id} className="rounded-2xl border border-white/10 bg-[#0c1f57]/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400">Alias Member ID</p>
+                    <p className="font-mono font-bold text-cyan-300">{alias.aliasMemberId || alias.aliasId}</p>
+                  </div>
+                  <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+                    {alias.status || "ACTIVE"}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
+                  <div>
+                    <p className="text-slate-500">Level</p>
+                    <p className="font-semibold text-white">{alias.createdFromAutopoolLevel ?? alias.sourceAutopoolLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Sponsor</p>
+                    <p className="font-mono font-semibold text-amber-300">{alias.sponsorId || user.sponsorId || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Deduction</p>
+                    <p className="font-semibold text-rose-300">${Number(alias.deductionAmount || 75).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Auto Deposit</p>
+                    <p className="font-semibold text-emerald-300">$75.00</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Rebirths</p>
+                    <p className="font-semibold text-cyan-300">{(alias.aliasRebirthIds || []).length}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Created</p>
+                    <p className="font-semibold text-white">{formatDate(alias.createdAt)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Wallet & Income Section ──────────────────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

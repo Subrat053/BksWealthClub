@@ -5,6 +5,8 @@ import { requireTwoFactorOtp } from "../../middleware/twofactor.middleware.js";
 import {
   changePasswordController,
   getProfileController,
+  getMyAliasesController,
+  getAliasDetailsController,
   updateProfileController,
 } from "./user.controller.js";
 import {
@@ -17,6 +19,8 @@ export const userRouter = Router();
 
 userRouter.use(authMiddleware, userOnly);
 userRouter.get("/me", getProfileController);
+userRouter.get("/my-aliases", getMyAliasesController);
+userRouter.get("/alias/:aliasMemberId", getAliasDetailsController);
 userRouter.patch(
   "/me",
   requireTwoFactorOtp,

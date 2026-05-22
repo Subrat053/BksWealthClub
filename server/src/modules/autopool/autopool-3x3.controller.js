@@ -8,10 +8,11 @@ import { asyncHandler } from "../../core/asyncHandler.js";
 import { ApiError } from "../../core/ApiError.js";
 import { ApiResponse } from "../../core/ApiResponse.js";
 import autopool3x3Service from "./autopool-3x3.service.js";
-import { User } from "../user/user.model.js";
+// import { User } from "../user/user.model.js";
 import { AutopoolUserFund } from "./autopool-user-fund.model.js";
 import { AutopoolFundTransaction } from "./autopool-fund-transaction.model.js";
 import { UpgradeAliasId } from "./upgrade-alias-id.model.js";
+import { User } from "../user/user.model.js";
 
 const getAuthenticatedUserId = (req) => req.auth?.userId || req.auth?.sub || null;
 const isNodeCompletedForReport = (node = {}) =>
@@ -530,6 +531,32 @@ export const getUserUpgradeIdsAdmin = asyncHandler(async (req, res) => {
   );
 });
 
+export const getAliasStatus = asyncHandler(async (req, res) => {
+  const { aliasMemberId } = req.params;
+  const aliasUser = await User.findOne({ memberId: aliasMemberId, isAliasAccount: true }).lean();
+  if (!aliasUser) throw new ApiError(404, "Alias not found");
+
+  const [relation, fund, autopoolDetails, transactions] = await Promise.all([
+    UpgradeAliasId.findOne({ aliasMemberId: aliasUser.memberId }).lean(),
+    AutopoolUserFund.findOne({ userId: aliasUser._id }).lean(),
+    autopool3x3Service.getIndividualAutopoolDetails(aliasUser._id),
+    AutopoolFundTransaction.find({ userId: aliasUser._id }).sort({ createdAt: -1 }).lean(),
+  ]);
+
+  res.json(
+    new ApiResponse({
+      message: "Alias autopool status fetched successfully",
+      data: {
+        aliasUser,
+        relation,
+        fund,
+        autopoolDetails,
+        transactions,
+      },
+    }),
+  );
+});
+
 /**
  * GET /api/v1/autopool/my/details
  * Get logged-in user's detailed individual autopool progress
@@ -586,4 +613,5 @@ export default {
   getUserFundsAdmin,
   getUserFundTransactionsAdmin,
   getUserUpgradeIdsAdmin,
+  getAliasStatus,
 };

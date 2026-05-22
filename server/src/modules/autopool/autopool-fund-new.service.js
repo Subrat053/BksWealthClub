@@ -3,6 +3,8 @@ import { AutopoolUserFund } from "./autopool-user-fund.model.js";
 import { AutopoolFundTransaction } from "./autopool-fund-transaction.model.js";
 import { UpgradeAliasId } from "./upgrade-alias-id.model.js";
 import { User } from "../user/user.model.js";
+import { DepositModel } from "../deposit/deposit.model.js";
+import { createAliasAccount } from "./autopool-fund.service.js";
 
 // Centralized Constant Maps
 export const POOL_FUND_MAP = {
@@ -112,6 +114,10 @@ export function getUpgradeIdCountByLevel(level) {
   return UPGRADE_ID_COUNT_MAP[level] || 0;
 }
 
+export function getAliasCountByLevel(level) {
+  return getUpgradeIdCountByLevel(level);
+}
+
 /**
  * Create Upgrade/Alias IDs for completed level
  */
@@ -119,32 +125,74 @@ export async function createUpgradeIdsForLevel(userId, level, session = null) {
   const user = await User.findById(userId).session(session);
   if (!user) throw new Error(`User ${userId} not found`);
 
-  const count = getUpgradeIdCountByLevel(level);
+  const count = getAliasCountByLevel(level);
   if (count <= 0) return [];
 
   const createdIds = [];
   for (let i = 1; i <= count; i++) {
-    const aliasId = `${user.memberId}-U${level}.${i}`;
-    
-    // Upsert to ensure idempotency
-    const existing = await UpgradeAliasId.findOne({ aliasId }).session(session);
-    if (!existing) {
-      const aliasDoc = await UpgradeAliasId.create(
-        [
-          {
-            userId,
-            aliasId,
-            sourceAutopoolLevel: level,
-            deductionAmount: UPGRADE_ID_COST,
-            status: "ACTIVE",
-          },
-        ],
-        { session }
-      );
-      createdIds.push(aliasDoc[0]);
-    } else {
-      createdIds.push(existing);
+    const aliasSequence = i;
+
+    const existingRelation = await UpgradeAliasId.findOne({
+      originalMainUserId: userId,
+      createdFromAutopoolLevel: level,
+      aliasSequence,
+    }).session(session);
+    if (existingRelation) {
+      createdIds.push(existingRelation);
+      continue;
     }
+
+    const existingAliasUser = await User.findOne({
+      isAliasAccount: true,
+      aliasOfUserId: userId,
+      createdFromAutopoolLevel: level,
+      aliasSequence,
+    }).session(session);
+
+    let aliasAccount;
+    if (existingAliasUser) {
+      const aliasDeposit = await DepositModel.findOne({
+        userRef: existingAliasUser._id,
+        type: "ALIAS_AUTO_DEPOSIT",
+        createdFromAutopoolLevel: level,
+      }).session(session);
+      aliasAccount = {
+        aliasUser: existingAliasUser,
+        deposit: aliasDeposit,
+        rebirthNodeIds: [],
+        sponsorMemberId: existingAliasUser.sponsorId,
+        sponsorUserId: existingAliasUser.sponsorUserId || null,
+      };
+    } else {
+      aliasAccount = await createAliasAccount(userId, level, aliasSequence, session);
+    }
+
+    const aliasUser = aliasAccount.aliasUser || aliasAccount;
+    const aliasRebirthIds = Array.isArray(aliasAccount.rebirthNodeIds)
+      ? aliasAccount.rebirthNodeIds
+      : [];
+
+    const aliasDoc = await UpgradeAliasId.create(
+      [
+        {
+          userId,
+          aliasId: aliasUser.memberId,
+          aliasMemberId: aliasUser.memberId,
+          aliasUserId: aliasUser._id,
+          originalMainUserId: userId,
+          sponsorId: aliasUser.sponsorId,
+          createdFromAutopoolLevel: level,
+          aliasSequence,
+          deductionAmount: UPGRADE_ID_COST,
+          autoDepositId: aliasAccount.deposit?._id || null,
+          aliasRebirthIds: aliasRebirthIds.map((rebirth) => rebirth?._id || rebirth).filter(Boolean),
+          status: "ACTIVE",
+        },
+      ],
+      { session },
+    );
+
+    createdIds.push(aliasDoc[0]);
   }
 
   return createdIds;
@@ -300,7 +348,7 @@ export async function applyAutopoolFundCompletion(
           userId,
           sourceRebirthId: sourceRebirthStr,
           completedLevel: level,
-          type: "UPGRADE_ID_DEDUCTION",
+          type: "AUTOPOOL_WITHDRAWABLE_ALIAS_DEDUCTION",
           amount: totalUpgradeDeduction,
           balanceAfter: userFund.withdrawableAutopoolFund,
           description: `Deduction of $${totalUpgradeDeduction} for creating ${upgradeCount} Upgrade ID(s) upon completing Autopool Level ${level}`,

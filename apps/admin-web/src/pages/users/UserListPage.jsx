@@ -466,10 +466,8 @@ export default function UserListPage() {
           className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
         >
           <option value="all">All Accounts</option>
-          <option value="normal">Normal Accounts</option>
+          <option value="main">Main Users</option>
           <option value="alias">Alias Accounts</option>
-          <option value="rebirths">Rebirth Accounts</option>
-          <option value="users">All Main Accounts (Users)</option>
         </select>
       </div>
 

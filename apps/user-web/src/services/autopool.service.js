@@ -1,5 +1,13 @@
 import userAxios from "./userAxios";
 
+const unwrapAliasList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.aliases)) return payload.aliases;
+  return [];
+};
+
+const unwrapAliasDetails = (payload) => payload || null;
+
 export const autopoolService = {
   getMyAutoPool: async () => {
     try {
@@ -93,6 +101,48 @@ export const autopoolService = {
     } catch (error) {
       console.error("Error fetching my upgrade IDs:", error);
       return [];
+    }
+  },
+
+  getMyAliases: async () => {
+    try {
+      const response = await userAxios.get("/member/aliases");
+      return unwrapAliasList(response.data?.data);
+    } catch (error) {
+      console.error("Error fetching my aliases:", error);
+      return [];
+    }
+  },
+
+  getAliasDetails: async (aliasMemberId) => {
+    try {
+      const response = await userAxios.get(`/member/aliases/${aliasMemberId}/autopool`);
+      return unwrapAliasDetails(response.data?.data);
+    } catch (error) {
+      console.error("Error fetching alias details:", error);
+      return null;
+    }
+  },
+
+  getAliasStatus: async (aliasMemberId) => {
+    try {
+      const response = await userAxios.get(`/member/aliases/${aliasMemberId}/autopool`);
+      return unwrapAliasDetails(response.data?.data);
+    } catch (error) {
+      console.error("Error fetching alias autopool status:", error);
+      return null;
+    }
+  },
+
+  getAliasTree: async (aliasMemberId, depth = 4) => {
+    try {
+      const response = await userAxios.get(`/member/aliases/${aliasMemberId}/tree`, {
+        params: { depth },
+      });
+      return response.data?.data || null;
+    } catch (error) {
+      console.error("Error fetching alias tree:", error);
+      return null;
     }
   },
 

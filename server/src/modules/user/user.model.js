@@ -181,6 +181,11 @@ const userSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    isAlias: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     aliasOfUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -203,9 +208,26 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    originalMainUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    aliasOwnerUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
     createdFromAutopoolLevel: {
       type: Number,
       default: null,
+    },
+    aliasSequence: {
+      type: Number,
+      default: null,
+      index: true,
     },
     createdFromCompletionId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -217,6 +239,10 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     autoCreatedDepositAmount: {
+      type: Number,
+      default: 0,
+    },
+    autoDepositAmount: {
       type: Number,
       default: 0,
     },

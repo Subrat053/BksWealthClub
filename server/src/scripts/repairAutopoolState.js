@@ -9,6 +9,12 @@ import { AutoPoolLevelCompletion } from "../modules/autopool/autopool-level-comp
 import { AutopoolUserFund } from "../modules/autopool/autopool-user-fund.model.js";
 import { PoolFundLedger } from "../modules/autopool/pool-fund-ledger.model.js";
 import { UpgradeAliasId } from "../modules/autopool/upgrade-alias-id.model.js";
+import { DepositModel } from "../modules/deposit/deposit.model.js";
+import { autopool3x3Service } from "../modules/autopool/autopool-3x3.service.js";
+import {
+  createUpgradeIdsForLevel,
+  getAliasCountByLevel,
+} from "../modules/autopool/autopool-fund-new.service.js";
 import {
   calculateAutopoolFundSummary,
   getCompletedLevelFromCompletedRebirths,
@@ -330,6 +336,130 @@ async function main() {
     const upgradeIds = await UpgradeAliasId.find({ userId: user._id }).lean();
     if (upgradeIds.length > 0) {
       console.log(`[${user.memberId}] upgrade IDs already present: ${upgradeIds.length}`);
+    }
+
+    for (let level = 4; level <= 9; level += 1) {
+      if (latestCompletedLevel === null || latestCompletedLevel < level) continue;
+
+      const expectedAliasCount = getAliasCountByLevel(level);
+      if (expectedAliasCount <= 0) continue;
+
+      const aliasRelations = await UpgradeAliasId.find({
+        originalMainUserId: user._id,
+        createdFromAutopoolLevel: level,
+      })
+        .sort({ aliasSequence: 1, createdAt: 1 })
+        .lean();
+
+      const activeAliasRelations = aliasRelations.filter((item) => item.status !== "INACTIVE" && item.status !== "INVALID");
+      const missingAliasCount = Math.max(0, expectedAliasCount - activeAliasRelations.length);
+
+      if (missingAliasCount > 0) {
+        console.log(
+          `[${user.memberId}] level ${level}: missing ${missingAliasCount} alias ID(s)`,
+        );
+        if (!dryRun) {
+          await createUpgradeIdsForLevel(user._id, level, null);
+        }
+      }
+
+      if (activeAliasRelations.length > expectedAliasCount) {
+        console.log(
+          `[${user.memberId}] level ${level}: found ${activeAliasRelations.length - expectedAliasCount} duplicate alias ID(s)`,
+        );
+        if (!dryRun) {
+          const duplicates = activeAliasRelations.slice(expectedAliasCount);
+          for (const duplicate of duplicates) {
+            await UpgradeAliasId.updateOne(
+              { _id: duplicate._id },
+              { $set: { status: "DUPLICATE" } },
+            );
+          }
+        }
+      }
+
+      const sponsorUser = user.sponsorUserId
+        ? await User.findById(user.sponsorUserId).select("memberId").lean()
+        : null;
+      const sponsorId = sponsorUser?.memberId || String(user.sponsorId || "").trim().toUpperCase();
+
+      for (const relation of aliasRelations) {
+        const aliasUser = relation.aliasUserId
+          ? await User.findById(relation.aliasUserId).lean()
+          : await User.findOne({ memberId: relation.aliasMemberId }).lean();
+
+        if (!aliasUser) continue;
+
+        const sponsorMismatch = String(aliasUser.sponsorId || "").trim().toUpperCase() !== sponsorId;
+        if (sponsorMismatch && !dryRun) {
+          await User.updateOne(
+            { _id: aliasUser._id },
+            {
+              $set: {
+                sponsorId,
+                sponsorUserId: user.sponsorUserId || null,
+                referredByUserId: user.sponsorUserId || null,
+              },
+            },
+          );
+          await UpgradeAliasId.updateOne(
+            { _id: relation._id },
+            { $set: { sponsorId } },
+          );
+        }
+
+        let aliasDeposit = relation.autoDepositId
+          ? await DepositModel.findById(relation.autoDepositId).lean()
+          : await DepositModel.findOne({
+              userRef: aliasUser._id,
+              type: "ALIAS_AUTO_DEPOSIT",
+              createdFromAutopoolLevel: level,
+            }).lean();
+
+        if (aliasDeposit && !relation.autoDepositId && !dryRun) {
+          await UpgradeAliasId.updateOne(
+            { _id: relation._id },
+            { $set: { autoDepositId: aliasDeposit._id } },
+          );
+        }
+
+        const aliasRebirths = await AutoPoolNode.find({
+          ownerUserId: aliasUser._id,
+          levelNumber: 0,
+          nodeType: "REBIRTH",
+        }).select("_id nodeCode queueSerialNo queueEnteredAt").lean();
+
+        if (aliasDeposit && aliasRebirths.length < 2) {
+          console.log(
+            `[${user.memberId}] alias ${aliasUser.memberId}: missing rebirths, attempting regeneration`,
+          );
+          if (!dryRun) {
+            await DepositModel.updateOne(
+              { _id: aliasDeposit._id },
+              { $set: { autoPoolProcessed: false, rebirthProcessed: false } },
+            );
+            await autopool3x3Service.processDepositSuccessForAutoPool(aliasDeposit._id, null);
+          }
+        }
+
+        const refreshedRebirths = await AutoPoolNode.find({
+          ownerUserId: aliasUser._id,
+          levelNumber: 0,
+          nodeType: "REBIRTH",
+        }).select("_id").lean();
+
+        if (!dryRun && refreshedRebirths.length > 0) {
+          await UpgradeAliasId.updateOne(
+            { _id: relation._id },
+            {
+              $set: {
+                aliasRebirthIds: refreshedRebirths.map((rebirth) => rebirth._id),
+                status: sponsorMismatch ? "REPAIRED" : relation.status || "ACTIVE",
+              },
+            },
+          );
+        }
+      }
     }
   }
 

@@ -30,6 +30,7 @@ import {
   getUserFundsAdmin,
   getUserFundTransactionsAdmin,
   getUserUpgradeIdsAdmin,
+  getAliasStatus,
 } from "./autopool-3x3.controller.js";
 import {
   getPoolFundSummary,
@@ -225,6 +226,12 @@ autopool3x3Router.get(
   authMiddleware,
   adminOnly,
   getUserUpgradeIdsAdmin,
+);
+
+autopool3x3Router.get(
+  "/alias-status/:aliasMemberId",
+  authMiddleware,
+  getAliasStatus,
 );
 
 // ─── User Routes ────────────────────────────────────────────────────────────
