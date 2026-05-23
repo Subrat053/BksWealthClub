@@ -221,10 +221,6 @@ export const depositService = {
       return result;
     });
 
-    if (shouldProcessAutoPoolQueue) {
-      await autopool3x3Service.processAutopoolUntilStable();
-    }
-
     return result;
   },
 

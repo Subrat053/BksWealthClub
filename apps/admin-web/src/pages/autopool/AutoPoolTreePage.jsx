@@ -37,18 +37,14 @@ const TreeNode = ({ node, childrenMap, depth = 0, maxDepth = 3 }) => {
           <h4 className="font-black text-slate-900 text-lg leading-tight tracking-tight">
             {node.poolNodeId}
           </h4>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            {/* <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
-              {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) ||
-                "U"}
-            </div> */}
+          <div className="flex flex-col items-center justify-center gap-1 mt-1">
             <p className="text-xs text-slate-600 font-semibold truncate max-w-30">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
             </p>
+            <span className="text-[9px] text-indigo-600 font-mono font-bold bg-indigo-50/80 px-2 py-0.5 rounded-full border border-indigo-100/50">
+              Q-Serial: {node.queueSerialNo || "N/A"}
+            </span>
           </div>
-          {/* <p className="text-[10px] text-indigo-400 font-mono mt-1 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
-            {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
-          </p> */}
         </div>
 
         {/* Children Status Dots */}

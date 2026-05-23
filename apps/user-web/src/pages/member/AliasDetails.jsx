@@ -100,6 +100,7 @@ export default function AliasDetails({ alias, details, tree = [] }) {
               <p className="mt-2 text-xs text-slate-400">Parent: {node.parentPoolNodeId?.poolNodeId || node.parentPoolNodeId?.nodeCode || "ROOT"}</p>
               <p className="mt-1 text-xs text-slate-400">Children: {node.autopoolChildrenCount ?? 0}</p>
               <p className="mt-1 text-xs text-slate-400">Status: {node.status}</p>
+              <p className="mt-1 text-xs text-slate-400">Q-Serial: {node.queueSerialNo || "N/A"}</p>
             </div>
           ))}
           {(tree || []).length === 0 && (

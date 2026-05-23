@@ -62,9 +62,14 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Anonymous"}
             </p>
           </div>
-          <p className="text-[9px] text-indigo-400 font-mono mt-1 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
-            {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
-          </p>
+          <div className="flex flex-col gap-1.5 mt-1.5 items-center justify-center">
+            <p className="text-[9px] text-indigo-400 font-mono font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
+              {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
+            </p>
+            <span className="text-[9px] text-indigo-600 font-mono font-bold bg-indigo-50/80 px-2 py-0.5 rounded-full border border-indigo-100/50">
+              Q-Serial: {node.queueSerialNo || "N/A"}
+            </span>
+          </div>
         </div>
 
         {/* Children Status Dots */}

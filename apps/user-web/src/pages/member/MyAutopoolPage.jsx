@@ -54,7 +54,7 @@ const TreeCanvasNode = ({ node, childrenMap, depth = 0 }) => {
         </div>
 
         {/* Content */}
-        <div className="mt-2 space-y-1">
+        <div className="mt-2 space-y-1.5">
           <h4 className="font-black text-white text-lg leading-tight tracking-tight">
             {node.poolNodeId || node.nodeCode}
           </h4>
@@ -66,9 +66,14 @@ const TreeCanvasNode = ({ node, childrenMap, depth = 0 }) => {
               {node.linkedRebirthNodeId?.ownerUserId?.fullName || "Member"}
             </p>
           </div>
-          <p className="text-[9px] text-cyan-300 font-mono mt-1 font-bold bg-cyan-500/10 inline-block px-2 py-0.5 rounded border border-cyan-500/20">
-            {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
-          </p>
+          <div className="flex flex-col gap-1 mt-1 items-center justify-center">
+            <p className="text-[9px] text-cyan-300 font-mono font-bold bg-cyan-500/10 inline-block px-2 py-0.5 rounded border border-cyan-500/20">
+              {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
+            </p>
+            <span className="text-[9px] text-cyan-300 font-mono font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+              Q-Serial: {node.queueSerialNo || "N/A"}
+            </span>
+          </div>
         </div>
 
         {/* Children Status Dots */}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DEPRECATED: Old AutoPool Job
  * This is kept for reference but disabled.
  * Use registerAutopool3x3Job() instead for the new 3x3 Matrix AutoPool.
@@ -42,7 +42,7 @@ export function registerAutopool3x3Job() {
         "../modules/autopool/autopool-3x3.service.js",
       )).default;
       
-      const result = await autopool3x3Service.processAutoPoolQueue();
+      const result = await autopool3x3Service.processNextQueueBatch(20);
       
       if (result.placedCount > 0) {
         console.log(

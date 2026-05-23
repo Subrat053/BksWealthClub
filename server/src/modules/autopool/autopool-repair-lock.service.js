@@ -49,6 +49,9 @@ export async function releaseAutopoolRepairLock({ lockedBy, session = null }) {
 }
 
 export async function isAutopoolRepairLocked(session = null) {
+  if (global.bypassAutopoolRepairLock === true) {
+    return false;
+  }
   const lock = await AutopoolRepairLock.findOne({
     key: AUTOPOOL_REPAIR_LOCK_KEY,
     isLocked: true,

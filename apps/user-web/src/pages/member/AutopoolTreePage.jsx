@@ -85,6 +85,9 @@ const TreeNode = ({
         <p className="text-[8px] font-bold text-amber-100/90 mt-0.5 truncate leading-tight">
           {ownerName}
         </p>
+        <span className="inline-block text-[6.5px] text-amber-400 font-mono font-bold bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 mt-1 scale-95">
+          Q-Serial: {node.queueSerialNo || "N/A"}
+        </span>
 
         <div className="mt-1.5 flex justify-center gap-1">
           {[1, 2, 3].map((i) => (
@@ -110,6 +113,12 @@ const TreeNode = ({
               <span className="text-amber-100/40">ID</span>
               <span className="text-amber-100/80 font-mono">
                 {ownerMemberId}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-amber-100/40">Q-Serial</span>
+              <span className="text-amber-100/80 font-mono">
+                {node.queueSerialNo || "N/A"}
               </span>
             </div>
             <div className="flex justify-between">

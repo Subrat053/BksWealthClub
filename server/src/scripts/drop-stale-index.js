@@ -19,9 +19,32 @@ async function dropIndex() {
     console.log("✅ Dropped stale index: mainUserId_1_round_1_sequence_1 on rebirthids");
   } catch (err) {
     if (err.code === 27 || /index not found/i.test(err.message)) {
-      console.log("ℹ️  Index already gone (or never existed). Nothing to drop.");
+      console.log("ℹ️  Index mainUserId_1_round_1_sequence_1 already gone on rebirthids.");
     } else {
-      console.error("❌ Error dropping index:", err.message);
+      console.error("❌ Error dropping index on rebirthids:", err.message);
+    }
+  }
+
+  // Drop the stale index on autopoolqueues
+  try {
+    await db.collection("autopoolqueues").dropIndex("rebirthNodeId_1");
+    console.log("✅ Dropped stale index: rebirthNodeId_1 on autopoolqueues");
+  } catch (err) {
+    if (err.code === 27 || /index not found/i.test(err.message)) {
+      console.log("ℹ️  Index rebirthNodeId_1 already gone on autopoolqueues.");
+    } else {
+      console.error("❌ Error dropping index on autopoolqueues:", err.message);
+    }
+  }
+
+  try {
+    await db.collection("autopoolqueues").dropIndex("queueSerialNo_1");
+    console.log("✅ Dropped stale index: queueSerialNo_1 on autopoolqueues");
+  } catch (err) {
+    if (err.code === 27 || /index not found/i.test(err.message)) {
+      console.log("ℹ️  Index queueSerialNo_1 already gone on autopoolqueues.");
+    } else {
+      console.error("❌ Error dropping index queueSerialNo_1 on autopoolqueues:", err.message);
     }
   }
 
