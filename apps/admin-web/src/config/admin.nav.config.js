@@ -25,6 +25,7 @@ export const adminNav = [
   { label: "Pool Fund", path: "/admin/autopool/fund", icon: Wallet },
   { label: "Deposits", path: "/admin/deposits", icon: CreditCard },
   { label: "Withdrawals", path: "/admin/withdrawals", icon: CircleDollarSign },
+  { label: "Wallet Transfers", path: "/admin/wallet-transfers", icon: CreditCard },
   { label: "Income Logs", path: "/admin/income/logs", icon: FileText },
   { label: "Income Rules", path: "/admin/income/rules", icon: FileText },
   { label: "Funds", path: "/admin/funds", icon: Wallet },

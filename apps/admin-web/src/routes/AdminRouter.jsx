@@ -14,6 +14,7 @@ import AutoPoolFundPage from "../pages/autopool/AutoPoolFundPage";
 import IndividualAutoPoolPage from "../pages/autopool/IndividualAutoPoolPage";
 import DepositRequestsPage from "../pages/deposits/DepositRequestsPage";
 import WithdrawalRequestsPage from "../pages/withdrawals/WithdrawalRequestsPage";
+import WalletTransfersReportPage from "../pages/transfers/WalletTransfersReportPage";
 import IncomeLogsPage from "../pages/income/IncomeLogsPage";
 import IncomeRulesPage from "../pages/income/IncomeRulesPage";
 import FundsPage from "../pages/income/FundsPage";
@@ -49,6 +50,7 @@ export const adminRouter = createBrowserRouter([
           { path: "autopool/fund", element: <AutoPoolFundPage /> },
           { path: "deposits", element: <DepositRequestsPage /> },
           { path: "withdrawals", element: <WithdrawalRequestsPage /> },
+          { path: "wallet-transfers", element: <WalletTransfersReportPage /> },
           { path: "income/logs", element: <IncomeLogsPage /> },
           { path: "income/rules", element: <IncomeRulesPage /> },
           { path: "funds", element: <FundsPage /> },

@@ -15,6 +15,13 @@ import {
   sendVerificationLink,
   getAdminSummary,
 } from "./admin.controller.js";
+import {
+  getAdminWithdrawalsController,
+  approveAdminWithdrawalController,
+  rejectAdminWithdrawalController,
+  markPaidAdminWithdrawalController,
+  getAdminWalletTransfersController,
+} from "../wallet/wallet.controller.js";
 
 import { Router } from "express";
 import { protect, adminOnly } from "../../middleware/auth.middleware.js";
@@ -42,3 +49,11 @@ adminRouter.patch("/users/:userId/status", updateUserStatus);
 adminRouter.patch("/users/:userId/reset-password", resetUserPassword);
 adminRouter.post("/users/:userId/reset-2fa", resetUserTwoFactor);
 adminRouter.delete("/users/:userId", deleteUser);
+
+// Admin Payout & Transfer Report routes
+adminRouter.get("/withdrawals", getAdminWithdrawalsController);
+adminRouter.patch("/withdrawals/:id/approve", approveAdminWithdrawalController);
+adminRouter.patch("/withdrawals/:id/reject", rejectAdminWithdrawalController);
+adminRouter.patch("/withdrawals/:id/mark-paid", markPaidAdminWithdrawalController);
+adminRouter.patch("/mark-paid", markPaidAdminWithdrawalController);
+adminRouter.get("/wallet-transfers", getAdminWalletTransfersController);

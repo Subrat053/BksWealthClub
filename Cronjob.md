@@ -27,4 +27,8 @@ bash
 
 tail -f logs/cron-seeder.log
 Once the database reaches 1,500 active users, the cron job will continue executing every minute, but will exit within milliseconds without taking any database actions.
-
+===============================
+i did 
+=========================================================================================
+*/2 * * * * cd /var/www/bks/server && /usr/bin/node scripts/seedIncrementalCron.js --batch=20 --target=1500 >> /var/www/logs/bks-cron/cron-seeder.log 2>&1 
+=============================================================

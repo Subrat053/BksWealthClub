@@ -11,6 +11,7 @@ import { incomeRouter } from "../modules/income/income.routes.js";
 import { depositRouter } from "../modules/deposit/deposit.routes.js";
 import { activationRouter } from "../modules/activation/activation.routes.js";
 import { withdrawalRouter } from "../modules/withdrawal/withdrawal.routes.js";
+import { walletRouter } from "../modules/wallet/wallet.routes.js";
 import { supportRouter } from "../modules/support/support.routes.js";
 import { cmsRouter } from "../modules/cms/cms.routes.js";
 import { dashboardRouter } from "../modules/dashboard/dashboard.routes.js";
@@ -47,6 +48,7 @@ apiRouter.use("/income", incomeRouter);
 |--------------------------------------------------------------------------
 */
 apiRouter.use("/deposits", depositRouter);
+apiRouter.use("/wallet", walletRouter);
 apiRouter.use("/activations", activationRouter);
 apiRouter.use("/withdrawals", withdrawalRouter);
 

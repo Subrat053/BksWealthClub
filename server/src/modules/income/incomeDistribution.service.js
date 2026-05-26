@@ -256,6 +256,10 @@ export async function distributeDepositIncome({ userId, depositId, depositDoc = 
           { upsert: true, session },
         );
 
+        // Call walletService hook for sponsor income
+        const { walletService } = await import("../wallet/wallet.service.js");
+        await walletService.creditSponsorIncome(sponsorUserId, SPONSOR_TOTAL, depositId, session);
+
         txnDocs.push({
           userId: sponsorUserId,
           fromUserId: userId,
@@ -346,6 +350,10 @@ export async function distributeDepositIncome({ userId, depositId, depositDoc = 
           { $inc: { withdrawableFund: rule.total } },
           { upsert: true, session },
         );
+
+        // Call walletService hook for level income
+        const { walletService } = await import("../wallet/wallet.service.js");
+        await walletService.creditLevelIncome(upline.userId, rule.total, depositId, session);
 
         txnDocs.push({
           userId: upline.userId,
@@ -811,13 +819,27 @@ export async function getUserWallet(userId) {
     0,
   );
 
+  const { getOrCreateSummary } = await import("../wallet/wallet.service.js");
+  const summary = await getOrCreateSummary(userId);
+
   return {
     ...wallet,
-    autopoolWithdrawableFund: autopoolFund?.withdrawableAutopoolFund || 0,
+    autopoolWithdrawableFund: summary.autopoolWithdrawableBalance,
     poolFundTotal: autopoolFund?.poolFundTotal || 0,
     reinvestmentFundTotal: autopoolFund?.reinvestmentFundTotal || 0,
-    directReferralIncome: totalDirectReferralIncome,
-    levelIncome: totalLevelIncome,
+    directReferralIncome: summary.sponsorIncomeBalance,
+    levelIncome: summary.levelIncomeBalance,
+
+    walletTransferReceivedBalance: summary.walletTransferReceivedBalance,
+    walletTransferSentBalance: summary.walletTransferSentBalance,
+    lockedWithdrawalBalance: summary.lockedWithdrawalBalance,
+    totalWithdrawableBalance: summary.totalWithdrawableBalance,
+    availableBalance: summary.availableBalance,
+    lifetimeWithdrawn: summary.lifetimeWithdrawn,
+    lifetimeAdminCharges: summary.lifetimeAdminCharges,
+    lifetimeTransferredOut: summary.lifetimeTransferredOut,
+    lifetimeTransferredIn: summary.lifetimeTransferredIn,
+
     rebirthWallets: rebirths.map((r) => ({
       rebirthCode: r.rebirthCode,
       sequenceNo: r.sequenceNo,

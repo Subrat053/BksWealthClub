@@ -193,6 +193,10 @@ export async function createUpgradeIdsForLevel(userId, level, session = null) {
     );
 
     createdIds.push(aliasDoc[0]);
+
+    // Call walletService hook for alias deduction
+    const { walletService } = await import("../wallet/wallet.service.js");
+    await walletService.debitAliasDeduction(userId, UPGRADE_ID_COST, aliasUser.memberId, session);
   }
 
   return createdIds;
@@ -332,6 +336,10 @@ export async function applyAutopoolFundCompletion(
     ],
     { session }
   );
+
+  // Call walletService hook for autopool credit
+  const { walletService } = await import("../wallet/wallet.service.js");
+  await walletService.creditAutopoolWithdrawable(userId, withdrawableCredit, sourceRebirthStr, session);
 
   // Apply Upgrade ID Deductions if level >= 4
   if (upgradeCount > 0) {
