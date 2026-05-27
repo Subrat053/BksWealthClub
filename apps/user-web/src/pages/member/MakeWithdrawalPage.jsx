@@ -231,31 +231,31 @@ export default function MakeWithdrawalPage() {
 
       {/* Available Balance Visual Summary Card */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1d2d54] to-[#121c37] p-5 shadow-xl">
-          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-cyan-500/10 blur-xl"></div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Available Balance</span>
-          <h2 className="mt-2 text-3xl font-extrabold text-white tracking-tight">
-            ${availableBal.toFixed(2)} <span className="text-sm font-medium text-cyan-400">USDT</span>
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#FFF4E5]/50 blur-xl"></div>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Available Balance</span>
+          <h2 className="mt-2 text-3xl font-extrabold text-slate-800 tracking-tight">
+            ${availableBal.toFixed(2)} <span className="text-sm font-bold text-[#E8A13F]">USDT</span>
           </h2>
-          <p className="mt-1 text-[11px] text-slate-400">Withdrawable income from Autopool, Sponsor & Level bonuses</p>
+          <p className="mt-1 text-[11px] text-slate-400 font-medium">Withdrawable income from Autopool, Sponsor & Level bonuses</p>
         </div>
 
         {summary && (
           <>
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#162947] to-[#0e1b30] p-5 shadow-xl">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Locked In Withdrawal</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-amber-400 tracking-tight">
-                ${summary.lockedWithdrawalBalance?.toFixed(2) || "0.00"} <span className="text-sm font-medium text-slate-400">USDT</span>
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Locked In Withdrawal</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-[#E8A13F] tracking-tight">
+                ${summary.lockedWithdrawalBalance?.toFixed(2) || "0.00"} <span className="text-sm font-bold text-[#E8A13F]">USDT</span>
               </h2>
-              <p className="mt-1 text-[11px] text-slate-400">Requested funds undergoing admin verification</p>
+              <p className="mt-1 text-[11px] text-slate-400 font-medium">Requested funds undergoing admin verification</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1e1d3e] to-[#131229] p-5 shadow-xl sm:col-span-2 lg:col-span-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Lifetime Paid Out</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-emerald-400 tracking-tight">
-                ${summary.lifetimeWithdrawn?.toFixed(2) || "0.00"} <span className="text-sm font-medium text-slate-400">USDT</span>
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2 lg:col-span-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Lifetime Paid Out</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-emerald-600 tracking-tight">
+                ${summary.lifetimeWithdrawn?.toFixed(2) || "0.00"} <span className="text-sm font-bold text-emerald-600">USDT</span>
               </h2>
-              <p className="mt-1 text-[11px] text-slate-400">Total processed withdrawals successfully settled</p>
+              <p className="mt-1 text-[11px] text-slate-400 font-medium">Total processed withdrawals successfully settled</p>
             </div>
           </>
         )}
@@ -264,9 +264,9 @@ export default function MakeWithdrawalPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main interactive form container */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-[#151c2c] overflow-hidden shadow-2xl">
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
             {/* Header Tabs switcher */}
-            <div className="flex border-b border-white/10 bg-[#111724]">
+            <div className="flex border-b border-slate-200 bg-slate-50">
               <button
                 onClick={() => {
                   setActiveTab("withdraw");
@@ -274,8 +274,8 @@ export default function MakeWithdrawalPage() {
                 }}
                 className={`flex-1 py-4 text-center font-bold transition-all duration-300 ${
                   activeTab === "withdraw"
-                    ? "bg-[#151c2c] text-cyan-400 border-b-2 border-cyan-400"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "bg-white text-[#E8A13F] border-b-2 border-[#F4B860]"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                 }`}
               >
                 Withdraw Funds (USDT)
@@ -287,8 +287,8 @@ export default function MakeWithdrawalPage() {
                 }}
                 className={`flex-1 py-4 text-center font-bold transition-all duration-300 ${
                   activeTab === "transfer"
-                    ? "bg-[#151c2c] text-cyan-400 border-b-2 border-cyan-400"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "bg-white text-[#E8A13F] border-b-2 border-[#F4B860]"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                 }`}
               >
                 Peer-to-Peer Wallet Transfer
@@ -306,7 +306,7 @@ export default function MakeWithdrawalPage() {
                         onChange={(e) =>
                           setWithdrawForm((prev) => ({ ...prev, amount: e.target.value }))
                         }
-                        className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
                         placeholder="Min 10 USDT"
                         type="number"
                         min="10"
@@ -320,7 +320,7 @@ export default function MakeWithdrawalPage() {
                         onChange={(e) =>
                           setWithdrawForm((prev) => ({ ...prev, network: e.target.value }))
                         }
-                        className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
                       >
                         <option value="TRC20">USDT - TRC20 (Recommended)</option>
                         <option value="BEP20">USDT - BEP20 (BSC)</option>
@@ -335,7 +335,7 @@ export default function MakeWithdrawalPage() {
                           onChange={(e) =>
                             setWithdrawForm((prev) => ({ ...prev, walletAddress: e.target.value }))
                           }
-                          className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400 font-mono text-sm"
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 font-mono text-sm"
                           placeholder="Paste blockchain wallet address"
                         />
                       </FormField>
@@ -348,7 +348,7 @@ export default function MakeWithdrawalPage() {
                           onChange={(e) =>
                             setWithdrawForm((prev) => ({ ...prev, userNote: e.target.value }))
                           }
-                          className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400"
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
                           placeholder="Description for your audit logs"
                         />
                       </FormField>
@@ -356,18 +356,18 @@ export default function MakeWithdrawalPage() {
 
                     {/* Live calculations */}
                     {wAmount > 0 && (
-                      <div className="sm:col-span-2 p-4 rounded-xl border border-cyan-500/10 bg-cyan-500/5 text-xs grid grid-cols-3 gap-2 text-slate-300">
+                      <div className="sm:col-span-2 p-4 rounded-xl border border-[#F4B860]/30 bg-[#FFF4E5] text-xs grid grid-cols-3 gap-2 text-slate-700">
                         <div>
-                          <p className="text-slate-400">Admin processing fee (5%)</p>
-                          <p className="text-sm font-bold text-cyan-400">${adminCharge.toFixed(2)} USDT</p>
+                          <p className="text-slate-500 font-medium">Admin processing fee (5%)</p>
+                          <p className="text-sm font-bold text-slate-855">${adminCharge.toFixed(2)} USDT</p>
                         </div>
                         <div>
-                          <p className="text-slate-400">Total Locked Debit</p>
-                          <p className="text-sm font-bold text-amber-400">${netDebit.toFixed(2)} USDT</p>
+                          <p className="text-slate-500 font-medium">Total Locked Debit</p>
+                          <p className="text-sm font-bold text-[#E8A13F]">${netDebit.toFixed(2)} USDT</p>
                         </div>
                         <div>
-                          <p className="text-slate-400">Remaining Balance</p>
-                          <p className={`text-sm font-bold ${availableBal - netDebit < 20 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          <p className="text-slate-500 font-medium">Remaining Balance</p>
+                          <p className={`text-sm font-bold ${availableBal - netDebit < 20 ? 'text-rose-600' : 'text-emerald-700'}`}>
                             ${(availableBal - netDebit).toFixed(2)} USDT
                           </p>
                         </div>
@@ -385,25 +385,25 @@ export default function MakeWithdrawalPage() {
                             onChange={(e) =>
                               setTransferForm((prev) => ({ ...prev, memberId: e.target.value }))
                             }
-                            className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] pl-4 pr-12 text-white outline-none focus:border-cyan-400 uppercase font-semibold"
+                            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 uppercase font-semibold"
                             placeholder="e.g. BKS00001"
                           />
                           {validatingReceiver && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-400 text-xs animate-pulse">
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#E8A13F] text-xs animate-pulse font-bold">
                               Validating...
                             </div>
                           )}
                         </div>
                         {receiverName && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Receiver Account Name: <span className="font-bold text-white ml-0.5">{receiverName}</span>
+                            Receiver Account Name: <span className="font-extrabold text-emerald-800 ml-0.5">{receiverName}</span>
                           </div>
                         )}
                         {receiverError && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border border-rose-500/20 bg-rose-500/10 text-rose-400">
+                          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-rose-200 bg-rose-50 text-rose-700">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -419,7 +419,7 @@ export default function MakeWithdrawalPage() {
                         onChange={(e) =>
                           setTransferForm((prev) => ({ ...prev, amount: e.target.value }))
                         }
-                        className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
                         placeholder="Enter amount"
                         type="number"
                         min="1"
@@ -433,21 +433,21 @@ export default function MakeWithdrawalPage() {
                         onChange={(e) =>
                           setTransferForm((prev) => ({ ...prev, note: e.target.value }))
                         }
-                        className="h-12 w-full rounded-xl border border-white/10 bg-[#1f293d] px-4 text-white outline-none focus:border-cyan-400"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
                         placeholder="Note receiver will see"
                       />
                     </FormField>
 
                     {/* Live calculations */}
                     {Number(transferForm.amount) > 0 && (
-                      <div className="sm:col-span-2 p-4 rounded-xl border border-cyan-500/10 bg-cyan-500/5 text-xs grid grid-cols-2 gap-2 text-slate-300">
+                      <div className="sm:col-span-2 p-4 rounded-xl border border-[#F4B860]/30 bg-[#FFF4E5] text-xs grid grid-cols-2 gap-2 text-slate-700">
                         <div>
-                          <p className="text-slate-400">Internal Transfer Fee</p>
-                          <p className="text-sm font-bold text-emerald-400">0.00 USDT (FREE)</p>
+                          <p className="text-slate-500 font-medium">Internal Transfer Fee</p>
+                          <p className="text-sm font-bold text-emerald-700">0.00 USDT (FREE)</p>
                         </div>
                         <div>
-                          <p className="text-slate-400">Remaining Balance</p>
-                          <p className={`text-sm font-bold ${availableBal - Number(transferForm.amount) < 20 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          <p className="text-slate-500 font-medium">Remaining Balance</p>
+                          <p className={`text-sm font-bold ${availableBal - Number(transferForm.amount) < 20 ? 'text-rose-600' : 'text-emerald-700'}`}>
                             ${(availableBal - Number(transferForm.amount)).toFixed(2)} USDT
                           </p>
                         </div>
@@ -459,16 +459,16 @@ export default function MakeWithdrawalPage() {
                 {/* 2FA Status Notice Box */}
                 <div className={`p-4 rounded-xl border text-xs leading-relaxed ${
                   twoFactorEnabled
-                    ? "border-emerald-500/20 bg-emerald-500/5 text-slate-200"
-                    : "border-amber-500/20 bg-amber-500/5 text-slate-200"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-amber-200 bg-amber-50 text-amber-800"
                 }`}>
                   {twoFactorEnabled ? (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 font-medium">
                       <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
                       2FA Google Authenticator is enabled. A verification code will be requested upon submission.
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 font-medium">
                       <span className="h-2 w-2 rounded-full bg-amber-500"></span>
                       Google Authenticator (2FA) is not enabled. Go to Profile Settings to activate it for maximum account security.
                     </span>
@@ -478,7 +478,7 @@ export default function MakeWithdrawalPage() {
                 {/* Action Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold rounded-xl shadow-lg transition-transform active:scale-95 duration-200 mt-2"
+                  className="w-full h-12 text-base font-bold rounded-xl shadow-xs transition-transform active:scale-95 duration-200 mt-2"
                   variant={activeTab === "withdraw" ? "danger" : "default"}
                   disabled={loading}
                 >
@@ -499,10 +499,10 @@ export default function MakeWithdrawalPage() {
 
                 {/* Operation result status banner */}
                 {status.message && (
-                  <div className={`mt-4 p-4 rounded-xl border text-sm text-center ${
+                  <div className={`mt-4 p-4 rounded-xl border text-sm text-center font-bold ${
                     status.success
-                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                      : "border-rose-500/20 bg-rose-500/10 text-rose-400"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-rose-200 bg-rose-50 text-rose-700"
                   }`}>
                     {status.message}
                   </div>
@@ -515,32 +515,32 @@ export default function MakeWithdrawalPage() {
         {/* Sidebar Guidelines Panel */}
         <div className="space-y-6">
           <Card title="System Guidelines">
-            <ul className="space-y-4 text-xs text-slate-300 leading-relaxed">
+            <ul className="space-y-4 text-xs text-slate-600 leading-relaxed">
               <li className="flex gap-2">
-                <span className="text-cyan-400 font-bold">1.</span>
+                <span className="text-[#E8A13F] font-bold">1.</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Post-Debit Minimum Balance</strong>
-                  Both actions (withdrawals and P2P transfers) require that your available wallet balance remains at least <span className="text-cyan-300 font-bold">20 USDT</span> after the debit is completed.
+                  <strong className="text-slate-800 block mb-0.5 font-bold">Post-Debit Minimum Balance</strong>
+                  Both actions (withdrawals and P2P transfers) require that your available wallet balance remains at least <span className="text-[#E8A13F] font-bold">20 USDT</span> after the debit is completed.
                 </div>
               </li>
               <li className="flex gap-2">
-                <span className="text-cyan-400 font-bold">2.</span>
+                <span className="text-[#E8A13F] font-bold">2.</span>
                 <div>
-                  <strong className="text-white block mb-0.5">5% Withdrawal Fee</strong>
+                  <strong className="text-slate-800 block mb-0.5 font-bold">5% Withdrawal Fee</strong>
                   All withdrawals carry a 5% admin charge. This fee is automatically computed and locked at the time you create the request, and permanently settled once the request is PAID.
                 </div>
               </li>
               <li className="flex gap-2">
-                <span className="text-cyan-400 font-bold">3.</span>
+                <span className="text-[#E8A13F] font-bold">3.</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Instant Direct Transfers</strong>
+                  <strong className="text-slate-800 block mb-0.5 font-bold">Instant Direct Transfers</strong>
                   Platform peer-to-peer transfers are instant. Ensure the Receiver Member ID is verified against the receiver's real name before confirming to avoid transfer errors.
                 </div>
               </li>
               <li className="flex gap-2">
-                <span className="text-cyan-400 font-bold">4.</span>
+                <span className="text-[#E8A13F] font-bold">4.</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Approval Processing Times</strong>
+                  <strong className="text-slate-800 block mb-0.5 font-bold">Approval Processing Times</strong>
                   Withdrawals are audited manually by our finance team and require blockchain Transaction Hash registration. Processing can take up to 24 hours.
                 </div>
               </li>

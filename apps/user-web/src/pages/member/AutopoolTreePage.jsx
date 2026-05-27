@@ -44,48 +44,48 @@ const TreeNode = ({
       <div
         className={`group relative px-2 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.04] ${
           treeDepth === 0
-            ? "bg-gradient-to-br from-amber-500/20 via-yellow-500/5 to-[#091a39]/95 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.35)]"
+            ? "bg-[#FFF4E5] border-[#F4B860] shadow-[0_0_15px_rgba(244,184,96,0.25)] text-[#111827]"
             : isCompleted
-            ? "bg-linear-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/30"
-            : "bg-[#091a39]/95 border-amber-500/20"
-        } w-[90px] text-center z-20 hover:z-50 hover:border-amber-500/40 flex-shrink-0`}
+            ? "bg-emerald-50 border-emerald-500/30 text-[#10B981]"
+            : "bg-white border-[#E5E7EB] text-[#111827]"
+        } w-[90px] text-center z-20 hover:z-50 hover:border-[#F4B860]/40 flex-shrink-0`}
       >
         {treeDepth > 0 && (
-          <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-500/50 border border-[#08142f] z-30" />
+          <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#F4B860] border border-white z-30" />
         )}
 
         <div
           className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full text-[7px] font-bold uppercase tracking-wider ${
             treeDepth > 0
-              ? "bg-amber-600 text-white"
-              : "bg-linear-to-r from-amber-400 to-yellow-600 text-white"
+              ? "bg-[#111827] text-white"
+              : "bg-[#F4B860] text-[#111827] font-bold"
           }`}
         >
           {treeDepth > 0 ? `D${treeDepth}` : "ROOT"}
         </div>
 
         {isCompleted && (
-          <div className="absolute -top-1.5 -right-1 px-1 py-px rounded text-[6px] font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-500/30">
+          <div className="absolute -top-1.5 -right-1 px-1 py-px rounded text-[6px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-500/20">
             ✓
           </div>
         )}
 
-        <div className="mt-2 mx-auto flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-amber-400/80 bg-[#08142f]">
+        <div className="mt-2 mx-auto flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-[#F4B860]/80 bg-[#F8FAFC]">
           <svg
-            className="w-3.5 h-3.5 text-amber-400"
+            className="w-3.5 h-3.5 text-[#F4B860]"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
           </svg>
         </div>
-        <p className="text-[7px] font-mono font-semibold text-amber-200/45 mt-1 truncate leading-none">
+        <p className="text-[7px] font-mono font-semibold text-[#6B7280] mt-1 truncate leading-none">
           {ownerMemberId}
         </p>
-        <p className="text-[8px] font-bold text-amber-100/90 mt-0.5 truncate leading-tight">
+        <p className="text-[8px] font-bold text-[#111827] mt-0.5 truncate leading-tight">
           {ownerName}
         </p>
-        <span className="inline-block text-[6.5px] text-amber-400 font-mono font-bold bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 mt-1 scale-95">
+        <span className="inline-block text-[6.5px] text-[#E8A13F] font-mono font-bold bg-[#FFF4E5] px-1 py-0.5 rounded border border-[#F4B860]/20 mt-1 scale-95">
           Q-Serial: {node.queueSerialNo || "N/A"}
         </span>
 
@@ -96,7 +96,7 @@ const TreeNode = ({
               className={`w-2 h-2 rounded-full transition-all ${
                 i <= childCount
                   ? "bg-linear-to-tr from-emerald-400 to-teal-500"
-                  : "bg-white/8 border border-white/10"
+                  : "bg-[#F3F4F6] border border-[#E5E7EB]"
               }`}
               title={`${i <= childCount ? "Filled" : "Empty"}`}
             />
@@ -104,44 +104,44 @@ const TreeNode = ({
         </div>
 
         {/* Hover tooltip — high z-index to stay above siblings */}
-        <div className="pointer-events-none absolute left-full top-1/2 ml-2 hidden w-[160px] -translate-y-1/2 rounded-xl border border-amber-500/20 bg-[#101d40]/95 p-2 text-left shadow-lg backdrop-blur-md group-hover:block z-[100]">
-          <h5 className="text-[10px] font-bold text-white truncate">
+        <div className="pointer-events-none absolute left-full top-1/2 ml-2 hidden w-[160px] -translate-y-1/2 rounded-xl border border-[#E5E7EB] bg-white p-2.5 text-left shadow-lg group-hover:block z-[100] text-[#111827]">
+          <h5 className="text-[10px] font-bold text-[#111827] truncate">
             {ownerName}
           </h5>
           <div className="mt-1 space-y-0.5 text-[8px]">
             <div className="flex justify-between">
-              <span className="text-amber-100/40">ID</span>
-              <span className="text-amber-100/80 font-mono">
+              <span className="text-[#6B7280]">ID</span>
+              <span className="text-[#111827] font-mono font-semibold">
                 {ownerMemberId}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-amber-100/40">Q-Serial</span>
-              <span className="text-amber-100/80 font-mono">
+              <span className="text-[#6B7280]">Q-Serial</span>
+              <span className="text-[#111827] font-mono font-semibold">
                 {node.queueSerialNo || "N/A"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-amber-100/40">Status</span>
+              <span className="text-[#6B7280]">Status</span>
               <span
-                className={isCompleted ? "text-emerald-300" : "text-amber-300"}
+                className={isCompleted ? "text-[#10B981] font-bold" : "text-[#F59E0B] font-bold"}
               >
                 {node.status || "PENDING"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-amber-100/40">Children</span>
-              <span className="text-amber-100/80">{childCount}/3</span>
+              <span className="text-[#6B7280]">Children</span>
+              <span className="text-[#111827] font-bold">{childCount}/3</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-amber-100/40">Depth</span>
-              <span className="text-amber-100/80">{treeDepth}</span>
+              <span className="text-[#6B7280]">Depth</span>
+              <span className="text-[#111827] font-bold">{treeDepth}</span>
             </div>
           </div>
         </div>
 
         {(renderChildren || showExpandBtn) && (
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-500 border border-[#08142f] z-30" />
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#F4B860] border border-white z-30" />
         )}
       </div>
 
@@ -152,7 +152,7 @@ const TreeNode = ({
             e.stopPropagation();
             onToggleExpand(node._id.toString());
           }}
-          className="mt-1.5 px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-wider border cursor-pointer bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20 z-30"
+          className="mt-1.5 px-2 py-0.5 rounded-full text-[7px] font-bold uppercase tracking-wider border cursor-pointer bg-[#FFF4E5] text-[#E8A13F] border border-[#F4B860]/20 hover:bg-[#FFF4E5]/80 z-30"
         >
           {isExpanded ? "▲ Hide" : "▼ Expand"}
         </button>
@@ -160,11 +160,11 @@ const TreeNode = ({
 
       {renderChildren && (
         <div className="flex flex-col items-center w-full mt-6 relative">
-          <div className="w-px h-6 bg-amber-500/30 absolute -top-6" />
+          <div className="w-px h-6 bg-[#E5E7EB] absolute -top-6" />
           <div className="flex justify-center gap-3 md:gap-5 relative w-full pt-3 flex-nowrap">
             {children.length > 1 && (
               <div
-                className="absolute top-0 h-px bg-amber-500/20"
+                className="absolute top-0 h-px bg-[#E5E7EB]"
                 style={{
                   left: `${100 / (children.length * 2)}%`,
                   right: `${100 / (children.length * 2)}%`,
@@ -173,7 +173,7 @@ const TreeNode = ({
             )}
             {children.map((child) => (
               <div key={child.node._id} className="relative flex-shrink-0">
-                <div className="w-px h-3 bg-amber-500/20 absolute -top-3 left-1/2 -translate-x-1/2" />
+                <div className="w-px h-3 bg-[#E5E7EB] absolute -top-3 left-1/2 -translate-x-1/2" />
                 <TreeNode
                   node={child.node}
                   visualChildrenMap={visualChildrenMap}

@@ -119,7 +119,7 @@ const AutoPoolQueuePage = () => {
           <button 
             onClick={handleDownloadExcel}
             disabled={downloading || loading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 disabled:opacity-50 font-semibold cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50 font-bold cursor-pointer text-sm"
           >
             <Download size={18} />
             {downloading ? "Exporting..." : "Download Excel"}
@@ -127,44 +127,44 @@ const AutoPoolQueuePage = () => {
           <button 
             onClick={handleProcessQueue}
             disabled={loading || downloading}
-            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 font-semibold"
+            className="px-6 py-2.5 bg-[#111827] text-white rounded-xl hover:bg-[#1F2937] transition-all shadow-sm disabled:opacity-50 font-bold text-sm cursor-pointer"
           >
             Process Queue Now
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
         <div className="w-full max-w-sm">
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by name, member ID or pool ID..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-indigo-400 focus:bg-white transition-all"
+            className="w-full rounded-xl border-none bg-[#F8FAFC] px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#F4B860]/20 transition-all"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Serial No.</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pool ID</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Placement Serial No.</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Owner</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gen / Level</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Matrix Parent</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Children</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed At</th>
+              <tr className="bg-[#F8FAFC] border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Serial No.</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Pool ID</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Placement Serial No.</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Owner</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Gen / Level</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Timestamp</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Matrix Parent</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Children</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Completed At</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
                   <td colSpan="11" className="px-6 py-10 text-center text-slate-400">Loading queue...</td>
@@ -175,21 +175,21 @@ const AutoPoolQueuePage = () => {
                 </tr>
               ) : (
                 queue.map((entry, index) => (
-                  <tr key={entry._id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={entry._id} className="hover:bg-[#FFF4E5]/40 transition-colors">
                     <td className="px-6 py-4 text-sm text-slate-600">{(currentPage - 1) * 100 + index + 1}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{entry.rebirthCode}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-[#111827]">{entry.rebirthCode}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{entry.placementSerialNo ?? "-"}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <div>{entry.ownerUserId?.fullName || "N/A"}</div>
+                      <div className="font-bold text-[#111827]">{entry.ownerUserId?.fullName || "N/A"}</div>
                       <div className="text-xs text-slate-400">{entry.ownerUserId?.memberId}</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      <span className={`px-2.5 py-0.5 rounded text-xs font-bold border ${
                         entry.nodeType === "ROOT"
-                          ? "bg-orange-100 text-orange-700 ring-1 ring-orange-300"
+                          ? "bg-[#FFF4E5] text-[#E8A13F] border-[#F4B860]/20"
                           : entry.generation === 0
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-purple-100 text-purple-700"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200/40"
+                          : "bg-purple-50 text-purple-700 border border-purple-200/40"
                       }`}>
                         {entry.nodeType === "ROOT" ? "ROOT" : `LEVEL ${entry.generation}`}
                       </span>
@@ -199,10 +199,10 @@ const AutoPoolQueuePage = () => {
                       {formatDate(entry.queueTimestamp)}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium 
-                        ${entry.status === "PENDING" ? "bg-amber-100 text-amber-700" : 
-                          entry.status === "PLACED" ? "bg-indigo-100 text-indigo-700" : 
-                          "bg-emerald-100 text-emerald-700"}`}>
+                      <span className={`px-2.5 py-0.5 rounded text-xs font-bold border 
+                        ${entry.status === "PENDING" ? "bg-amber-50 text-[#F59E0B] border border-[#F59E0B]/25" : 
+                          entry.status === "PLACED" ? "bg-[#FFF4E5] text-[#E8A13F] border border-[#F4B860]/20" : 
+                          "bg-emerald-50 text-[#10B981] border border-[#10B981]/25"}`}>
                         {entry.status}
                       </span>
                     </td>
@@ -220,19 +220,19 @@ const AutoPoolQueuePage = () => {
 
         {/* Pagination Controls */}
         {!loading && queue.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-slate-200">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Showing <span className="text-slate-900 font-bold">{(currentPage - 1) * 100 + 1}</span> to{" "}
-              <span className="text-slate-900 font-bold">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-slate-100">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              Showing <span className="text-slate-900 font-black">{(currentPage - 1) * 100 + 1}</span> to{" "}
+              <span className="text-slate-900 font-black">
                 {Math.min(currentPage * 100, totalEntries)}
               </span>{" "}
-              of <span className="text-slate-900 font-bold">{totalEntries}</span> entries
+              of <span className="text-slate-900 font-black">{totalEntries}</span> entries
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => fetchQueue(1)}
                 disabled={currentPage === 1}
-                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-[#FFF4E5]/40 disabled:opacity-40 disabled:hover:bg-transparent transition-all cursor-pointer"
                 title="First Page"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +242,7 @@ const AutoPoolQueuePage = () => {
               <button
                 onClick={() => fetchQueue(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1"
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-[#FFF4E5]/40 disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1 cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -267,10 +267,10 @@ const AutoPoolQueuePage = () => {
                   <button
                     key={pageNum}
                     onClick={() => fetchQueue(pageNum)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       currentPage === pageNum
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
-                        : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "bg-[#F4B860] text-[#111827] font-bold shadow-sm"
+                        : "border border-slate-200 text-slate-600 hover:bg-[#FFF4E5]/40"
                     }`}
                   >
                     {pageNum}
@@ -281,7 +281,7 @@ const AutoPoolQueuePage = () => {
               <button
                 onClick={() => fetchQueue(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1"
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-[#FFF4E5]/40 disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1 cursor-pointer"
               >
                 Next
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,7 +291,7 @@ const AutoPoolQueuePage = () => {
               <button
                 onClick={() => fetchQueue(totalPages)}
                 disabled={currentPage === totalPages}
-                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-[#FFF4E5]/40 disabled:opacity-40 disabled:hover:bg-transparent transition-all cursor-pointer"
                 title="Last Page"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

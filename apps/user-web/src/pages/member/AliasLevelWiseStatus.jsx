@@ -11,22 +11,22 @@ const formatDate = (value) => {
 
 const statusClass = (status) => {
   const normalized = String(status || "").toLowerCase();
-  if (normalized === "completed") return "text-emerald-300 border-emerald-500/20 bg-emerald-500/10";
-  if (normalized === "in progress") return "text-amber-300 border-amber-500/20 bg-amber-500/10";
-  return "text-slate-300 border-white/10 bg-white/5";
+  if (normalized === "completed") return "text-emerald-700 border-emerald-200 bg-emerald-50";
+  if (normalized === "in progress") return "text-[#9A6A1F] border-[#F4B860]/40 bg-[#FFF4E5]";
+  return "text-slate-600 border-slate-200 bg-slate-50";
 };
 
 export default function AliasLevelWiseStatus({ levelWiseStatus = [] }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_12px_28px_rgba(5,10,35,0.25)]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-bold text-white">Level-wise Status</h3>
+        <h3 className="text-lg font-bold text-slate-900">Level-wise Status</h3>
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Alias completion map</p>
       </div>
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.2em] text-slate-400">
+            <tr className="border-b border-slate-200 text-[11px] uppercase tracking-[0.2em] text-slate-500">
               <th className="px-3 py-3">Level</th>
               <th className="px-3 py-3">Required</th>
               <th className="px-3 py-3">Generated</th>
@@ -36,10 +36,10 @@ export default function AliasLevelWiseStatus({ levelWiseStatus = [] }) {
               <th className="px-3 py-3">Completed At</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
+          <tbody className="divide-y divide-slate-100">
             {levelWiseStatus.map((level) => (
-              <tr key={level.level} className="text-slate-200">
-                <td className="px-3 py-3 font-semibold">{level.level}</td>
+              <tr key={level.level} className="text-slate-700 hover:bg-slate-50 transition">
+                <td className="px-3 py-3 font-semibold text-slate-900">{level.level}</td>
                 <td className="px-3 py-3">{level.requiredCount}</td>
                 <td className="px-3 py-3">{level.generatedCount}</td>
                 <td className="px-3 py-3">{level.completedCount}</td>

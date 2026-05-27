@@ -296,14 +296,14 @@ export default function WalletIncomePage() {
   // Status Colors for history
   const getStatusBadge = (status) => {
     const colors = {
-      PENDING_ADMIN_APPROVAL: "bg-amber-400/10 text-amber-300 border-amber-400/30",
-      APPROVED: "bg-blue-400/10 text-blue-300 border-blue-400/30",
-      PAID: "bg-emerald-400/10 text-emerald-300 border-emerald-400/30",
-      REJECTED: "bg-rose-400/10 text-rose-300 border-rose-400/30",
-      FAILED: "bg-rose-400/10 text-rose-300 border-rose-400/30",
+      PENDING_ADMIN_APPROVAL: "bg-[#FFF4E5] text-[#E8A13F] border-[#F4B860]/40 font-bold",
+      APPROVED: "bg-blue-50 text-blue-700 border-blue-250 font-bold",
+      PAID: "bg-emerald-50 text-emerald-700 border-emerald-250 font-bold",
+      REJECTED: "bg-rose-50 text-rose-700 border-rose-250 font-bold",
+      FAILED: "bg-rose-50 text-rose-700 border-rose-250 font-bold",
     };
     return (
-      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${colors[status] || "bg-slate-400/10 text-slate-300 border-slate-400/30"}`}>
+      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${colors[status] || "bg-slate-50 text-slate-500 border-slate-200"}`}>
         {status?.replace(/_/g, " ")}
       </span>
     );
@@ -311,18 +311,18 @@ export default function WalletIncomePage() {
 
   const getLedgerTypeBadge = (type) => {
     const colors = {
-      AUTOPOOL_WITHDRAWABLE_CREDIT: "bg-purple-400/10 text-purple-300 border-purple-400/20",
-      SPONSOR_INCOME_CREDIT: "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
-      LEVEL_INCOME_CREDIT: "bg-teal-400/10 text-teal-300 border-teal-400/20",
-      ALIAS_DEDUCTION: "bg-orange-400/10 text-orange-300 border-orange-400/20",
-      WITHDRAWAL_LOCK: "bg-amber-400/10 text-amber-300 border-amber-400/20",
-      WITHDRAWAL_PAID: "bg-indigo-400/10 text-indigo-300 border-indigo-400/20",
-      WITHDRAWAL_REJECTED_UNLOCK: "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
-      WALLET_TRANSFER_SENT: "bg-rose-400/10 text-rose-300 border-rose-400/20",
-      WALLET_TRANSFER_RECEIVED: "bg-sky-400/10 text-sky-300 border-sky-400/20",
+      AUTOPOOL_WITHDRAWABLE_CREDIT: "bg-purple-50 text-purple-700 border-purple-200 font-bold",
+      SPONSOR_INCOME_CREDIT: "bg-emerald-50 text-emerald-700 border-emerald-250 font-bold",
+      LEVEL_INCOME_CREDIT: "bg-teal-50 text-teal-700 border-teal-200 font-bold",
+      ALIAS_DEDUCTION: "bg-orange-50 text-orange-700 border-orange-200 font-bold",
+      WITHDRAWAL_LOCK: "bg-amber-50 text-[#F59E0B] border-amber-200 font-bold",
+      WITHDRAWAL_PAID: "bg-indigo-50 text-indigo-700 border-indigo-200 font-bold",
+      WITHDRAWAL_REJECTED_UNLOCK: "bg-emerald-50 text-emerald-700 border-emerald-250 font-bold",
+      WALLET_TRANSFER_SENT: "bg-rose-50 text-rose-700 border-rose-250 font-bold",
+      WALLET_TRANSFER_RECEIVED: "bg-sky-50 text-sky-700 border-sky-200 font-bold",
     };
     return (
-      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${colors[type] || "bg-slate-400/10 text-slate-300 border-slate-400/20"}`}>
+      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${colors[type] || "bg-slate-50 text-slate-500 border-slate-200"}`}>
         {type?.replace(/_/g, " ")}
       </span>
     );
@@ -337,7 +337,7 @@ export default function WalletIncomePage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-10 w-10 animate-spin text-cyan-400" />
+          <Loader2 className="h-10 w-10 animate-spin text-[#E8A13F]" />
           <p className="mt-4 text-sm text-slate-400">Loading your balance sheet...</p>
         </div>
       ) : (
@@ -346,66 +346,66 @@ export default function WalletIncomePage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             
             {/* Primary available Balance card with glowing border */}
-            <div className="relative overflow-hidden rounded-[20px] border border-cyan-400/40 bg-gradient-to-br from-[#0c2461]/90 to-[#07163e]/95 p-5 shadow-[0_0_25px_rgba(34,211,238,0.15)] transition hover:scale-[1.01]">
-              <div className="absolute top-4 right-4 rounded-xl bg-cyan-400/10 p-2 text-cyan-400">
+            <div className="relative overflow-hidden rounded-2xl border border-[#F4B860]/40 bg-[#FFF4E5] p-5 shadow-[#FFF4E5]/50 shadow-md transition hover:scale-[1.01]">
+              <div className="absolute top-4 right-4 rounded-xl bg-[#FFF4E5] border border-[#F4B860]/20 p-2 text-[#E8A13F]">
                 <Wallet size={20} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E8A13F]">
                 Available Wallet Balance
               </p>
-              <h3 className="mt-3 text-3xl font-extrabold text-white">
+              <h3 className="mt-3 text-3xl font-black text-slate-900 tracking-tight">
                 {formatMoney(s.availableBalance)}
               </h3>
-              <div className="mt-3 flex items-center justify-between border-t border-cyan-400/10 pt-2 text-xs text-slate-400">
+              <div className="mt-3 flex items-center justify-between border-t border-[#F4B860]/20 pt-2 text-xs text-slate-500 font-semibold">
                 <span>Min Required Balance</span>
-                <span className="font-bold text-cyan-200">20.00 USDT</span>
+                <span className="font-bold text-[#E8A13F]">20.00 USDT</span>
               </div>
             </div>
 
             {/* Total Withdrawable Balance card */}
-            <div className="overflow-hidden rounded-[20px] border border-white/10 bg-[#091a4a]/85 p-5 transition hover:scale-[1.01]">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:scale-[1.01]">
               <div className="flex justify-between items-start">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Total Withdrawable
                 </p>
-                <span className="text-emerald-400"><TrendingUp size={16} /></span>
+                <span className="text-emerald-600"><TrendingUp size={16} /></span>
               </div>
-              <h3 className="mt-3 text-2xl font-bold text-white">
+              <h3 className="mt-3 text-2xl font-black text-slate-900 tracking-tight">
                 {formatMoney(s.totalWithdrawableBalance)}
               </h3>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-550 font-medium">
                 Total earnings minus sent transfers.
               </p>
             </div>
 
             {/* Locked Withdrawal Balance card */}
-            <div className="overflow-hidden rounded-[20px] border border-white/10 bg-[#091a4a]/85 p-5 transition hover:scale-[1.01]">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:scale-[1.01]">
               <div className="flex justify-between items-start">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Locked Withdrawal
                 </p>
-                <span className="text-amber-400"><Lock size={16} /></span>
+                <span className="text-[#E8A13F]"><Lock size={16} /></span>
               </div>
-              <h3 className="mt-3 text-2xl font-bold text-amber-300">
+              <h3 className="mt-3 text-2xl font-black text-[#E8A13F] tracking-tight">
                 {formatMoney(s.lockedWithdrawalBalance)}
               </h3>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-550 font-medium">
                 Pending approval (includes 5% fee).
               </p>
             </div>
 
             {/* Lifetime payouts card */}
-            <div className="overflow-hidden rounded-[20px] border border-white/10 bg-[#091a4a]/85 p-5 transition hover:scale-[1.01]">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:scale-[1.01]">
               <div className="flex justify-between items-start">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Lifetime Payouts
                 </p>
-                <span className="text-blue-400"><DollarSign size={16} /></span>
+                <span className="text-blue-500"><DollarSign size={16} /></span>
               </div>
-              <h3 className="mt-3 text-2xl font-bold text-cyan-300">
+              <h3 className="mt-3 text-2xl font-black text-[#E8A13F] tracking-tight">
                 {formatMoney(s.lifetimeWithdrawn)}
               </h3>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-550 font-medium">
                 Paid out: {formatMoney(s.lifetimeWithdrawn)} (+ {formatMoney(s.lifetimeAdminCharges)} fee)
               </p>
             </div>
@@ -413,25 +413,25 @@ export default function WalletIncomePage() {
 
           {/* SECONDARY ROW: BALANCE BREAKDOWNS */}
           <div className="grid gap-4 grid-cols-2 md:grid-cols-5 text-center">
-            <div className="rounded-xl border border-white/5 bg-[#07133a]/60 p-3">
-              <p className="text-[10px] font-medium text-slate-400">Autopool Income</p>
-              <h4 className="text-lg font-bold text-emerald-400 mt-1">{formatMoney(s.autopoolWithdrawableBalance)}</h4>
+            <div className="rounded-xl border border-slate-150 bg-slate-50 p-3 shadow-xs">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Autopool Income</p>
+              <h4 className="text-lg font-bold text-emerald-600 mt-1">{formatMoney(s.autopoolWithdrawableBalance)}</h4>
             </div>
-            <div className="rounded-xl border border-white/5 bg-[#07133a]/60 p-3">
-              <p className="text-[10px] font-medium text-slate-400">Sponsor Income</p>
-              <h4 className="text-lg font-bold text-cyan-300 mt-1">{formatMoney(s.sponsorIncomeBalance)}</h4>
+            <div className="rounded-xl border border-slate-150 bg-slate-50 p-3 shadow-xs">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Sponsor Income</p>
+              <h4 className="text-lg font-bold text-[#E8A13F] mt-1">{formatMoney(s.sponsorIncomeBalance)}</h4>
             </div>
-            <div className="rounded-xl border border-white/5 bg-[#07133a]/60 p-3">
-              <p className="text-[10px] font-medium text-slate-400">Level Income</p>
-              <h4 className="text-lg font-bold text-teal-300 mt-1">{formatMoney(s.levelIncomeBalance)}</h4>
+            <div className="rounded-xl border border-slate-150 bg-slate-50 p-3 shadow-xs">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Level Income</p>
+              <h4 className="text-lg font-bold text-slate-700 mt-1">{formatMoney(s.levelIncomeBalance)}</h4>
             </div>
-            <div className="rounded-xl border border-white/5 bg-[#07133a]/60 p-3">
-              <p className="text-[10px] font-medium text-slate-400">Transferred In</p>
-              <h4 className="text-lg font-bold text-sky-400 mt-1">{formatMoney(s.walletTransferReceivedBalance)}</h4>
+            <div className="rounded-xl border border-slate-150 bg-slate-50 p-3 shadow-xs">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Transferred In</p>
+              <h4 className="text-lg font-bold text-slate-800 mt-1">{formatMoney(s.walletTransferReceivedBalance)}</h4>
             </div>
-            <div className="rounded-xl border border-white/5 bg-[#07133a]/60 p-3 col-span-2 md:col-span-1">
-              <p className="text-[10px] font-medium text-slate-400">Transferred Out</p>
-              <h4 className="text-lg font-bold text-rose-400 mt-1">{formatMoney(s.walletTransferSentBalance)}</h4>
+            <div className="rounded-xl border border-slate-150 bg-slate-50 p-3 shadow-xs col-span-2 md:col-span-1">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Transferred Out</p>
+              <h4 className="text-lg font-bold text-rose-600 mt-1">{formatMoney(s.walletTransferSentBalance)}</h4>
             </div>
           </div>
 
@@ -439,16 +439,16 @@ export default function WalletIncomePage() {
           <div className="grid gap-6 lg:grid-cols-12">
             
             {/* User Financial Actions Card (Withdrawal & transfers) */}
-            <div className="lg:col-span-8 overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-xl">
+            <div className="lg:col-span-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               
               {/* Card Action Tabs */}
-              <div className="flex border-b border-white/10 bg-[#07153d]/90">
+              <div className="flex border-b border-slate-200 bg-slate-50">
                 <button
                   onClick={() => setActiveActionTab("withdraw")}
-                  className={`flex flex-1 items-center justify-center gap-2 py-4 text-sm font-semibold tracking-wide transition ${
+                  className={`flex flex-1 items-center justify-center gap-2 py-4 text-sm font-bold tracking-wide transition ${
                     activeActionTab === "withdraw"
-                      ? "bg-cyan-500/10 text-cyan-300 border-b-2 border-cyan-400"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      ? "bg-[#FFF4E5] text-[#E8A13F] border-b-2 border-[#F4B860]"
+                      : "text-slate-550 hover:bg-slate-100 hover:text-slate-800"
                   }`}
                 >
                   <ArrowDownLeft size={16} />
@@ -456,10 +456,10 @@ export default function WalletIncomePage() {
                 </button>
                 <button
                   onClick={() => setActiveActionTab("transfer")}
-                  className={`flex flex-1 items-center justify-center gap-2 py-4 text-sm font-semibold tracking-wide transition ${
+                  className={`flex flex-1 items-center justify-center gap-2 py-4 text-sm font-bold tracking-wide transition ${
                     activeActionTab === "transfer"
-                      ? "bg-cyan-500/10 text-cyan-300 border-b-2 border-cyan-400"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      ? "bg-[#FFF4E5] text-[#E8A13F] border-b-2 border-[#F4B860]"
+                      : "text-slate-550 hover:bg-slate-100 hover:text-slate-800"
                   }`}
                 >
                   <Send size={16} />
@@ -477,7 +477,7 @@ export default function WalletIncomePage() {
                           <input
                             value={withdrawForm.amount}
                             onChange={(e) => setWithdrawForm(prev => ({ ...prev, amount: e.target.value }))}
-                            className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] pl-10 pr-4 text-white outline-none focus:border-cyan-400/80 transition"
+                            className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 pl-10 pr-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
                             placeholder="Enter amount"
                             type="number"
                             step="0.01"
@@ -491,7 +491,7 @@ export default function WalletIncomePage() {
                         <select
                           value={withdrawForm.network}
                           onChange={(e) => setWithdrawForm(prev => ({ ...prev, network: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] px-4 text-white outline-none focus:border-cyan-400/80 transition"
+                          className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm font-semibold"
                         >
                           <option value="TRC20">TRON (TRC20) — Recommended</option>
                           <option value="ERC20">Ethereum (ERC20)</option>
@@ -503,7 +503,7 @@ export default function WalletIncomePage() {
                         <input
                           value={withdrawForm.address}
                           onChange={(e) => setWithdrawForm(prev => ({ ...prev, address: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] px-4 text-white outline-none focus:border-cyan-400/80 transition"
+                          className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
                           placeholder="Paste your USDT wallet address here"
                           type="text"
                           required
@@ -514,7 +514,7 @@ export default function WalletIncomePage() {
                         <input
                           value={withdrawForm.note}
                           onChange={(e) => setWithdrawForm(prev => ({ ...prev, note: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] px-4 text-white outline-none focus:border-cyan-400/80 transition"
+                          className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
                           placeholder="E.g., personal emergency payout"
                           type="text"
                         />
@@ -523,18 +523,18 @@ export default function WalletIncomePage() {
 
                     {/* Calculated Fee Breakdown */}
                     {Number(withdrawForm.amount) > 0 && (
-                      <div className="rounded-xl border border-cyan-400/10 bg-cyan-400/5 p-4 text-xs space-y-2">
+                      <div className="rounded-xl border border-[#F4B860]/20 bg-[#FFF4E5]/40 p-4 text-xs space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Withdraw Amount:</span>
-                          <span className="font-semibold text-white">${Number(withdrawForm.amount).toFixed(2)} USDT</span>
+                          <span className="text-slate-550">Withdraw Amount:</span>
+                          <span className="font-bold text-slate-800">${Number(withdrawForm.amount).toFixed(2)} USDT</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">5% Admin Fee:</span>
-                          <span className="font-semibold text-amber-300">+ ${(Number(withdrawForm.amount) * 0.05).toFixed(2)} USDT</span>
+                          <span className="text-slate-550">5% Admin Fee:</span>
+                          <span className="font-bold text-[#E8A13F]">+ ${(Number(withdrawForm.amount) * 0.05).toFixed(2)} USDT</span>
                         </div>
-                        <div className="flex justify-between border-t border-cyan-400/10 pt-2 text-sm">
-                          <span className="font-bold text-slate-300">Total Debit amount:</span>
-                          <span className="font-extrabold text-cyan-300">${(Number(withdrawForm.amount) * 1.05).toFixed(2)} USDT</span>
+                        <div className="flex justify-between border-t border-[#F4B860]/20 pt-2 text-sm">
+                          <span className="font-bold text-slate-700">Total Debit amount:</span>
+                          <span className="font-extrabold text-[#E8A13F]">${(Number(withdrawForm.amount) * 1.05).toFixed(2)} USDT</span>
                         </div>
                         <div className="text-[10px] text-slate-500 italic mt-1">
                           Note: A minimum remaining balance of 20 USDT must be maintained in your account after this debit.
@@ -542,8 +542,8 @@ export default function WalletIncomePage() {
                       </div>
                     )}
 
-                    <div className="flex gap-2 items-center rounded-xl bg-slate-500/10 p-3 text-xs text-slate-300">
-                      <AlertCircle className="shrink-0 h-4 w-4 text-cyan-400" />
+                    <div className="flex gap-2 items-center rounded-xl border border-[#F4B860]/20 bg-[#FFF4E5] p-3 text-xs text-[#E8A13F] font-semibold">
+                      <AlertCircle className="shrink-0 h-4 w-4 text-[#E8A13F]" />
                       <span>
                         {twoFactorEnabled
                           ? "2FA is enabled. Submitting will trigger a Google Authenticator verification modal."
@@ -564,8 +564,8 @@ export default function WalletIncomePage() {
                     {withdrawStatus.message && (
                       <div className={`mt-3 flex items-start gap-2 rounded-xl p-3 text-sm border ${
                         withdrawStatus.success
-                          ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
-                          : "bg-rose-400/10 text-rose-300 border-rose-400/20"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-250 font-bold"
+                          : "bg-rose-50 text-rose-700 border-rose-250 font-bold"
                       }`}>
                         {withdrawStatus.success ? <CheckCircle2 className="h-5 w-5 shrink-0" /> : <XCircle className="h-5 w-5 shrink-0" />}
                         <span>{withdrawStatus.message}</span>
@@ -580,7 +580,7 @@ export default function WalletIncomePage() {
                         <input
                           value={transferForm.memberId}
                           onChange={(e) => setTransferForm(prev => ({ ...prev, memberId: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] px-4 text-white outline-none focus:border-cyan-400/80 transition uppercase"
+                          className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition uppercase shadow-sm font-semibold"
                           placeholder="E.g., BKS100230"
                           type="text"
                           required
@@ -602,7 +602,7 @@ export default function WalletIncomePage() {
                           <input
                             value={transferForm.amount}
                             onChange={(e) => setTransferForm(prev => ({ ...prev, amount: e.target.value }))}
-                            className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] pl-10 pr-4 text-white outline-none focus:border-cyan-400/80 transition"
+                            className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 pl-10 pr-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
                             placeholder="Enter amount"
                             type="number"
                             step="0.01"
@@ -616,15 +616,15 @@ export default function WalletIncomePage() {
                         <input
                           value={transferForm.note}
                           onChange={(e) => setTransferForm(prev => ({ ...prev, note: e.target.value }))}
-                          className="h-12 w-full rounded-xl border border-white/15 bg-[#050f2f] px-4 text-white outline-none focus:border-cyan-400/80 transition"
+                          className="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
                           placeholder="Enter transfer purpose..."
                           type="text"
                         />
                       </FormField>
                     </div>
 
-                    <div className="flex gap-2 items-center rounded-xl bg-slate-500/10 p-3 text-xs text-slate-300">
-                      <AlertCircle className="shrink-0 h-4 w-4 text-cyan-400" />
+                    <div className="flex gap-2 items-center rounded-xl border border-[#F4B860]/20 bg-[#FFF4E5] p-3 text-xs text-[#E8A13F] font-semibold">
+                      <AlertCircle className="shrink-0 h-4 w-4 text-[#E8A13F]" />
                       <span>
                         Wallet-to-wallet transfers are instant, free of admin charge (0%), and require no admin approval. Remaining available balance must be &gt;= 20 USDT.
                       </span>
@@ -643,8 +643,8 @@ export default function WalletIncomePage() {
                     {transferStatus.message && (
                       <div className={`mt-3 flex items-start gap-2 rounded-xl p-3 text-sm border ${
                         transferStatus.success
-                          ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
-                          : "bg-rose-400/10 text-rose-300 border-rose-400/20"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-250 font-bold"
+                          : "bg-rose-50 text-rose-700 border-rose-250 font-bold"
                       }`}>
                         {transferStatus.success ? <CheckCircle2 className="h-5 w-5 shrink-0" /> : <XCircle className="h-5 w-5 shrink-0" />}
                         <span>{transferStatus.message}</span>
@@ -668,19 +668,19 @@ export default function WalletIncomePage() {
                     {rebirths.map((rb) => (
                       <div
                         key={rb._id}
-                        className="rounded-xl border border-cyan-300/10 bg-[linear-gradient(170deg,rgba(15,33,88,0.7),rgba(10,24,67,0.8))] p-3.5 transition hover:border-cyan-400/30"
+                        className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 transition hover:border-[#F4B860]/30 shadow-xs"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-mono text-xs font-bold text-cyan-300">
+                          <span className="font-mono text-xs font-extrabold text-[#E8A13F]">
                             {rb.rebirthCode}
                           </span>
-                          <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[10px] text-cyan-200">
+                          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10px] font-bold text-[#E8A13F]">
                             Slot {rb.sequenceNo}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400">Wallet Balance</span>
-                          <span className="text-lg font-bold text-emerald-400">
+                          <span className="text-xs font-semibold text-slate-500">Wallet Balance</span>
+                          <span className="text-lg font-extrabold text-emerald-600">
                             ${rb.walletBalance?.toFixed(2) || "0.00"}
                           </span>
                         </div>
@@ -700,13 +700,13 @@ export default function WalletIncomePage() {
           <Card className="p-0 overflow-hidden">
             
             {/* History Tabs Header */}
-            <div className="flex border-b border-white/10 bg-[#071337] overflow-x-auto">
+            <div className="flex border-b border-slate-200 bg-slate-50 overflow-x-auto">
               <button
                 onClick={() => setActiveHistoryTab("withdrawals")}
                 className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-wider transition shrink-0 ${
                   activeHistoryTab === "withdrawals"
-                    ? "border-b-2 border-cyan-400 bg-white/5 text-white"
-                    : "text-slate-400 hover:text-white"
+                    ? "border-b-2 border-[#F4B860] bg-[#FFF4E5]/40 text-[#E8A13F]"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 }`}
               >
                 <ArrowDownLeft size={14} />
@@ -716,8 +716,8 @@ export default function WalletIncomePage() {
                 onClick={() => setActiveHistoryTab("transfers")}
                 className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-wider transition shrink-0 ${
                   activeHistoryTab === "transfers"
-                    ? "border-b-2 border-cyan-400 bg-white/5 text-white"
-                    : "text-slate-400 hover:text-white"
+                    ? "border-b-2 border-[#F4B860] bg-[#FFF4E5]/40 text-[#E8A13F]"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 }`}
               >
                 <ArrowUpRight size={14} />
@@ -727,8 +727,8 @@ export default function WalletIncomePage() {
                 onClick={() => setActiveHistoryTab("ledger")}
                 className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-wider transition shrink-0 ${
                   activeHistoryTab === "ledger"
-                    ? "border-b-2 border-cyan-400 bg-white/5 text-white"
-                    : "text-slate-400 hover:text-white"
+                    ? "border-b-2 border-[#F4B860] bg-[#FFF4E5]/40 text-[#E8A13F]"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 }`}
               >
                 <History size={14} />
@@ -743,16 +743,16 @@ export default function WalletIncomePage() {
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-left">
                       <thead>
-                        <tr className="border-b border-white/10 pb-2">
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Date Requested</th>
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Payout Amt</th>
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Charges (5%)</th>
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Network & Wallet Address</th>
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Tx Hash / Reason</th>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Date Requested</th>
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Payout Amt</th>
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Charges (5%)</th>
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Network & Wallet Address</th>
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                          <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Tx Hash / Reason</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5 text-sm">
+                      <tbody className="divide-y divide-slate-200 text-sm">
                         {withdrawals.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
@@ -761,13 +761,13 @@ export default function WalletIncomePage() {
                           </tr>
                         ) : (
                           withdrawals.map((w) => (
-                            <tr key={w._id} className="hover:bg-white/5 transition">
-                              <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{formatDate(w.requestedAt)}</td>
-                              <td className="px-4 py-3 font-bold text-white">${w.requestedAmount.toFixed(2)}</td>
-                              <td className="px-4 py-3 text-slate-300">${w.adminChargeAmount.toFixed(2)}</td>
+                            <tr key={w._id} className="hover:bg-slate-50 transition">
+                              <td className="px-4 py-3 text-xs text-slate-500 font-semibold whitespace-nowrap">{formatDate(w.requestedAt).split(",")[0]}</td>
+                              <td className="px-4 py-3 font-bold text-slate-900">${w.requestedAmount.toFixed(2)}</td>
+                              <td className="px-4 py-3 text-slate-600 font-semibold">${w.adminChargeAmount.toFixed(2)}</td>
                               <td className="px-4 py-3">
-                                <div className="text-xs font-mono text-cyan-200">{w.network}</div>
-                                <div className="text-xs text-slate-400 max-w-[200px] truncate" title={w.walletAddress}>{w.walletAddress}</div>
+                                <div className="text-xs font-mono font-bold text-[#E8A13F]">{w.network}</div>
+                                <div className="text-xs text-slate-500 font-medium max-w-[200px] truncate" title={w.walletAddress}>{w.walletAddress}</div>
                               </td>
                               <td className="px-4 py-3">{getStatusBadge(w.status)}</td>
                               <td className="px-4 py-3 text-xs text-slate-400">

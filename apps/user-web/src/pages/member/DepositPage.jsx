@@ -30,15 +30,15 @@ function StatusPill({ status }) {
   const map = {
     pending: {
       label: "Pending",
-      cls: "bg-amber-400/15 text-amber-300 border-amber-400/30",
+      cls: "bg-[#FFF4E5] text-[#E8A13F] border-[#F4B860]/40 font-bold",
     },
     approved: {
       label: "Approved",
-      cls: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
+      cls: "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold",
     },
     rejected: {
       label: "Rejected",
-      cls: "bg-red-400/15 text-red-300 border-red-400/30",
+      cls: "bg-rose-50 text-rose-700 border-rose-200 font-bold",
     },
   };
   const s = map[status] || map.pending;
@@ -149,24 +149,24 @@ export default function DepositPage() {
       {/* ── Step 1: Amount form ── */}
       {step === "form" && (
         <div className="mx-auto max-w-md">
-          <div className="rounded-2xl border border-white/10 bg-[#0d1f4a]/80 p-6 shadow-xl backdrop-blur-sm">
-            <h2 className="mb-5 text-lg font-semibold text-white">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-slate-800">
               Enter Amount
             </h2>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 font-medium">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300">
+              <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 font-medium">
                 {success}
               </div>
             )}
 
             <div className="relative mb-4">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
                 $
               </span>
               <input
@@ -176,18 +176,18 @@ export default function DepositPage() {
                 onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handlePayNow()}
                 placeholder={`${ACTIVATION_AMOUNT_USD}`}
-                className="h-12 w-full rounded-xl border border-white/10 bg-[#1a2d5a] pl-8 pr-4 text-white placeholder-slate-500 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20 transition"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-4 text-slate-800 placeholder-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition"
               />
             </div>
 
-            <p className="mb-5 text-xs text-slate-500">
+            <p className="mb-5 text-xs text-slate-400">
               Minimum activation:{" "}
-              <span className="text-cyan-400">${ACTIVATION_AMOUNT_USD}</span>
+              <span className="text-[#E8A13F] font-bold">${ACTIVATION_AMOUNT_USD}</span>
             </p>
 
             <button
               onClick={handlePayNow}
-              className="h-12 w-full rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98]"
+              className="h-12 w-full rounded-xl bg-[#111827] hover:bg-[#1F2937] font-bold text-white shadow-xs active:scale-[0.98] transition"
             >
               Pay Now
             </button>
@@ -197,12 +197,12 @@ export default function DepositPage() {
 
       {/* ── Step 2: QR + wallet address + txHash ── */}
       {step === "qr" && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[#03081ccc] p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-3xl rounded-2xl border border-white/15 bg-[linear-gradient(170deg,rgba(5,18,58,0.98)_0%,rgba(12,33,94,0.98)_100%)] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)] max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
             <button
               type="button"
               onClick={handleCloseModal}
-              className="absolute right-4 top-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="absolute right-4 top-4 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
             >
               Close
             </button>
@@ -210,17 +210,17 @@ export default function DepositPage() {
               <div className="w-full md:w-auto">
                 {/* Header */}
                 <div className="mb-6 md:pr-0 text-center">
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-slate-855">
                     BKS Wealth Club
                   </h2>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-slate-555">
                     Scan QR or copy the address below
                   </p>
                 </div>
 
                 {/* QR Code */}
                 <div className="mb-6 flex flex-col items-center">
-                  <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-lg">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <QRCodeSVG
                       value={qrValue}
                       size={180}
@@ -229,11 +229,11 @@ export default function DepositPage() {
                       level="M"
                     />
                   </div>
-                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2">
-                    <span className="rounded bg-amber-400 px-2 py-0.5 text-xs font-bold text-black uppercase">
+                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#F4B860]/30 bg-[#FFF4E5] px-4 py-2">
+                    <span className="rounded bg-[#E8A13F] px-2 py-0.5 text-xs font-bold text-white uppercase">
                       {COMPANY_WALLET.network.split(' ')[0]}
                     </span>
-                    <span className="text-base font-bold text-amber-200">
+                    <span className="text-base font-bold text-[#E8A13F]">
                       {Number(amount).toFixed(2)} USDT
                     </span>
                   </div>
@@ -242,18 +242,18 @@ export default function DepositPage() {
 
               <div className="w-full md:max-w-sm">
               {/* Wallet address */}
-              <div className="mb-5 rounded-xl border border-white/10 bg-[#1a2d5a] p-3">
-                <p className="mb-1 text-xs text-slate-500">
+              <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-1 text-xs text-slate-400 font-bold">
                   Address ({COMPANY_WALLET.network})
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="flex-1 break-all font-mono text-xs text-slate-300">
+                  <p className="flex-1 break-all font-mono text-xs text-slate-600 font-medium">
                     {COMPANY_WALLET.address}
                   </p>
                   <button
                     type="button"
                     onClick={handleCopyAddress}
-                    className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/10"
+                    className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 font-bold transition hover:bg-slate-50"
                   >
                     {copied ? "✓ Copied" : "Copy"}
                   </button>
@@ -261,10 +261,10 @@ export default function DepositPage() {
               </div>
 
               {/* Instructions */}
-              <div className="mb-5 space-y-1 rounded-xl border border-blue-400/20 bg-blue-400/5 px-4 py-3 text-xs text-blue-200/80">
+              <div className="mb-5 space-y-1 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800/90 leading-relaxed">
                 <p>
                   1. Send exactly{" "}
-                  <strong className="text-white">
+                  <strong className="text-blue-955 font-bold">
                     ${Number(amount).toFixed(2)} USDT
                   </strong>{" "}
                   to the address above.
@@ -272,13 +272,13 @@ export default function DepositPage() {
                 <p>2. Copy the transaction hash from your wallet app.</p>
                 <p>
                   3. Paste it below and click{" "}
-                  <strong className="text-white">Confirm Payment</strong>.
+                  <strong className="text-blue-955 font-bold">Confirm Payment</strong>.
                 </p>
               </div>
 
               {/* txHash input */}
               {error && (
-                <div className="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+                <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 font-medium">
                   {error}
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function DepositPage() {
                 value={txHash}
                 onChange={(e) => setTxHash(e.target.value)}
                 placeholder="Paste transaction hash (0x...)"
-                className="mb-4 h-12 w-full rounded-xl border border-white/10 bg-[#1a2d5a] px-4 font-mono text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20"
+                className="mb-4 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
               />
             </div>
             </div>
@@ -295,7 +295,7 @@ export default function DepositPage() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="h-12 flex-1 rounded-xl border border-white/10 bg-white/5 font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
+                className="h-12 flex-1 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-600 transition hover:bg-slate-100"
               >
                 Back
               </button>
@@ -303,7 +303,7 @@ export default function DepositPage() {
                 type="button"
                 onClick={handleSubmitProof}
                 disabled={submitLoading}
-                className="h-12 flex-1 rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] disabled:opacity-60"
+                className="h-12 flex-1 rounded-xl bg-[#111827] font-bold text-white shadow-xs transition hover:bg-[#1F2937] active:scale-[0.98] disabled:opacity-60"
               >
                 {submitLoading ? "Submitting..." : "Confirm Payment"}
               </button>
@@ -313,14 +313,14 @@ export default function DepositPage() {
       )}
 
       {/* ── History table ── */}
-      <div className="rounded-2xl border border-white/10 bg-[#091a4a]/75 shadow-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/10">
-          <h3 className="font-semibold text-white">History</h3>
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="font-semibold text-slate-800">History</h3>
         </div>
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full text-left">
-            <thead className="bg-[#112766]/70">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 {[
                   "S.No.",
@@ -332,19 +332,19 @@ export default function DepositPage() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                    className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-500"
+                    className="px-5 py-10 text-center text-sm text-slate-400"
                   >
                     Loading...
                   </td>
@@ -353,7 +353,7 @@ export default function DepositPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-10 text-center text-sm text-slate-500"
+                    className="px-5 py-10 text-center text-sm text-slate-400"
                   >
                     No deposits yet.
                   </td>
@@ -362,19 +362,19 @@ export default function DepositPage() {
                 history.map((item, idx) => (
                   <tr
                     key={item._id || idx}
-                    className="transition hover:bg-white/5"
+                    className="transition hover:bg-slate-50"
                   >
-                    <td className="px-5 py-4 text-sm text-slate-400">
+                    <td className="px-5 py-4 text-sm text-slate-400 font-bold">
                       {idx + 1}
                     </td>
-                    <td className="px-5 py-4 text-sm font-medium text-white">
+                    <td className="px-5 py-4 text-sm font-bold text-slate-800">
                       ${item.amount}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
+                    <td className="px-5 py-4 text-sm text-slate-500">
                       {item.walletType || "USDT"}
                     </td>
                     <td
-                      className="px-5 py-4 font-mono text-xs text-slate-400"
+                      className="px-5 py-4 font-mono text-xs text-[#E8A13F] font-bold"
                       title={item.txHash}
                     >
                       {shortHash(item.txHash)}
@@ -393,36 +393,36 @@ export default function DepositPage() {
         </div>
 
         {/* Mobile Card View */}
-        <div className="md:hidden divide-y divide-white/5">
+        <div className="md:hidden divide-y divide-slate-100">
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">Loading...</div>
+            <div className="p-8 text-center text-sm text-slate-400">Loading...</div>
           ) : history.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500">No deposits yet.</div>
+            <div className="p-8 text-center text-sm text-slate-400">No deposits yet.</div>
           ) : (
             history.map((item, idx) => (
-              <div key={item._id || idx} className="p-4 space-y-3 transition active:bg-white/5">
+              <div key={item._id || idx} className="p-4 space-y-3 transition active:bg-slate-50">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500">#{idx + 1}</span>
+                  <span className="text-xs font-bold text-slate-400">#{idx + 1}</span>
                   <StatusPill status={item.status} />
                 </div>
                 
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-xs text-slate-500">Amount</p>
-                    <p className="text-lg font-bold text-white">${item.amount}</p>
+                    <p className="text-xs text-slate-400">Amount</p>
+                    <p className="text-lg font-bold text-slate-855">${item.amount}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-500">Date</p>
-                    <p className="text-sm text-slate-300">{formatDate(item.createdAt)}</p>
+                    <p className="text-xs text-slate-400">Date</p>
+                    <p className="text-sm text-slate-600">{formatDate(item.createdAt)}</p>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-white/5 p-2.5">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 p-2.5">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-500">Transaction Hash</span>
-                    <span className="text-[10px] font-bold text-cyan-400/80">{item.walletType || "USDT"}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400">Transaction Hash</span>
+                    <span className="text-[10px] font-bold text-[#E8A13F]">{item.walletType || "USDT"}</span>
                   </div>
-                  <p className="font-mono text-xs text-slate-400 break-all">{item.txHash}</p>
+                  <p className="font-mono text-xs text-slate-600 break-all">{item.txHash}</p>
                 </div>
               </div>
             ))

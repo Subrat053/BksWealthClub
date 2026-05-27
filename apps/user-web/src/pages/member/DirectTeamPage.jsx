@@ -58,14 +58,14 @@ export default function DirectTeamPage() {
       <Card title="Filter">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <input
-            className="h-12 rounded-xl border border-white/10 bg-[#2d3440] px-4 text-sm text-white outline-none focus:border-cyan-300/70"
+            className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             placeholder="Name"
           />
           <input
-            className="h-12 rounded-xl border border-white/10 bg-[#2d3440] px-4 text-sm text-white outline-none focus:border-cyan-300/70"
+            className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             placeholder="Username"
           />
-          <select className="h-12 rounded-xl border border-white/10 bg-[#2d3440] px-4 text-sm text-white outline-none focus:border-cyan-300/70">
+          <select className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20">
             <option>Select Status</option>
           </select>
           <Button className="w-full">Search</Button>
@@ -73,9 +73,9 @@ export default function DirectTeamPage() {
       </Card>
       <Card>
         {loading ? (
-          <p className="p-4 text-slate-300">Loading direct referrals...</p>
+          <p className="p-4 text-slate-500">Loading direct referrals...</p>
         ) : error ? (
-          <p className="p-4 text-red-300">{error}</p>
+          <p className="p-4 text-rose-600">{error}</p>
         ) : (
           <DataTable
             columns={directTeamColumns}

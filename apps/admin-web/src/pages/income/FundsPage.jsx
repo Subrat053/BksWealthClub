@@ -15,35 +15,39 @@ function formatDate(dateStr) {
 }
 
 function FundCard({ title, amount, lastCredit, txnCount, color, iconEmoji }) {
+  const displayColor = color === "text-blue-300" ? "text-blue-600" :
+                        color === "text-amber-300" ? "text-[#E8A13F]" :
+                        color === "text-purple-300" ? "text-purple-600" :
+                        "text-[#E8A13F]";
   return (
-    <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/30 transition duration-300">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">{iconEmoji}</span>
-        <p className="text-sm font-medium text-blue-100/70">{title}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</p>
       </div>
-      <h3 className={`text-3xl font-bold ${color}`}>${amount?.toFixed(2) || "0.00"}</h3>
-      <div className="mt-3 space-y-1.5 border-t border-white/5 pt-3">
+      <h3 className={`text-2xl font-black text-slate-900 tracking-tight`}>${amount?.toFixed(2) || "0.00"}</h3>
+      <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-slate-600">
         {lastCredit ? (
           <>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Last Credit</span>
-              <span className="text-emerald-300 font-medium">${lastCredit.amount}</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-400 font-semibold">Last Credit</span>
+              <span className="text-emerald-600 font-bold">${lastCredit.amount}</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">From</span>
-              <span className="text-slate-200 font-mono">{lastCredit.fromUser}</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-400 font-semibold">From</span>
+              <span className="text-slate-700 font-bold font-mono">{lastCredit.fromUser}</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Date</span>
-              <span className="text-slate-300">{formatDate(lastCredit.creditedAt)}</span>
+            <div className="flex items-center justify-between text-xs font-medium">
+              <span className="text-slate-400 font-semibold">Date</span>
+              <span className="text-slate-500 font-semibold">{formatDate(lastCredit.creditedAt).split(",")[0]}</span>
             </div>
           </>
         ) : (
-          <p className="text-xs text-slate-500 italic">No credits yet</p>
+          <p className="text-xs text-slate-400 italic">No credits yet</p>
         )}
-        <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
-          <span className="text-slate-400">Transactions</span>
-          <span className="text-slate-200 font-semibold">{txnCount || 0}</span>
+        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 font-semibold">
+          <span className="text-slate-400 font-semibold">Transactions</span>
+          <span className="text-slate-800 font-bold">{txnCount || 0}</span>
         </div>
       </div>
     </div>
@@ -60,10 +64,10 @@ const FUND_TYPE_MAP = {
 
 function TypeBadge({ type }) {
   const colors = {
-    COMPANY_FUND: "bg-blue-400/15 text-blue-300 border-blue-400/30",
-    ADMIN_FUND: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-    ACHIEVER_FUND: "bg-purple-400/15 text-purple-300 border-purple-400/30",
-    LEFTOVER_TO_COMPANY: "bg-orange-400/15 text-orange-300 border-orange-400/30",
+    COMPANY_FUND: "bg-blue-50 text-blue-700 border-blue-200 font-semibold",
+    ADMIN_FUND: "bg-amber-50 text-[#F59E0B] border-amber-200 font-semibold",
+    ACHIEVER_FUND: "bg-purple-50 text-purple-700 border-purple-200 font-semibold",
+    LEFTOVER_TO_COMPANY: "bg-orange-50 text-orange-700 border-orange-200 font-semibold",
   };
   return (
     <span
@@ -176,22 +180,22 @@ export default function FundsPage() {
               color="text-orange-300"
               iconEmoji="📦"
             />
-            <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-500/10 p-5 shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm hover:border-emerald-300 transition duration-300">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">💰</span>
-                <p className="text-sm font-medium text-emerald-200">Total Superadmin</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Total Superadmin</p>
               </div>
-              <h3 className="text-3xl font-bold text-emerald-300">
+              <h3 className="text-2xl font-black text-emerald-600 tracking-tight">
                 ${s.totalSuperAdminFund?.toFixed(2) || "0.00"}
               </h3>
-              <div className="mt-3 space-y-1.5 border-t border-emerald-400/10 pt-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-emerald-200/60">Deposits Distributed</span>
-                  <span className="text-emerald-200 font-semibold">{s.totalDepositsDistributed || 0}</span>
+              <div className="mt-3 space-y-1.5 border-t border-emerald-200/60 pt-3">
+                <div className="flex items-center justify-between text-xs font-medium text-emerald-800">
+                  <span className="font-semibold">Deposits Distributed</span>
+                  <span className="font-bold">{s.totalDepositsDistributed || 0}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-emerald-200/60">User Income Total</span>
-                  <span className="text-emerald-200 font-semibold">${s.totalUserIncomeDistributed || 0}</span>
+                <div className="flex items-center justify-between text-xs font-medium text-emerald-800">
+                  <span className="font-semibold">User Income Total</span>
+                  <span className="font-bold">${s.totalUserIncomeDistributed || 0}</span>
                 </div>
               </div>
             </div>
@@ -200,14 +204,14 @@ export default function FundsPage() {
       )}
 
       {/* Filters */}
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-5">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-5">
         <select
           value={filters.fundType}
           onChange={(e) => setFilters((p) => ({ ...p, fundType: e.target.value }))}
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm font-semibold"
         >
           {Object.entries(FUND_TYPE_MAP).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k} className="bg-white">{v}</option>
           ))}
         </select>
         <input
@@ -215,18 +219,18 @@ export default function FundsPage() {
           value={filters.dateFrom}
           onChange={(e) => setFilters((p) => ({ ...p, dateFrom: e.target.value }))}
           placeholder="From Date"
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-855 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
         />
         <input
           type="date"
           value={filters.dateTo}
           onChange={(e) => setFilters((p) => ({ ...p, dateTo: e.target.value }))}
           placeholder="To Date"
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-855 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm font-semibold"
         />
         <button
           onClick={handleApplyFilters}
-          className="rounded-xl bg-[#1e327d] px-4 py-3 text-sm font-semibold text-white hover:bg-[#2944a8]"
+          className="rounded-xl bg-[#111827] hover:bg-[#1F2937] px-4 py-3 text-sm font-bold text-white transition shadow-md shadow-slate-100"
         >
           Apply Filters
         </button>
@@ -250,17 +254,17 @@ export default function FundsPage() {
       </div>
 
       {/* Transaction Table */}
-      <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead className="bg-[#112766]/70">
-              <tr>
+          <table className="min-w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
                 {["Date", "From User", "Fund Type", "Amount", "Deposit ID", "Remarks", "Status"].map((h) => (
-                  <th key={h} className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">{h}</th>
+                  <th key={h} className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200">
               {txnLoading ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-sm text-slate-500">
@@ -275,24 +279,24 @@ export default function FundsPage() {
                 </tr>
               ) : (
                 transactions.map((txn) => (
-                  <tr key={txn._id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-xs text-slate-400">{formatDate(txn.createdAt)}</td>
-                    <td className="px-5 py-4 text-sm text-slate-200">
-                      <span className="font-mono text-cyan-300">{txn.fromUserId?.memberId || "—"}</span>
+                  <tr key={txn._id} className="transition hover:bg-slate-50">
+                    <td className="px-5 py-4 text-xs text-slate-500 font-medium">{formatDate(txn.createdAt).split(",")[0]}</td>
+                    <td className="px-5 py-4 text-sm text-slate-700 font-medium">
+                      <span className="font-mono font-bold text-[#E8A13F]">{txn.fromUserId?.memberId || "—"}</span>
                       {txn.fromUserId?.fullName && (
-                        <span className="ml-1 text-xs text-slate-400">({txn.fromUserId.fullName})</span>
+                        <span className="ml-1 text-xs text-slate-400 font-semibold">({txn.fromUserId.fullName})</span>
                       )}
                     </td>
                     <td className="px-5 py-4"><TypeBadge type={txn.type} /></td>
-                    <td className="px-5 py-4 text-sm font-semibold text-emerald-300">${txn.amount}</td>
-                    <td className="px-5 py-4 font-mono text-xs text-slate-400">
+                    <td className="px-5 py-4 text-sm font-bold text-emerald-600">${txn.amount}</td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-500 font-semibold">
                       {txn.depositId ? String(txn.depositId).slice(-8) : "—"}
                     </td>
-                    <td className="px-5 py-4 text-xs text-slate-400 max-w-[200px] truncate" title={txn.remarks}>
+                    <td className="px-5 py-4 text-xs text-slate-500 font-medium max-w-[200px] truncate" title={txn.remarks}>
                       {txn.remarks || "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="inline-flex rounded-full border border-emerald-250 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
                         {txn.status}
                       </span>
                     </td>
@@ -305,21 +309,21 @@ export default function FundsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 bg-slate-50">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+              className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
             >
               Previous
             </button>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500 font-semibold">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+              className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
             >
               Next
             </button>

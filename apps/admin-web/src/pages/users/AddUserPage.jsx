@@ -139,21 +139,21 @@ export default function AddUserPage() {
       />
 
       {error && (
-        <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 font-semibold shadow-sm">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+        <div className="rounded-2xl border border-emerald-250 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 font-semibold shadow-sm">
           {message}
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
-          <h2 className="text-2xl font-bold text-white">Invite + Verify</h2>
-          <p className="mt-1 text-sm text-blue-100/75">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Invite + Verify</h2>
+          <p className="mt-1 text-sm text-slate-500 font-medium">
             Send a code to email, verify it, then set a password.
           </p>
 
@@ -163,21 +163,21 @@ export default function AddUserPage() {
               value={form.sponsorId}
               onChange={handleChange}
               placeholder="Sponsor ID"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="fullName"
               value={form.fullName}
               onChange={handleChange}
               placeholder="Full Name"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="phone"
               value={form.phone}
               onChange={handleChange}
               placeholder="Phone"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="email"
@@ -185,7 +185,7 @@ export default function AddUserPage() {
               value={form.email}
               onChange={handleChange}
               placeholder="Email"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
 
             <div className="flex gap-3">
@@ -193,7 +193,7 @@ export default function AddUserPage() {
                 type="button"
                 disabled={loading}
                 onClick={handleRequestCode}
-                className="flex-1 rounded-xl bg-[#1e327d] px-4 py-3 font-semibold text-white hover:bg-[#2944a8] disabled:opacity-60"
+                className="flex-1 rounded-xl bg-[#111827] px-4 py-3 font-bold text-white hover:bg-[#1F2937] disabled:opacity-60 transition shadow-sm"
               >
                 Send Code
               </button>
@@ -204,13 +204,13 @@ export default function AddUserPage() {
               value={form.code}
               onChange={handleChange}
               placeholder="Verification Code"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <button
               type="button"
               disabled={loading || !form.code}
               onClick={handleVerifyCode}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-white hover:bg-white/10 disabled:opacity-60"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60 transition shadow-sm"
             >
               Verify Code
             </button>
@@ -221,22 +221,22 @@ export default function AddUserPage() {
               value={form.password}
               onChange={handleChange}
               placeholder="Password"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <button
               type="button"
               disabled={loading || !inviteVerified}
               onClick={handleCompleteInvite}
-              className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+              className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md shadow-emerald-100"
             >
               Complete User
             </button>
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
-          <h2 className="text-2xl font-bold text-white">Direct Create</h2>
-          <p className="mt-1 text-sm text-blue-100/75">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Direct Create</h2>
+          <p className="mt-1 text-sm text-slate-500 font-medium">
             Admin creates the user immediately and sends a welcome email.
           </p>
 
@@ -246,21 +246,21 @@ export default function AddUserPage() {
               value={form.sponsorId}
               onChange={handleChange}
               placeholder="Sponsor ID"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="fullName"
               value={form.fullName}
               onChange={handleChange}
               placeholder="Full Name"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="phone"
               value={form.phone}
               onChange={handleChange}
               placeholder="Phone"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="email"
@@ -268,7 +268,7 @@ export default function AddUserPage() {
               value={form.email}
               onChange={handleChange}
               placeholder="Email"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <input
               name="password"
@@ -276,13 +276,13 @@ export default function AddUserPage() {
               value={form.password}
               onChange={handleChange}
               placeholder="Password"
-              className="w-full rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-white outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
             />
             <button
               type="button"
               disabled={loading}
               onClick={handleDirectCreate}
-              className="w-full rounded-xl bg-[#1e327d] px-4 py-3 font-semibold text-white hover:bg-[#2944a8] disabled:opacity-60"
+              className="w-full rounded-xl bg-[#111827] px-4 py-3 font-bold text-white hover:bg-[#1F2937] disabled:opacity-60 transition shadow-md shadow-slate-100"
             >
               Create User
             </button>

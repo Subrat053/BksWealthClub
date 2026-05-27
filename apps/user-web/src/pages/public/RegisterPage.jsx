@@ -189,14 +189,14 @@ export default function RegisterPage() {
     <div className="mx-auto my-6 max-w-3xl">
       <Card
         title="Register"
-        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+        className="border border-slate-200 bg-white shadow-xl"
       >
         <form className="space-y-4" onSubmit={onSubmit}>
           <FormField label="Sponsor ID">
             <input
               value={form.sponsor}
               onChange={onSponsorChange}
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter sponsor ID"
             />
 
@@ -207,8 +207,8 @@ export default function RegisterPage() {
                   sponsorStatus ===
                     "Enter sponsor ID or referral code like BKS12345 or ABCD123456" ||
                   sponsorValidation?.error
-                    ? "bg-red-500/20 text-red-300"
-                    : "bg-green-500/20 text-green-300"
+                    ? "bg-rose-50 text-rose-600 border border-rose-200"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 }`}
               >
                 {sponsorStatus}
@@ -222,7 +222,7 @@ export default function RegisterPage() {
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, name: e.target.value }))
               }
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter your name"
             />
           </FormField>
@@ -234,7 +234,7 @@ export default function RegisterPage() {
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, email: e.target.value }))
               }
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter your email"
             />
           </FormField>
@@ -244,7 +244,7 @@ export default function RegisterPage() {
               <select
                 value={form.countryCode}
                 onChange={onCountryChange}
-                className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               >
                 {countries.map((country) => (
                   <option key={country.code} value={country.code}>
@@ -255,15 +255,15 @@ export default function RegisterPage() {
             </FormField>
 
             <FormField label="Mobile">
-              <div className="flex overflow-hidden rounded-xl border border-white/10 bg-[#1f2c59] focus-within:border-cyan-300/70">
-                <span className="flex h-12 items-center border-r border-white/10 px-4 text-sm font-semibold text-cyan-200">
+              <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#E8A13F] focus-within:ring-2 focus-within:ring-[#E8A13F]/20">
+                <span className="flex h-12 items-center border-r border-slate-200 px-4 text-sm font-semibold text-[#E8A13F] bg-[#FFF4E5]">
                   {form.dialCode}
                 </span>
 
                 <input
                   value={form.mobile}
                   onChange={onMobileChange}
-                  className="h-12 w-full bg-transparent px-4 text-white outline-none"
+                  className="h-12 w-full bg-transparent px-4 text-slate-900 outline-none"
                   placeholder="Mobile number"
                   inputMode="numeric"
                 />
@@ -280,13 +280,13 @@ export default function RegisterPage() {
                   setForm((prev) => ({ ...prev, password: e.target.value }))
                 }
                 autoComplete="new-password"
-                className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="rounded-xl border border-white/20 bg-white/10 px-3 text-sm"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 hover:bg-slate-100"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -305,29 +305,29 @@ export default function RegisterPage() {
                   }))
                 }
                 autoComplete="new-password"
-                className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               />
 
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="rounded-xl border border-white/20 bg-white/10 px-3 text-sm"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 hover:bg-slate-100"
               >
                 {showConfirmPassword ? "Hide" : "Show"}
               </button>
             </div>
           </FormField>
 
-          {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          {success ? <p className="text-sm text-green-300">{success}</p> : null}
+          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          {success ? <p className="text-sm text-emerald-600">{success}</p> : null}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </Button>
 
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-500">
             Already have an account?{" "}
-            <Link to="/login" className="text-white underline">
+            <Link to="/login" className="font-semibold text-[#E8A13F] hover:underline">
               Login
             </Link>
           </p>
@@ -348,7 +348,7 @@ export default function RegisterPage() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", duration: 0.6, bounce: 0.3 }}
-              className="relative w-full max-w-lg rounded-2xl border border-amber-500/30 bg-[#09153a] p-8 shadow-[0_0_40px_rgba(245,158,11,0.15)] text-left m-auto"
+              className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-2xl text-left m-auto"
             >
               <div className="mb-6 text-center">
                 <img
@@ -361,35 +361,35 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className="space-y-4 text-blue-100/90 text-[15px] leading-relaxed">
+              <div className="space-y-4 text-slate-600 text-[15px] leading-relaxed">
                 <p>
                   Dear{" "}
-                  <strong className="text-white text-base capitalize">
+                  <strong className="text-slate-900 text-base capitalize">
                     {form.name}
                   </strong>
                   ,
                 </p>
 
-                <p className="text-lg font-bold text-amber-400">
+                <p className="text-lg font-bold text-[#E8A13F]">
                   Welcome to BKS Wealth Club Family
                 </p>
 
-                <div className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-3 shadow-inner">
+                <div className="rounded-xl bg-[#FFF4E5] border border-[#F4B860]/30 p-5 space-y-3">
                   <p>
                     Your Id is{" "}
-                    <strong className="text-cyan-400 font-mono text-base">
+                    <strong className="text-[#E8A13F] font-mono text-base">
                       {registeredMemberId}
                     </strong>
                   </p>
                   <p>
                     Your password is{" "}
-                    <strong className="text-emerald-400 font-mono text-base">
+                    <strong className="text-emerald-600 font-mono text-base">
                       {form.password}
                     </strong>
                   </p>
                   <p>
                     Your registration date and time :{" "}
-                    <strong className="text-white">
+                    <strong className="text-slate-900">
                       {new Date().toLocaleString("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -402,7 +402,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="pt-2">
-                  <h3 className="text-white font-semibold text-base mb-3 border-b border-white/10 pb-2 uppercase tracking-wide">
+                  <h3 className="text-slate-900 font-semibold text-base mb-3 border-b border-slate-200 pb-2 uppercase tracking-wide">
                     Next steps
                   </h3>
                   <ul className="space-y-2 list-none pl-0">
@@ -429,7 +429,7 @@ export default function RegisterPage() {
                   </ul>
                 </div>
 
-                <div className="pt-4 border-t border-white/10 mt-2">
+                <div className="pt-4 border-t border-slate-200 mt-2">
                   <p>
                     For support email to{" "}
                     <a
@@ -444,7 +444,7 @@ export default function RegisterPage() {
 
                 <div className="pt-4">
                   <p>Best Regards,</p>
-                  <p className="font-semibold text-amber-400 tracking-wide mt-1">
+                  <p className="font-semibold text-[#E8A13F] tracking-wide mt-1">
                     Team BKS Wealth Club
                   </p>
                 </div>
@@ -456,7 +456,7 @@ export default function RegisterPage() {
                     state: { registeredEmail: form.email.trim() },
                   })
                 }
-                className="mt-8 w-full rounded-xl bg-linear-to-r from-amber-500 to-amber-600 py-3.5 font-bold text-[#09153a] shadow-[0_0_20px_rgba(245,158,11,0.3)] transition hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.5)]"
+                className="mt-8 w-full rounded-xl bg-[#111827] py-3.5 font-bold text-white shadow-sm transition hover:bg-[#1F2937] active:scale-[0.98]"
               >
                 Continue to Login
               </button>

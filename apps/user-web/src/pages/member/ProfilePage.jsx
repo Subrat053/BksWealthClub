@@ -172,14 +172,14 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, fullName: e.target.value }))
               }
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#2d3440] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             />
           </FormField>
           <FormField label="Email">
             <input
               value={profile.email}
               readOnly
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#2d3440] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             />
           </FormField>
           <FormField label="Phone">
@@ -188,7 +188,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, phone: e.target.value }))
               }
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#2d3440] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             />
           </FormField>
           <FormField label="USDT Wallet">
@@ -197,15 +197,15 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, bepAddress: e.target.value }))
               }
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#2d3440] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
             />
           </FormField>
           <div className="md:col-span-2 rounded-xl border p-4 text-sm">
             <div
               className={`${
                 twoFactorEnabled
-                  ? "border-emerald-300/25 bg-emerald-500/8 text-emerald-100"
-                  : "border-cyan-300/25 bg-cyan-400/10 text-cyan-100"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-[#F4B860]/30 bg-[#FFF4E5] text-[#9A6A1F]"
               } rounded-xl border p-4`}
             >
               <p>
@@ -250,8 +250,8 @@ export default function ProfilePage() {
             <div
               className={`md:col-span-2 rounded-lg p-3 text-sm font-medium ${
                 statusMessage.includes("✓")
-                  ? "border border-emerald-300/30 bg-emerald-500/15 text-emerald-100"
-                  : "border border-red-300/30 bg-red-500/15 text-red-100"
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border border-rose-200 bg-rose-50 text-rose-700"
               }`}
             >
               {statusMessage}

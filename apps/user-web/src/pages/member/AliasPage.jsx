@@ -18,7 +18,7 @@ const formatDate = (value) => {
 };
 
 function SkeletonCard() {
-  return <div className="h-36 animate-pulse rounded-2xl border border-white/10 bg-white/5" />;
+  return <div className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />;
 }
 
 export default function AliasPage() {
@@ -99,14 +99,14 @@ export default function AliasPage() {
           <button
             type="button"
             onClick={loadAliases}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             <RefreshCw size={16} /> Refresh
           </button>
           <button
             type="button"
             onClick={() => navigate("/member/team/autopool")}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/15"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#F4B860]/30 bg-[#FFF4E5] px-4 py-2.5 text-sm font-semibold text-[#9A6A1F] transition hover:bg-[#FFE8C0]"
           >
             <ChevronLeft size={16} /> Back to My Autopool
           </button>
@@ -121,38 +121,38 @@ export default function AliasPage() {
           <SkeletonCard />
         </div>
       ) : aliases.length === 0 ? (
-        <Card className="border-white/10 bg-[#081730]/95! p-8 text-center">
-          <p className="text-lg font-semibold text-white">No alias/upgrade IDs created yet.</p>
-          <p className="mt-2 text-sm text-slate-400">
+        <Card className="border border-slate-200 bg-white p-8 text-center">
+          <p className="text-lg font-semibold text-slate-900">No alias/upgrade IDs created yet.</p>
+          <p className="mt-2 text-sm text-slate-500">
             When an alias is created, it will appear here with its own autopool summary.
           </p>
         </Card>
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="border-white/10 bg-[#081730]/95!">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total Aliases</p>
-              <p className="mt-2 text-3xl font-black text-white">{aliasSummary.total}</p>
+            <Card className="border border-slate-200 bg-white">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total Aliases</p>
+              <p className="mt-2 text-3xl font-black text-slate-900">{aliasSummary.total}</p>
             </Card>
-            <Card className="border-white/10 bg-[#081730]/95!">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Active</p>
-              <p className="mt-2 text-3xl font-black text-cyan-300">{aliasSummary.active}</p>
+            <Card className="border border-slate-200 bg-white">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Active</p>
+              <p className="mt-2 text-3xl font-black text-[#E8A13F]">{aliasSummary.active}</p>
             </Card>
-            <Card className="border-white/10 bg-[#081730]/95!">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Completed</p>
-              <p className="mt-2 text-3xl font-black text-emerald-300">{aliasSummary.completed}</p>
+            <Card className="border border-slate-200 bg-white">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Completed</p>
+              <p className="mt-2 text-3xl font-black text-emerald-600">{aliasSummary.completed}</p>
             </Card>
-            <Card className="border-white/10 bg-[#081730]/95!">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Withdrawable Fund</p>
-              <p className="mt-2 text-3xl font-black text-amber-300">$ {aliasSummary.withdrawable.toFixed(2)}</p>
+            <Card className="border border-[#F4B860]/30 bg-[#FFF4E5]">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Withdrawable Fund</p>
+              <p className="mt-2 text-3xl font-black text-[#E8A13F]">$ {aliasSummary.withdrawable.toFixed(2)}</p>
             </Card>
           </div>
 
-          <Card className="border-white/10 bg-[#081730]/95! p-5">
+          <Card className="border border-slate-200 bg-white p-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <h2 className="text-xl font-bold text-white">Select Alias</h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <h2 className="text-xl font-bold text-slate-900">Select Alias</h2>
+                <p className="mt-1 text-sm text-slate-500">
                   Each alias is a separate member identity with its own rebirth queue.
                 </p>
               </div>
@@ -161,7 +161,7 @@ export default function AliasPage() {
                   <select
                     value={selectedAliasId}
                     onChange={(e) => setSelectedAliasId(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-white/10 bg-black/20 px-4 py-3 pr-10 text-sm text-white outline-none"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                   >
                     {aliases.map((alias) => {
                       const aliasMemberId = alias.aliasMemberId || alias.aliasId;
@@ -186,16 +186,16 @@ export default function AliasPage() {
                     key={alias._id || aliasMemberId}
                     type="button"
                     onClick={() => setSelectedAliasId(aliasMemberId)}
-                    className={`rounded-2xl border p-4 text-left transition ${isSelected ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                    className={`rounded-2xl border p-4 text-left transition ${isSelected ? "border-[#F4B860]/40 bg-[#FFF4E5]" : "border-slate-200 bg-white hover:bg-slate-50"}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="font-mono text-lg font-bold text-white">{aliasMemberId}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+                        <p className="font-mono text-lg font-bold text-slate-900">{aliasMemberId}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
                           Original/Main: {alias.originalMainUserId || "-"}
                         </p>
                       </div>
-                      <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-200">
+                      <span className="rounded-full border border-[#F4B860]/40 bg-[#FFF4E5] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#9A6A1F]">
                         {String(alias.status || "ACTIVE").toUpperCase()}
                       </span>
                     </div>

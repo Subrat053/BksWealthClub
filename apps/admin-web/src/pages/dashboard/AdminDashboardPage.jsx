@@ -6,14 +6,14 @@ import { adminIncomeService } from "../../services/adminIncome.service";
 import { adminService } from "../../services/admin.service";
 import DownloadReportButton from "../../components/common/DownloadReportButton";
 
-function FundMiniCard({ title, amount, emoji, color }) {
+function FundMiniCard({ title, amount, emoji }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-[#0c1f57]/70 p-4 shadow-md">
+    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-sm hover:shadow-md transition-all duration-300">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">{emoji}</span>
-        <p className="text-xs font-medium text-blue-100/60">{title}</p>
+        <p className="text-xs font-semibold text-[#6B7280]">{title}</p>
       </div>
-      <h4 className={`text-2xl font-bold ${color}`}>
+      <h4 className="text-2xl font-black text-[#111827]">
         ${amount?.toFixed(2) || "0.00"}
       </h4>
     </div>
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {loading ? (
-          <div className="col-span-full text-center py-8 text-slate-400">
+          <div className="col-span-full text-center py-8 text-[#9CA3AF]">
             Loading stats...
           </div>
         ) : (
@@ -116,12 +116,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── Fund Summary Cards ─────────────────────────────────────────────── */}
-      <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+      <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Superadmin Funds</h2>
+          <h2 className="text-lg font-bold text-[#111827]">Superadmin Funds</h2>
           <a
             href="/admin/funds"
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10 transition"
+            className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition shadow-sm"
           >
             View Details
           </a>
@@ -131,34 +131,30 @@ export default function AdminDashboardPage() {
             title="Company Fund"
             amount={funds?.companyFund}
             emoji="🏢"
-            color="text-blue-300"
           />
           <FundMiniCard
             title="Admin Fund"
             amount={funds?.adminFund}
             emoji="🔑"
-            color="text-amber-300"
           />
           <FundMiniCard
             title="Achiever Fund"
             amount={funds?.achieverFund}
             emoji="🏆"
-            color="text-purple-300"
           />
           <FundMiniCard
             title="Leftover Fund"
             amount={funds?.leftoverFund}
             emoji="📦"
-            color="text-orange-300"
           />
-          <div className="rounded-[20px] border border-emerald-400/20 bg-emerald-500/10 p-4">
+          <div className="rounded-2xl border border-[#10B981]/25 bg-[#ECFDF5] p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">💰</span>
-              <p className="text-xs font-medium text-emerald-200/70">
+              <p className="text-xs font-semibold text-[#047857]">
                 Total Fund
               </p>
             </div>
-            <h4 className="text-2xl font-bold text-emerald-300">
+            <h4 className="text-2xl font-black text-[#065F46]">
               ${funds?.totalSuperAdminFund?.toFixed(2) || "0.00"}
             </h4>
           </div>
@@ -166,34 +162,34 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">User Growth</h2>
-            <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
+            <h2 className="text-lg font-bold text-[#111827]">User Growth</h2>
+            <button className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition">
               View
             </button>
           </div>
-          <div className="flex h-72 items-center justify-center rounded-[20px] border border-white/10 bg-[#0c1f57]/70 text-sm text-blue-100/60">
+          <div className="flex h-72 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] text-sm font-semibold text-[#6B7280]">
             Chart Area
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-bold text-[#111827]">
               Revenue Overview
             </h2>
-            <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
+            <button className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition">
               View
             </button>
           </div>
-          <div className="flex h-72 items-center justify-center rounded-[20px] border border-white/10 bg-[#0c1f57]/70 text-sm text-blue-100/60">
+          <div className="flex h-72 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] text-sm font-semibold text-[#6B7280]">
             Chart Area
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
-          <h2 className="mb-5 text-lg font-semibold text-white">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-bold text-[#111827]">
             Quick Actions
           </h2>
           <div className="grid gap-3">
@@ -205,7 +201,7 @@ export default function AdminDashboardPage() {
             ].map((item) => (
               <button
                 key={item}
-                className="rounded-[18px] border border-white/10 bg-[#0c1f57]/70 p-4 text-left text-sm font-semibold text-blue-50 transition hover:bg-[#102767]"
+                className="rounded-2xl border border-[#E5E7EB] bg-[#FFF4E5]/40 p-4 text-left text-sm font-bold text-[#111827] transition hover:bg-[#FFF4E5] hover:border-[#F4B860]/40 hover:scale-[1.01] duration-200"
               >
                 {item}
               </button>
@@ -215,25 +211,25 @@ export default function AdminDashboardPage() {
               fileName="all-users-report"
               sheetName="All Users"
               label="Quick Export: User List"
-              className="w-full !justify-start !p-4 !rounded-[18px] !bg-[#0c1f57]/70 !border-white/10 hover:!bg-[#102767]"
+              className="w-full !justify-start !p-4 !rounded-2xl !bg-[#FFF4E5]/40 !border-[#E5E7EB] hover:!bg-[#FFF4E5] hover:!border-[#F4B860]/40 text-[#111827] font-bold duration-200 hover:scale-[1.01]"
             />
           </div>
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+      <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-bold text-[#111827]">
             Recent Activities
           </h2>
-          <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
+          <button className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition">
             View All
           </button>
         </div>
 
         <div className="space-y-4">
           {loading ? (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-[#9CA3AF]">
               Loading activities...
             </div>
           ) : summary?.recentActivities &&
@@ -241,25 +237,25 @@ export default function AdminDashboardPage() {
             summary.recentActivities.map((activity, idx) => (
               <div
                 key={idx}
-                className="rounded-[20px] border border-white/10 bg-[#0c1f57]/70 p-4 transition hover:bg-[#102767]"
+                className="rounded-2xl border border-[#E5E7EB] bg-white p-4 transition hover:bg-[#FFF4E5]/30 hover:border-[#F4B860]/20 hover:scale-[1.005] duration-200"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="font-semibold text-white">
+                    <h3 className="font-bold text-[#111827]">
                       {activity.action || "Action"}: {activity.targetType || ""}
                     </h3>
-                    <p className="mt-1 text-sm text-blue-100/70">
+                    <p className="mt-1 text-sm text-[#6B7280]">
                       {activity.details || `Admin: ${activity.adminId || ""}`}
                     </p>
                   </div>
-                  <span className="whitespace-nowrap text-xs font-medium text-blue-200/55">
+                  <span className="whitespace-nowrap text-xs font-semibold text-[#9CA3AF]">
                     {new Date(activity.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-[#9CA3AF]">
               No recent activities
             </div>
           )}

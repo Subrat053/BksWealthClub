@@ -31,6 +31,14 @@ export async function apiClient(urlOrFn, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
+    // ── Auto-logout on 401 Invalid/Expired Token ─────────────────────────
+    if (response.status === 401) {
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("user");
+      // Notify AuthContext (and any other listener) without importing React
+      window.dispatchEvent(new CustomEvent("auth:logout"));
+    }
+
     const error = new Error(data?.message || `Request failed with status ${response.status}`);
     error.status = response.status;
     error.data = data;
@@ -39,3 +47,4 @@ export async function apiClient(urlOrFn, options = {}) {
 
   return data;
 }
+

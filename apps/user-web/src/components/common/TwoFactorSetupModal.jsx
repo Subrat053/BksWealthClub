@@ -25,18 +25,19 @@ export default function TwoFactorSetupModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#03081ccc] p-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-2xl border border-cyan-200/20 bg-[linear-gradient(170deg,rgba(5,18,58,0.98)_0%,rgba(12,33,94,0.98)_100%)] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
-        <h2 className="text-2xl font-bold text-white">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-3xl border border-[#E5E7EB] bg-white p-6 shadow-2xl">
+        <h2 className="text-2xl font-bold text-[#111827]">
           Enable Google Authenticator
         </h2>
-        <p className="mt-1 text-sm text-cyan-100/80">
+
+        <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
           Scan this QR code using Google Authenticator, then enter the current
           6-digit code to activate 2FA.
         </p>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
-          <div className="rounded-2xl border border-cyan-100/20 bg-white p-3">
+        <div className="mt-5 grid gap-5 md:grid-cols-[220px_1fr]">
+          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
             {qrCodeDataUrl ? (
               <img
                 src={qrCodeDataUrl}
@@ -44,21 +45,24 @@ export default function TwoFactorSetupModal({
                 className="mx-auto h-48 w-48"
               />
             ) : (
-              <div className="grid h-48 w-48 place-items-center bg-slate-100 text-sm text-slate-500">
+              <div className="grid h-48 w-48 place-items-center rounded-xl bg-[#F8FAFC] text-sm text-[#6B7280]">
                 Loading QR...
               </div>
             )}
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/10 p-3 text-sm text-yellow-100">
-              Backup key:
-              <div className="mt-1 break-all font-mono text-[13px] text-yellow-50">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[#F4B860]/40 bg-[#FFF4E5] p-4 text-sm text-[#6B7280]">
+              <span className="font-semibold text-[#111827]">
+                Backup key:
+              </span>
+
+              <div className="mt-2 break-all rounded-xl bg-white px-3 py-2 font-mono text-[13px] font-semibold text-[#111827]">
                 {tempSecret || "Generating..."}
               </div>
             </div>
 
-            <form onSubmit={submit} className="space-y-3">
+            <form onSubmit={submit} className="space-y-4">
               <input
                 value={otp}
                 onChange={(event) =>
@@ -67,18 +71,45 @@ export default function TwoFactorSetupModal({
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 placeholder="Enter 6-digit OTP"
-                className="h-12 w-full rounded-xl border border-white/20 bg-[#1d2b61] px-4 text-center text-lg tracking-[0.25em] text-white outline-none focus:border-cyan-300/70"
+                className="
+                  h-12
+                  w-full
+                  rounded-xl
+                  border
+                  border-[#E5E7EB]
+                  bg-white
+                  px-4
+                  text-center
+                  text-lg
+                  font-semibold
+                  tracking-[0.25em]
+                  text-[#111827]
+                  placeholder:text-[#9CA3AF]
+                  outline-none
+                  transition-all
+                  duration-300
+                  focus:border-[#F4B860]
+                  focus:ring-4
+                  focus:ring-[#F4B860]/20
+                "
               />
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   type="submit"
+                  variant="secondary"
                   className="w-full"
                   disabled={loading || otp.length !== 6}
                 >
                   {loading ? "Verifying..." : "Verify and Enable"}
                 </Button>
-                <Button type="button" variant="muted" onClick={onClose}>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={onClose}
+                >
                   Cancel
                 </Button>
               </div>

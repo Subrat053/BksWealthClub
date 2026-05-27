@@ -72,13 +72,13 @@ const faqs = [
 export default function HomePage() {
   return (
     <div className="lg:space-y-0">
-      <section className="relative min-h-screen overflow-hidden bg-[#021533] text-white">
+      <section className="relative min-h-screen overflow-hidden bg-white text-slate-900">
         {/* background */}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,16,44,0.96)_0%,rgba(2,25,61,0.96)_60%,rgba(8,63,96,0.88)_100%)]" />
-        <div className="absolute inset-0 opacity-10 [background-image:linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:48px_48px]" />
-        <div className="absolute bottom-0 right-0 h-[280px] w-[280px] bg-cyan-500/20 blur-3xl" />
-        <div className="absolute left-[-80px] top-[140px] h-[220px] w-[220px] rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-56 w-56 border-t-[120px] border-l-[120px] border-t-transparent border-l-cyan-600/40" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#FFFFFF_0%,#FFF9F5_60%,#FFF4E5_100%)]" />
+        <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(232,161,63,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(232,161,63,0.12)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <div className="absolute bottom-0 right-0 h-[280px] w-[280px] bg-[#E8A13F]/10 blur-3xl" />
+        <div className="absolute left-[-80px] top-[140px] h-[220px] w-[220px] rounded-full bg-[#E8A13F]/10 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-56 w-56 border-t-[120px] border-l-[120px] border-t-transparent border-l-[#E8A13F]/20" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Navbar */}
@@ -136,13 +136,13 @@ export default function HomePage() {
               animate="visible"
               className="max-w-xl"
             >
-              <h1 className="text-4xl font-extrabold uppercase leading-tight sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-extrabold uppercase leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                 BksWealthClub
               </h1>
-              <h2 className="mt-3 text-2xl font-bold leading-snug text-slate-100 sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-bold leading-snug text-slate-700 sm:text-3xl">
                 Transmute Platform To Build Up With BksWealthClub.
               </h2>
-              <p className="mt-6 max-w-lg text-sm leading-7 text-slate-300 sm:text-base">
+              <p className="mt-6 max-w-lg text-sm leading-7 text-slate-500 sm:text-base">
                 This is a picture decentralized community building platform
                 based on smart contracts, connects people from across the world
                 which will create ample of wealth. This is a new economic
@@ -152,20 +152,20 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
                   to="/login"
-                  className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-cyan-400 hover:text-slate-950"
+                  className="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
                 >
                   Login
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700">
                     <ArrowRight size={14} />
                   </span>
                 </Link>
 
                 <Link
                   to="/register"
-                  className="group inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:scale-105"
+                  className="group inline-flex items-center gap-2 rounded-full bg-[#111827] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1F2937] active:scale-[0.98]"
                 >
                   Register
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white">
                     <ArrowRight size={14} />
                   </span>
                 </Link>
@@ -179,16 +179,16 @@ export default function HomePage() {
               className="relative mx-auto flex items-center justify-center"
             >
               <div className="relative h-[360px] w-[360px] sm:h-[430px] sm:w-[430px]">
-                <div className="absolute inset-0 animate-[spin_18s_linear_infinite] rounded-full border-[18px] border-transparent border-t-cyan-400 border-r-lime-400 border-b-yellow-400 border-l-blue-500 opacity-90" />
-                <div className="absolute inset-[38px] rounded-full border border-white/10 bg-white/5 backdrop-blur-md" />
-                <div className="absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.7)]" />
-                <div className="absolute right-4 top-16 h-10 w-10 rounded-full bg-lime-400 shadow-[0_0_25px_rgba(163,230,53,0.7)]" />
-                <div className="absolute bottom-10 right-3 h-10 w-10 rounded-full bg-yellow-300 shadow-[0_0_25px_rgba(253,224,71,0.7)]" />
-                <div className="absolute bottom-2 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full bg-red-400 shadow-[0_0_25px_rgba(248,113,113,0.7)]" />
-                <div className="absolute bottom-12 left-5 h-10 w-10 rounded-full bg-purple-400 shadow-[0_0_25px_rgba(192,132,252,0.7)]" />
-                <div className="absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-indigo-400 shadow-[0_0_25px_rgba(129,140,248,0.7)]" />
-                <div className="absolute left-10 top-20 h-10 w-10 rounded-full bg-sky-500 shadow-[0_0_25px_rgba(14,165,233,0.7)]" />
-                <div className="absolute inset-[100px] rounded-full border border-white/10 bg-[#08224d]/70 backdrop-blur-xl" />
+                <div className="absolute inset-0 animate-[spin_18s_linear_infinite] rounded-full border-[18px] border-transparent border-t-[#E8A13F] border-r-amber-300 border-b-orange-400 border-l-slate-300 opacity-90" />
+                <div className="absolute inset-[38px] rounded-full border border-slate-200 bg-white/80 backdrop-blur-md" />
+                <div className="absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 rounded-full bg-[#E8A13F] shadow-[0_0_25px_rgba(232,161,63,0.5)]" />
+                <div className="absolute right-4 top-16 h-10 w-10 rounded-full bg-amber-300 shadow-[0_0_25px_rgba(252,211,77,0.5)]" />
+                <div className="absolute bottom-10 right-3 h-10 w-10 rounded-full bg-orange-400 shadow-[0_0_25px_rgba(251,146,60,0.5)]" />
+                <div className="absolute bottom-2 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full bg-rose-400 shadow-[0_0_25px_rgba(251,113,133,0.5)]" />
+                <div className="absolute bottom-12 left-5 h-10 w-10 rounded-full bg-slate-400 shadow-[0_0_25px_rgba(148,163,184,0.5)]" />
+                <div className="absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-slate-500 shadow-[0_0_25px_rgba(100,116,139,0.5)]" />
+                <div className="absolute left-10 top-20 h-10 w-10 rounded-full bg-amber-200 shadow-[0_0_25px_rgba(253,230,138,0.5)]" />
+                <div className="absolute inset-[100px] rounded-full border border-slate-200 bg-[#FFF9F5] backdrop-blur-xl" />
               </div>
             </motion.div>
           </div>
@@ -224,7 +224,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#E8A13F]">
               About Us
             </p>
             <h3 className="mt-3 max-w-xl text-4xl font-extrabold leading-tight text-slate-900">
@@ -240,7 +240,7 @@ export default function HomePage() {
 
             <div className="mt-8 space-y-5">
               <div className="flex gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 shadow-sm ring-1 ring-cyan-100">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4E5] text-[#E8A13F] shadow-sm ring-1 ring-[#F4B860]/30">
                   <MessageCircle size={26} />
                 </div>
                 <div>
@@ -255,7 +255,7 @@ export default function HomePage() {
               </div>
 
               <div className="flex gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 shadow-sm ring-1 ring-cyan-100">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4E5] text-[#E8A13F] shadow-sm ring-1 ring-[#F4B860]/30">
                   <Brain size={26} />
                 </div>
                 <div>
@@ -270,7 +270,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-[#072144] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-cyan-500">
+            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-[#111827] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1F2937]">
               Read More
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">
                 <ArrowRight size={14} />
@@ -281,7 +281,7 @@ export default function HomePage() {
       </section>
 
       {/* FEATURES */}
-      <section id="services" className="bg-[#dff3f7] py-20">
+      <section id="services" className="bg-[#FFF9F5] py-20">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:px-8">
           <motion.div
             variants={fadeLeft}
@@ -290,7 +290,7 @@ export default function HomePage() {
             viewport={{ once: true, amount: 0.2 }}
             className="max-w-xl"
           >
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#E8A13F]">
               Power of Compounding
             </p>
             <h3 className="mt-4 text-4xl font-extrabold leading-none text-slate-900 sm:text-6xl">
@@ -304,7 +304,7 @@ export default function HomePage() {
               multiplication which makes it extraordinary from others.
             </p>
 
-            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-[#072144] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-cyan-500">
+            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-[#111827] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1F2937]">
               Read More
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">
                 <ArrowRight size={14} />
@@ -324,9 +324,9 @@ export default function HomePage() {
               return (
                 <div
                   key={index}
-                  className="rounded-[26px] border border-cyan-100 bg-white p-7 shadow-[0_12px_35px_rgba(2,21,51,0.08)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_18px_45px_rgba(2,21,51,0.14)]"
+                  className="rounded-[26px] border border-[#F4B860]/30 bg-white p-7 shadow-[0_12px_35px_rgba(2,21,51,0.06)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_18px_45px_rgba(2,21,51,0.12)] hover:border-[#E8A13F]/50"
                 >
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 ring-1 ring-cyan-100">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFF4E5] text-[#E8A13F] ring-1 ring-[#F4B860]/30">
                     <Icon size={30} />
                   </div>
                   <h4 className="mt-5 text-xl font-bold text-slate-900">
@@ -335,7 +335,7 @@ export default function HomePage() {
                   <p className="mt-3 text-sm leading-7 text-slate-600">
                     {item.desc}
                   </p>
-                  <button className="mt-5 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-500">
+                  <button className="mt-5 text-sm font-semibold uppercase tracking-[0.2em] text-[#E8A13F]">
                     Read More
                   </button>
                 </div>
@@ -380,7 +380,7 @@ export default function HomePage() {
             viewport={{ once: true, amount: 0.2 }}
             className="max-w-xl"
           >
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#E8A13F]">
               Reason To Choose Us
             </p>
             <h3 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">
@@ -408,7 +408,7 @@ export default function HomePage() {
               ))}
             </div>
 
-            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-[#081d3b] px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-cyan-500">
+            <button className="group mt-8 inline-flex items-center gap-3 rounded-full bg-white/10 border border-white/20 px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/20">
               Read More
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">
                 <ArrowRight size={14} />
@@ -419,7 +419,7 @@ export default function HomePage() {
       </section>
 
       {/* TESTIMONIAL */}
-      <section className="bg-[#eaf8fb] py-20">
+      <section className="bg-[#FFF9F5] py-20">
         <div className="mx-auto max-w-6xl px-4 text-center sm:px-6 lg:px-8">
           <motion.div
             variants={fadeUp}
@@ -427,7 +427,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#E8A13F]">
               Testimonials
             </p>
             <h3 className="mt-3 text-4xl font-extrabold text-slate-900 sm:text-5xl">
@@ -452,17 +452,17 @@ export default function HomePage() {
                 <p className="text-lg italic leading-8 text-slate-700">
                   “This would be proven the best one in future.”
                 </p>
-                <h4 className="mt-4 text-lg font-bold text-cyan-600">
+                <h4 className="mt-4 text-lg font-bold text-[#E8A13F]">
                   Michelle Lewis
                 </h4>
                 <p className="text-sm text-slate-500">Long term investor</p>
               </div>
 
               <div className="flex gap-3 self-end sm:self-center">
-                <button className="flex h-11 w-11 items-center justify-center rounded-full bg-[#072144] text-white transition hover:bg-cyan-500">
-                  <ChevronRight size={16} />
-                </button>
-                <button className="flex h-11 w-11 items-center justify-center rounded-full bg-[#072144] text-white transition hover:bg-cyan-500">
+                  <button className="flex h-11 w-11 items-center justify-center rounded-full bg-[#111827] text-white transition hover:bg-[#1F2937]">
+                    <ChevronRight size={16} />
+                  </button>
+                  <button className="flex h-11 w-11 items-center justify-center rounded-full bg-[#111827] text-white transition hover:bg-[#1F2937]">
                   <ChevronRight size={16} className="rotate-180" />
                 </button>
               </div>
@@ -480,7 +480,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#E8A13F]">
               FAQs
             </p>
             <h3 className="mt-3 max-w-md text-4xl font-extrabold leading-none text-slate-900 sm:text-6xl">
@@ -491,12 +491,12 @@ export default function HomePage() {
               {faqs.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-full border border-slate-200 bg-[#f8fbfd] px-5 py-4 shadow-sm transition hover:border-cyan-300"
+                  className="flex items-center justify-between rounded-full border border-slate-200 bg-white px-5 py-4 shadow-sm transition hover:border-[#E8A13F]/50 hover:shadow-md"
                 >
                   <span className="text-sm font-medium text-slate-700 sm:text-base">
                     {item}
                   </span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8A13F] text-white">
                     <Plus size={16} />
                   </span>
                 </div>
@@ -512,7 +512,7 @@ export default function HomePage() {
             id="contact"
             className="relative"
           >
-            <div className="absolute -right-2 -top-2 h-full w-full rounded-[30px] bg-cyan-400/40" />
+            <div className="absolute -right-2 -top-2 h-full w-full rounded-[30px] bg-[#E8A13F]/20" />
             <div className="relative rounded-[30px] bg-white p-8 shadow-[0_22px_55px_rgba(2,21,51,0.12)] ring-1 ring-slate-100">
               <h4 className="text-3xl font-bold text-slate-900">
                 Need any Help!
@@ -525,27 +525,27 @@ export default function HomePage() {
                 <input
                   type="text"
                   placeholder="Your Name"
-                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-cyan-400"
+                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                 />
                 <input
                   type="email"
                   placeholder="Your Email"
-                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-cyan-400"
+                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                 />
                 <input
                   type="text"
                   placeholder="Phone"
-                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-cyan-400"
+                  className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                 />
                 <textarea
                   rows="5"
                   placeholder="Message"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                 />
 
                 <button
                   type="submit"
-                  className="group inline-flex items-center gap-3 rounded-full bg-[#072144] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-cyan-500"
+                  className="group inline-flex items-center gap-3 rounded-full bg-[#111827] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1F2937]"
                 >
                   Submit Now
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-900">

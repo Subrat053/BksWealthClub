@@ -8,6 +8,24 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ── Global 401 auto-logout listener ─────────────────────────────────────
+  // apiClient fires "auth:logout" whenever it receives a 401 response.
+  // We respond by clearing state and hard-redirecting to /login.
+  useEffect(() => {
+    const handleForceLogout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      // Redirect to login, preserving current path so user can return after re-login
+      const returnPath = window.location.pathname + window.location.search;
+      window.location.replace(
+        `/login?session=expired&returnTo=${encodeURIComponent(returnPath)}`
+      );
+    };
+
+    window.addEventListener("auth:logout", handleForceLogout);
+    return () => window.removeEventListener("auth:logout", handleForceLogout);
+  }, []);
+
   // Check if user is already logged in on mount
   useEffect(() => {
     const token = localStorage.getItem("userToken");
@@ -77,3 +95,4 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+

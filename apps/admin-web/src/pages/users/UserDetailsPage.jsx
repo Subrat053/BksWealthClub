@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
+import AdminPageHeader from "../../components/layout/AdminPageHeader";
 import { getUserDetails, updateUserStatus } from "../../api/user.api";
 import { adminIncomeService } from "../../services/adminIncome.service";
 import StatusBadge from "../../components/StatusBadge";
@@ -71,15 +71,15 @@ export default function UserDetailsPage() {
 
   if (loading)
     return (
-      <div className="p-10 text-center text-blue-100/60">
+      <div className="p-10 text-center text-slate-400 font-medium">
         Loading user details...
       </div>
     );
   if (error)
-    return <div className="p-10 text-center text-red-400">{error}</div>;
+    return <div className="p-10 text-center text-rose-600 font-bold bg-rose-50 border border-rose-200 rounded-xl m-4">{error}</div>;
   if (!user)
     return (
-      <div className="p-10 text-center text-blue-100/60">User not found.</div>
+      <div className="p-10 text-center text-slate-400 font-medium">User not found.</div>
     );
 
   const w = incomeSummary?.wallet || {};
@@ -103,84 +103,84 @@ export default function UserDetailsPage() {
       <div className="mb-2">
         <button
           onClick={() => navigate("/admin/users")}
-          className="flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
         >
           &larr; Back to Users
         </button>
       </div>
-      <PageHeader
+      <AdminPageHeader
         title="User Details"
         subtitle={`Viewing profile for ${user.fullName}`}
       />
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Profile Snapshot */}
-        <section className="col-span-2 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
+        <section className="col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-bold text-slate-900">
               Profile Information
             </h3>
             <StatusBadge status={user.status} />
           </div>
 
-          <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+          <div className="mb-5 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-inner">
             {user.isAliasAccount ? "ALIAS USER" : "MAIN USER"}
           </div>
 
           <div className="grid gap-y-4 text-sm md:grid-cols-2">
             <div>
-              <p className="text-blue-200/50">Full Name</p>
-              <p className="font-medium text-white">{user.fullName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Full Name</p>
+              <p className="font-semibold text-slate-800">{user.fullName}</p>
             </div>
             <div>
-              <p className="text-blue-200/50">User ID (Member ID)</p>
-              <p className="font-mono font-medium text-emerald-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">User ID (Member ID)</p>
+              <p className="font-mono font-bold text-[#E8A13F]">
                 {user.memberId}
               </p>
             </div>
             <div>
-              <p className="text-blue-200/50">Email Address</p>
-              <p className="font-medium text-white">{user.email}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Email Address</p>
+              <p className="font-semibold text-slate-800">{user.email}</p>
             </div>
             <div>
-              <p className="text-blue-200/50">Phone Number</p>
-              <p className="font-medium text-white">{user.phone || "N/A"}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Phone Number</p>
+              <p className="font-semibold text-slate-800">{user.phone || "N/A"}</p>
             </div>
             <div>
-              <p className="text-blue-200/50">Sponsor ID</p>
-              <p className="font-mono font-medium text-blue-300">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Sponsor ID</p>
+              <p className="font-mono font-bold text-slate-700">
                 {user.sponsorId}
               </p>
             </div>
             <div>
-              <p className="text-blue-200/50">Sponsored By ID</p>
-              <p className="font-mono font-medium text-cyan-300">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Sponsored By ID</p>
+              <p className="font-mono font-bold text-slate-700">
                 {sponsoredById}
               </p>
             </div>
             <div>
-              <p className="text-blue-200/50">Sponsored By Name</p>
-              <p className="font-medium text-white">{sponsoredByName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Sponsored By Name</p>
+              <p className="font-semibold text-slate-800">{sponsoredByName}</p>
             </div>
             <div>
-              <p className="text-blue-200/50">Registration Source</p>
-              <p className="font-medium capitalize text-white">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Registration Source</p>
+              <p className="font-semibold capitalize text-slate-800">
                 {user.registrationSource || "Web"}
               </p>
             </div>
             <div>
-              <p className="text-blue-200/50">Email Verified</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Email Verified</p>
               <p
-                className={
-                  user.isEmailVerified ? "text-emerald-400" : "text-red-400"
-                }
+                className={`font-bold ${
+                  user.isEmailVerified ? "text-emerald-600" : "text-rose-600"
+                }`}
               >
                 {user.isEmailVerified ? "Verified" : "Not Verified"}
               </p>
             </div>
             <div>
-              <p className="text-blue-200/50">Joined On</p>
-              <p className="font-medium text-white">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Joined On</p>
+              <p className="font-semibold text-slate-650">
                 {new Date(user.createdAt).toLocaleDateString()}{" "}
                 {new Date(user.createdAt).toLocaleTimeString()}
               </p>
@@ -189,8 +189,8 @@ export default function UserDetailsPage() {
         </section>
 
         {/* Quick Actions */}
-        <section className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-6 text-lg font-semibold text-white">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-6 text-lg font-bold text-slate-900">
             Admin Actions
           </h3>
           <div className="flex flex-col gap-3">
@@ -198,7 +198,7 @@ export default function UserDetailsPage() {
               <button
                 disabled={updating}
                 onClick={() => handleUpdateStatus("active")}
-                className="w-full rounded-xl bg-emerald-500/10 py-3 text-sm font-semibold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition disabled:opacity-50"
+                className="w-full rounded-xl bg-emerald-50 py-3 text-sm font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition disabled:opacity-50 shadow-sm"
               >
                 Activate / Approve
               </button>
@@ -207,7 +207,7 @@ export default function UserDetailsPage() {
               <button
                 disabled={updating}
                 onClick={() => handleUpdateStatus("suspended")}
-                className="w-full rounded-xl bg-amber-500/10 py-3 text-sm font-semibold text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition disabled:opacity-50"
+                className="w-full rounded-xl bg-amber-50 py-3 text-sm font-bold text-amber-700 border border-amber-250 hover:bg-amber-100 transition disabled:opacity-50 shadow-sm"
               >
                 Suspend Account
               </button>
@@ -216,36 +216,36 @@ export default function UserDetailsPage() {
               <button
                 disabled={updating}
                 onClick={() => handleUpdateStatus("blocked")}
-                className="w-full rounded-xl bg-red-500/10 py-3 text-sm font-semibold text-red-400 border border-red-500/20 hover:bg-red-500/20 transition disabled:opacity-50"
+                className="w-full rounded-xl bg-rose-50 py-3 text-sm font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition disabled:opacity-50 shadow-sm"
               >
                 Block User
               </button>
             )}
           </div>
 
-          <div className="mt-8 rounded-2xl bg-white/5 p-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-200/40">
+          <div className="mt-8 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Security Status
             </h4>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-blue-100/60">2FA Enabled</span>
+                <span className="text-slate-500 font-semibold">2FA Enabled</span>
                 <span
-                  className={
+                  className={`font-bold ${
                     user.twoFactorEnabled
-                      ? "text-emerald-400"
-                      : "text-slate-400"
-                  }
+                      ? "text-emerald-600"
+                      : "text-slate-500"
+                  }`}
                 >
                   {user.twoFactorEnabled ? "YES" : "NO"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-blue-100/60">Account Locked</span>
+                <span className="text-slate-500 font-semibold">Account Locked</span>
                 <span
-                  className={
-                    user.isSuspended ? "text-red-400" : "text-emerald-400"
-                  }
+                  className={`font-bold ${
+                    user.isSuspended ? "text-rose-600" : "text-emerald-600"
+                  }`}
                 >
                   {user.isSuspended ? "YES" : "NO"}
                 </span>
@@ -256,51 +256,51 @@ export default function UserDetailsPage() {
       </div>
 
       {aliases.length > 0 && (
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Alias / Upgrade IDs</h3>
-            <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+            <h3 className="text-lg font-bold text-slate-900">Alias / Upgrade IDs</h3>
+            <span className="rounded-full border border-[#F4B860]/20 bg-[#FFF4E5] px-3 py-1 text-xs font-bold text-[#E8A13F]">
               {aliases.length} alias record(s)
             </span>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {aliases.map((alias) => (
-              <div key={alias._id} className="rounded-2xl border border-white/10 bg-[#0c1f57]/70 p-4">
+              <div key={alias._id} className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400">Alias Member ID</p>
-                    <p className="font-mono font-bold text-cyan-300">{alias.aliasMemberId || alias.aliasId}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Alias Member ID</p>
+                    <p className="font-mono font-bold text-[#E8A13F]">{alias.aliasMemberId || alias.aliasId}</p>
                   </div>
-                  <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
                     {alias.status || "ACTIVE"}
                   </span>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-650">
                   <div>
-                    <p className="text-slate-500">Level</p>
-                    <p className="font-semibold text-white">{alias.createdFromAutopoolLevel ?? alias.sourceAutopoolLevel}</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Level</p>
+                    <p className="font-bold text-slate-800">{alias.createdFromAutopoolLevel ?? alias.sourceAutopoolLevel}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Sponsor</p>
-                    <p className="font-mono font-semibold text-amber-300">{alias.sponsorId || user.sponsorId || "—"}</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Sponsor</p>
+                    <p className="font-mono font-bold text-[#E8A13F]">{alias.sponsorId || user.sponsorId || "—"}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Deduction</p>
-                    <p className="font-semibold text-rose-300">${Number(alias.deductionAmount || 75).toFixed(2)}</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Deduction</p>
+                    <p className="font-bold text-rose-600">${Number(alias.deductionAmount || 75).toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Auto Deposit</p>
-                    <p className="font-semibold text-emerald-300">$75.00</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Auto Deposit</p>
+                    <p className="font-bold text-emerald-600">$75.00</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Rebirths</p>
-                    <p className="font-semibold text-cyan-300">{(alias.aliasRebirthIds || []).length}</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Rebirths</p>
+                    <p className="font-bold text-slate-800">{(alias.aliasRebirthIds || []).length}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Created</p>
-                    <p className="font-semibold text-white">{formatDate(alias.createdAt)}</p>
+                    <p className="text-slate-400 font-semibold uppercase text-[9px]">Created</p>
+                    <p className="font-semibold text-slate-600">{formatDate(alias.createdAt)}</p>
                   </div>
                 </div>
               </div>
@@ -311,35 +311,35 @@ export default function UserDetailsPage() {
 
       {/* ── Wallet & Income Section ──────────────────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/20 transition">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Withdrawable Fund
           </p>
-          <h4 className="mt-2 text-3xl font-bold text-emerald-300">
+          <h4 className="mt-2 text-3xl font-black text-emerald-600">
             ${w.withdrawableFund?.toFixed(2) || "0.00"}
           </h4>
         </div>
-        <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/20 transition">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Fund Wallet
           </p>
-          <h4 className="mt-2 text-3xl font-bold text-cyan-300">
+          <h4 className="mt-2 text-3xl font-black text-[#E8A13F]">
             ${w.fundWallet?.toFixed(2) || "0.00"}
           </h4>
         </div>
-        <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/20 transition">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Main Wallet
           </p>
-          <h4 className="mt-2 text-3xl font-bold text-blue-300">
+          <h4 className="mt-2 text-3xl font-black text-slate-800">
             ${w.mainWallet?.toFixed(2) || "0.00"}
           </h4>
         </div>
-        <div className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-md">
-          <p className="text-xs uppercase tracking-wider text-blue-100/50">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/20 transition">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Total Rebirth Balance
           </p>
-          <h4 className="mt-2 text-3xl font-bold text-purple-300">
+          <h4 className="mt-2 text-3xl font-black text-purple-700">
             ${w.totalRebirthBalance?.toFixed(2) || "0.00"}
           </h4>
         </div>
@@ -347,12 +347,12 @@ export default function UserDetailsPage() {
 
       {/* Rebirth IDs */}
       {rebirths.length > 0 && (
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">Rebirth IDs</h3>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-bold text-slate-900">Rebirth IDs</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead className="bg-[#112766]/70">
-                <tr>
+            <table className="min-w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
                   {[
                     "Rebirth User ID",
                     "Parent User ID",
@@ -363,34 +363,34 @@ export default function UserDetailsPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                      className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200">
                 {rebirths.map((rb) => (
-                  <tr key={rb._id} className="transition hover:bg-white/5">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-cyan-300">
+                  <tr key={rb._id} className="transition hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs font-bold text-[#E8A13F]">
                       {rb.rebirthUserId || rb.rebirthCode}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-blue-200">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-600">
                       {rb.ownerMemberId ||
                         summaryUserProfile.memberId ||
                         user.memberId}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-amber-300">
+                    <td className="px-4 py-3 font-mono text-xs font-bold text-slate-700">
                       {rb.sponsorId || sponsoredById}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-200">
+                    <td className="px-4 py-3 text-sm font-semibold text-slate-750">
                       {rb.sponsorName || sponsoredByName}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-emerald-300">
+                    <td className="px-4 py-3 text-sm font-bold text-emerald-600">
                       ${rb.walletBalance?.toFixed(2) || "0.00"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400">
+                    <td className="px-4 py-3 text-xs text-slate-500 font-medium">
                       {formatDate(rb.createdAt)}
                     </td>
                   </tr>
@@ -403,23 +403,23 @@ export default function UserDetailsPage() {
 
       {/* Income Breakdown by Type */}
       {Object.keys(incomeByType).length > 0 && (
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-bold text-slate-900">
             Income Breakdown
           </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(incomeByType).map(([type, data]) => (
               <div
                 key={type}
-                className="rounded-[18px] border border-white/10 bg-[#0c1f57]/70 p-4"
+                className="rounded-xl border border-slate-150 bg-slate-50 p-4"
               >
-                <p className="text-xs text-slate-400 uppercase">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   {type.replace(/_/g, " ")}
                 </p>
-                <p className="mt-1 text-xl font-bold text-white">
+                <p className="mt-1.5 text-xl font-black text-[#E8A13F]">
                   ${data.total?.toFixed(2)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 font-semibold">
                   {data.count} transaction(s)
                 </p>
               </div>
@@ -430,40 +430,40 @@ export default function UserDetailsPage() {
 
       {/* Recent Income Logs */}
       {recentLogs.length > 0 && (
-        <div className="rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-bold text-slate-900">
             Recent Income Logs
           </h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead className="bg-[#112766]/70">
-                <tr>
+            <table className="min-w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
                   {["Date", "From", "Type", "Amount", "Remarks"].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                      className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200">
                 {recentLogs.map((log) => (
-                  <tr key={log._id} className="transition hover:bg-white/5">
-                    <td className="px-4 py-3 text-xs text-slate-400">
+                  <tr key={log._id} className="transition hover:bg-slate-50">
+                    <td className="px-4 py-3 text-xs text-slate-500 font-medium">
                       {formatDate(log.createdAt)}
                     </td>
-                    <td className="px-4 py-3 text-sm font-mono text-cyan-300">
+                    <td className="px-4 py-3 text-sm font-mono font-bold text-[#E8A13F]">
                       {log.fromUserId?.memberId || "System"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-300">
+                    <td className="px-4 py-3 text-xs text-slate-600 font-semibold">
                       {log.type?.replace(/_/g, " ")}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-emerald-300">
+                    <td className="px-4 py-3 text-sm font-bold text-emerald-600">
                       ${log.amount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-xs text-slate-500 font-medium max-w-[200px] truncate">
                       {log.remarks || "—"}
                     </td>
                   </tr>

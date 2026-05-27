@@ -27,13 +27,13 @@ const TYPE_OPTIONS = {
 
 function TypeBadge({ type }) {
   const colors = {
-    RB_INCOME: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
-    SPONSOR_INCOME: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
-    LEVEL_INCOME: "bg-teal-400/15 text-teal-300 border-teal-400/30",
-    COMPANY_FUND: "bg-blue-400/15 text-blue-300 border-blue-400/30",
-    ADMIN_FUND: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-    ACHIEVER_FUND: "bg-purple-400/15 text-purple-300 border-purple-400/30",
-    LEFTOVER_TO_COMPANY: "bg-orange-400/15 text-orange-300 border-orange-400/30",
+    RB_INCOME: "bg-cyan-50 text-cyan-700 border-cyan-200 font-semibold",
+    SPONSOR_INCOME: "bg-emerald-50 text-emerald-700 border-emerald-250 font-semibold",
+    LEVEL_INCOME: "bg-teal-50 text-teal-700 border-teal-200 font-semibold",
+    COMPANY_FUND: "bg-blue-50 text-blue-700 border-blue-200 font-semibold",
+    ADMIN_FUND: "bg-amber-50 text-[#F59E0B] border-amber-200 font-semibold",
+    ACHIEVER_FUND: "bg-purple-50 text-purple-700 border-purple-200 font-semibold",
+    LEFTOVER_TO_COMPANY: "bg-orange-50 text-orange-700 border-orange-200 font-semibold",
   };
   return (
     <span
@@ -84,20 +84,20 @@ export default function IncomeLogsPage() {
       />
 
       {/* Filters */}
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-5">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-5">
         <select
           value={filters.type}
           onChange={(e) => {
             setFilters({ type: e.target.value });
             setPage(1);
           }}
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-805 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm font-semibold"
         >
           {Object.entries(TYPE_OPTIONS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k} className="bg-white">{v}</option>
           ))}
         </select>
-        <div className="flex items-center justify-end lg:col-span-4">
+        <div className="flex items-center justify-end lg:col-span-4 font-semibold text-slate-600">
           <DownloadReportButton
             data={logs}
             fileName={filters.type ? `${filters.type.toLowerCase()}-report` : "income-logs-report"}
@@ -115,24 +115,24 @@ export default function IncomeLogsPage() {
               { header: "Status", key: "status" },
             ]}
           />
-          <div className="ml-4 text-xs text-slate-400">
-            Total: <span className="font-semibold text-white">{total}</span> transactions
+          <div className="ml-4 text-xs text-slate-500 font-semibold">
+            Total: <span className="font-extrabold text-[#E8A13F] text-sm">{total}</span> transactions
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead className="bg-[#112766]/70">
-              <tr>
+          <table className="min-w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
                 {["Date", "From User", "Receiver", "Type", "Level", "Amount", "Remarks", "Status"].map((h) => (
-                  <th key={h} className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400">{h}</th>
+                  <th key={h} className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-5 py-12 text-center text-sm text-slate-500">
@@ -147,36 +147,36 @@ export default function IncomeLogsPage() {
                 </tr>
               ) : (
                 logs.map((item) => (
-                  <tr key={item._id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-xs text-slate-400">{formatDate(item.createdAt)}</td>
-                    <td className="px-5 py-4 text-sm">
-                      <span className="font-mono text-cyan-300">{item.fromUserId?.memberId || "—"}</span>
+                  <tr key={item._id} className="transition hover:bg-slate-50">
+                    <td className="px-5 py-4 text-xs text-slate-550 font-medium">{formatDate(item.createdAt).split(",")[0]}</td>
+                    <td className="px-5 py-4 text-sm text-slate-700 font-medium">
+                      <span className="font-mono font-bold text-[#E8A13F]">{item.fromUserId?.memberId || "—"}</span>
                       {item.fromUserId?.fullName && (
-                        <span className="ml-1 text-xs text-slate-400">({item.fromUserId.fullName})</span>
+                        <span className="ml-1 text-xs text-slate-400 font-semibold">({item.fromUserId.fullName})</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm">
+                    <td className="px-5 py-4 text-sm text-slate-700 font-medium">
                       {item.userId ? (
                         <>
-                          <span className="font-mono text-emerald-300">{item.userId?.memberId || "—"}</span>
+                          <span className="font-mono font-bold text-[#E8A13F]">{item.userId?.memberId || "—"}</span>
                           {item.userId?.fullName && (
-                            <span className="ml-1 text-xs text-slate-400">({item.userId.fullName})</span>
+                            <span className="ml-1 text-xs text-slate-400 font-semibold">({item.userId.fullName})</span>
                           )}
                         </>
                       ) : (
-                        <span className="text-xs text-slate-500 italic">Superadmin</span>
+                        <span className="text-xs text-slate-400 font-semibold italic">Superadmin</span>
                       )}
                     </td>
                     <td className="px-5 py-4"><TypeBadge type={item.type} /></td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
+                    <td className="px-5 py-4 text-sm text-slate-600 font-bold">
                       {item.level ? `L${item.level}` : "—"}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-emerald-300">${item.amount}</td>
-                    <td className="px-5 py-4 text-xs text-slate-400 max-w-[200px] truncate" title={item.remarks}>
+                    <td className="px-5 py-4 text-sm font-bold text-emerald-600">${item.amount}</td>
+                    <td className="px-5 py-4 text-xs text-slate-500 font-medium max-w-[200px] truncate" title={item.remarks}>
                       {item.remarks || "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="inline-flex rounded-full border border-emerald-250 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
                         {item.status}
                       </span>
                     </td>
@@ -189,21 +189,21 @@ export default function IncomeLogsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-white/5 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 bg-slate-50">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+              className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-40 transition"
             >
               Previous
             </button>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500 font-semibold">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+              className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-40 transition"
             >
               Next
             </button>

@@ -63,46 +63,46 @@ export default function AutopoolManagerPage() {
         {poolStats.map((item) => (
           <div
             key={item.label}
-            className="rounded-[24px] border border-white/10 bg-[#0c1f57]/70 p-5 shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#F4B860]/40 transition duration-300"
           >
-            <p className="text-sm font-medium text-blue-100/70">{item.label}</p>
-            <h3 className="mt-3 text-3xl font-bold text-white">{item.value}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{item.label}</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-900 tracking-tight">{item.value}</h3>
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead className="bg-[#112766]/70">
-              <tr>
-                <th className="px-5 py-4 text-sm font-semibold text-white">USERNAME</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">POOL</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">CYCLE</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">POSITION</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">PAYOUT</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">STATUS</th>
-                <th className="px-5 py-4 text-sm font-semibold text-white">ACTIONS</th>
+          <table className="min-w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">USERNAME</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">POOL</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">CYCLE</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">POSITION</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">PAYOUT</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">STATUS</th>
+                <th className="px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ACTIONS</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200">
               {autopoolEntries.map((item) => (
-                <tr key={item.id} className="transition hover:bg-white/5">
-                  <td className="px-5 py-4 text-sm text-blue-100/85">{item.username}</td>
-                  <td className="px-5 py-4 text-sm text-blue-100/85">{item.poolName}</td>
-                  <td className="px-5 py-4 text-sm text-blue-100/85">{item.cycle}</td>
-                  <td className="px-5 py-4 text-sm text-blue-100/85">{item.position}</td>
-                  <td className="px-5 py-4 text-sm text-blue-100/85">{item.payout}</td>
-                  <td className="px-5 py-4 text-sm text-blue-100/85">
+                <tr key={item.id} className="transition hover:bg-slate-50">
+                  <td className="px-5 py-4 text-sm font-bold text-slate-800">{item.username}</td>
+                  <td className="px-5 py-4 text-sm font-semibold text-slate-600">{item.poolName}</td>
+                  <td className="px-5 py-4 text-sm font-semibold text-slate-600">{item.cycle}</td>
+                  <td className="px-5 py-4 text-sm font-bold text-slate-700">{item.position}</td>
+                  <td className="px-5 py-4 text-sm font-black text-slate-800">{item.payout}</td>
+                  <td className="px-5 py-4 text-sm">
                     <StatusBadge status={item.status} />
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex gap-2">
-                      <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
+                      <button className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
                         View
                       </button>
-                      <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10">
+                      <button className="px-3.5 py-1.5 bg-[#111827] text-white rounded-lg text-xs font-bold hover:bg-[#1F2937] transition shadow-sm">
                         Rotate
                       </button>
                     </div>

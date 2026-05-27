@@ -19,28 +19,27 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
 
   const sidebarContent = (
     <>
-      <div className="px-6 py-2">
-        {/* <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/90">
+      <div className="px-6 py-4 flex items-center justify-center border-b border-[#1F2937] mb-4">
+        {/* <p className="text-[11px] uppercase tracking-[0.24em] text-[#F4B860]">
           Member Panel
         </p>
         <p className="mt-2 text-2xl font-bold">BksWealthClub</p> */}
-        <img src="/bks_logo.png" alt="logo" className="" />
-        {/* <img src="/bks_logo.png" alt="" /> */}
+        <img src="/bks_logo.png" alt="logo" className="h-10 object-contain" />
       </div>
 
       <div className="px-6 pb-4">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.35)]">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-slate-300">
+        <div className="rounded-xl border border-[#1F2937] bg-[#1F2937]/30 p-4 shadow-sm text-center">
+          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">
             Member ID
           </p>
-          <p className="mt-1 text-lg font-semibold">{memberId}</p>
-          <p className={`mt-1 text-xs capitalize ${statusClass}`}>
+          <p className="mt-1 text-base font-semibold text-white">{memberId}</p>
+          <p className={`mt-1 text-xs capitalize ${statusClass} font-medium`}>
             Status: {memberStatus}
           </p>
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pb-6">
+      <nav className="flex-1 overflow-y-auto px-3 pb-6 space-y-2">
         {memberNav.map((item) => {
           const Icon = item.icon;
 
@@ -49,7 +48,7 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
               (child) => location.pathname === child.path,
             );
             return (
-              <div key={item.label} className="mb-2">
+              <div key={item.label} className="space-y-1">
                 <button
                   onClick={() =>
                     setOpenMenus((prev) => ({
@@ -57,31 +56,37 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
                       [item.label]: !prev[item.label],
                     }))
                   }
-                  className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition ${
-                    activeChild ? "bg-[#162457]" : "hover:bg-[#101d49]"
+                  className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition duration-200 ${
+                    activeChild
+                      ? "bg-[#1F2937]/50 text-white font-semibold"
+                      : "text-[#E5E7EB] hover:bg-[#1F2937]"
                   }`}
                 >
-                  <span className="flex items-center gap-3 text-sm font-semibold">
-                    <span className="rounded-full bg-[#111b43] p-2">
-                      {Icon && <Icon size={16} />}
+                  <span className="flex items-center gap-3 text-sm">
+                    <span className={`rounded-lg p-1.5 ${activeChild ? "bg-[#F4B860] text-[#111827]" : "bg-[#1F2937] text-[#F4B860]"}`}>
+                      {Icon && <Icon size={14} />}
                     </span>
                     {item.label}
                   </span>
                   <ChevronDown
-                    size={16}
-                    className={`transition ${openMenus[item.label] ? "rotate-180" : ""}`}
+                    size={14}
+                    className={`transition-transform duration-200 ${openMenus[item.label] ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {openMenus[item.label] && (
-                  <div className="ml-10 mt-2 space-y-2">
+                  <div className="ml-10 space-y-1 py-1">
                     {item.children.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `block rounded-md px-2 py-1 text-sm ${isActive ? "bg-white/10 text-white" : "text-slate-300 hover:text-white"}`
+                          `block rounded-lg px-3 py-2 text-xs transition duration-200 ${
+                            isActive
+                              ? "bg-[#F4B860] text-[#111827] font-semibold"
+                              : "text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/30"
+                          }`
                         }
                       >
                         {child.label}
@@ -99,15 +104,21 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
               to={item.path}
               onClick={onClose}
               className={({ isActive }) =>
-                `mb-2 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                  isActive ? "bg-[#162457]" : "hover:bg-[#101d49]"
+                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition duration-200 ${
+                  isActive
+                    ? "bg-[#F4B860] text-[#111827] shadow-sm font-semibold"
+                    : "text-[#E5E7EB] hover:bg-[#1F2937] hover:text-white"
                 }`
               }
             >
-              <span className="rounded-full bg-[#111b43] p-2">
-                {Icon && <Icon size={16} />}
-              </span>
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <span className={`rounded-lg p-1.5 transition ${isActive ? "bg-[#111827] text-[#F4B860]" : "bg-[#1F2937] text-[#F4B860]"}`}>
+                    {Icon && <Icon size={14} />}
+                  </span>
+                  <span>{item.label}</span>
+                </>
+              )}
             </NavLink>
           );
         })}
@@ -117,18 +128,18 @@ export default function MemberSidebar({ mobileOpen, onClose }) {
 
   return (
     <>
-      <aside className="hidden lg:fixed lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:shrink-0 lg:flex-col bg-[#020d2e] text-white shadow-2xl">
+      <aside className="hidden lg:fixed lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:shrink-0 lg:flex-col border-r border-[#1F2937] bg-[#111827] text-white shadow-lg">
         {sidebarContent}
       </aside>
 
       {mobileOpen ? (
         <>
           <button
-            className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden animate-fade-in"
             onClick={onClose}
             aria-label="Close menu"
           />
-          <aside className="fixed left-0 top-0 z-40 flex h-screen w-[280px] flex-col bg-[#020d2e] text-white lg:hidden">
+          <aside className="fixed left-0 top-0 z-40 flex h-screen w-[280px] flex-col border-r border-[#1F2937] bg-[#111827] text-white lg:hidden">
             {sidebarContent}
           </aside>
         </>

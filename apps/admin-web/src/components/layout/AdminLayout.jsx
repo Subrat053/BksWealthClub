@@ -12,11 +12,11 @@ export default function AdminLayout() {
   const adminSession = admin || {};
 
   return (
-    <div className="min-h-screen bg-[#07122d] text-white selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#111827] selection:bg-[#F4B860]/30">
       <div className="flex min-h-screen">
         {/* Sidebar Overlay for mobile */}
         <div
-          className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
           onClick={() => setMobileOpen(false)}
         />
 
@@ -31,7 +31,7 @@ export default function AdminLayout() {
             adminSession={adminSession}
             onMenuClick={() => setMobileOpen(true)}
           />
-          <main className="flex-1 px-4 py-6 lg:px-1 max-w-full overflow-x-hidden">
+          <main className="flex-1 px-4 py-6 lg:px-8 max-w-full overflow-x-hidden">
             <div className="mx-auto max-w-8xl">
               <Outlet />
             </div>

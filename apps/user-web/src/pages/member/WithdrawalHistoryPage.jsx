@@ -125,59 +125,59 @@ export default function WithdrawalHistoryPage() {
     switch (w.status) {
       case "PENDING_ADMIN_APPROVAL":
         statusBadge = (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#FFF4E5] text-[#E8A13F] border border-[#F4B860]/40">
             Pending Approval
           </span>
         );
         break;
       case "APPROVED":
         statusBadge = (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
             Approved
           </span>
         );
         break;
       case "PAID":
         statusBadge = (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
             Paid
           </span>
         );
         break;
       case "REJECTED":
         statusBadge = (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
             Rejected
           </span>
         );
         break;
       default:
         statusBadge = (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-300 border border-slate-500/20">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200">
             {w.status}
           </span>
         );
     }
 
     // Details cell containing TxHash, notes or rejection reason
-    let detailsCell = <span className="text-slate-400 font-italic text-xs">No extra info</span>;
+    let detailsCell = <span className="text-slate-400 font-italic text-xs font-medium">No extra info</span>;
     if (w.status === "REJECTED" && w.rejectionReason) {
       detailsCell = (
-        <div className="text-rose-300 text-xs">
+        <div className="text-rose-600 text-xs font-medium">
           <span className="font-bold">Reason:</span> {w.rejectionReason}
         </div>
       );
     } else if (w.status === "PAID" && w.txHash) {
       detailsCell = (
         <div className="flex items-center gap-1.5 font-mono text-xs">
-          <span className="text-slate-400 truncate max-w-[120px]">{w.txHash}</span>
+          <span className="text-slate-500 truncate max-w-[120px]">{w.txHash}</span>
           <button
             onClick={() => handleCopy(w.txHash, w._id)}
-            className="p-1 rounded bg-white/5 hover:bg-white/10 text-cyan-400 transition active:scale-90"
+            className="p-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#E8A13F] transition active:scale-90"
             title="Copy Tx Hash"
           >
             {copiedId === w._id ? (
-              <span className="text-[10px] text-emerald-400">Copied</span>
+              <span className="text-[10px] text-emerald-700 font-bold">Copied</span>
             ) : (
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -187,19 +187,19 @@ export default function WithdrawalHistoryPage() {
         </div>
       );
     } else if (w.userNote) {
-      detailsCell = <span className="text-slate-300 text-xs">{w.userNote}</span>;
+      detailsCell = <span className="text-slate-655 text-xs font-medium">{w.userNote}</span>;
     }
 
     return {
-      serial: <span className="font-semibold text-slate-400">{sNo}</span>,
-      amount: <span className="font-bold text-white">${w.requestedAmount?.toFixed(2)}</span>,
-      charges: <span className="text-slate-300">${w.adminChargeAmount?.toFixed(2)} (5%)</span>,
-      payable: <span className="font-bold text-emerald-400">${(w.requestedAmount - w.adminChargeAmount)?.toFixed(2)}</span>,
-      network: <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#1d2d54] text-cyan-300 border border-cyan-500/10 font-sans">{w.network || "TRC20"}</span>,
-      address: <span className="font-mono text-xs text-slate-300 truncate max-w-[140px]" title={w.walletAddress}>{w.walletAddress}</span>,
+      serial: <span className="font-bold text-slate-400">{sNo}</span>,
+      amount: <span className="font-bold text-slate-800">${w.requestedAmount?.toFixed(2)}</span>,
+      charges: <span className="text-slate-500 font-medium">${w.adminChargeAmount?.toFixed(2)} (5%)</span>,
+      payable: <span className="font-bold text-emerald-700">${(w.requestedAmount - w.adminChargeAmount)?.toFixed(2)}</span>,
+      network: <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-50 text-slate-600 border border-slate-200 font-sans">{w.network || "TRC20"}</span>,
+      address: <span className="font-mono text-xs text-slate-600 font-medium truncate max-w-[140px]" title={w.walletAddress}>{w.walletAddress}</span>,
       status: statusBadge,
       details: detailsCell,
-      date: <span className="text-xs text-slate-300">{formatDate(w.createdAt)}</span>
+      date: <span className="text-xs text-slate-500 font-medium">{formatDate(w.createdAt)}</span>
     };
   });
 
@@ -213,14 +213,14 @@ export default function WithdrawalHistoryPage() {
     
     const isSent = senderIdStr === currentUserIdStr;
     const typeBadge = isSent ? (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
         <svg className="w-3 h-3 rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
         Sent
       </span>
     ) : (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
         <svg className="w-3 h-3 rotate-225" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
         </svg>
@@ -234,19 +234,19 @@ export default function WithdrawalHistoryPage() {
     const partnerName = partner?.fullName || "BKS Member";
 
     return {
-      serial: <span className="font-semibold text-slate-400">{sNo}</span>,
+      serial: <span className="font-bold text-slate-400">{sNo}</span>,
       type: typeBadge,
       partner: (
         <div>
-          <span className="font-bold text-white block uppercase tracking-wide text-xs">{partnerId}</span>
-          <span className="text-[11px] text-slate-400">{partnerName}</span>
+          <span className="font-extrabold text-slate-800 block uppercase tracking-wide text-xs">{partnerId}</span>
+          <span className="text-[11px] text-slate-500 font-medium">{partnerName}</span>
         </div>
       ),
-      amount: <span className={`font-bold ${isSent ? 'text-rose-400' : 'text-emerald-400'}`}>
+      amount: <span className={`font-bold ${isSent ? 'text-rose-600' : 'text-emerald-700'}`}>
         {isSent ? "-" : "+"}${t.amount?.toFixed(2)}
       </span>,
-      note: <span className="text-xs text-slate-300">{t.note || "Peer-to-Peer Transfer"}</span>,
-      date: <span className="text-xs text-slate-300">{formatDate(t.createdAt)}</span>
+      note: <span className="text-xs text-slate-655 font-medium">{t.note || "Peer-to-Peer Transfer"}</span>,
+      date: <span className="text-xs text-slate-500 font-medium">{formatDate(t.createdAt)}</span>
     };
   });
 
@@ -257,15 +257,15 @@ export default function WithdrawalHistoryPage() {
         subtitle="Review audit trails of your withdrawal payouts and direct member transfers"
       />
 
-      <div className="rounded-2xl border border-white/10 bg-[#151c2c] overflow-hidden shadow-2xl">
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         {/* Navigation Tabs switcher */}
-        <div className="flex border-b border-white/10 bg-[#111724]">
+        <div className="flex border-b border-slate-200 bg-slate-50">
           <button
             onClick={() => setActiveTab("withdrawals")}
             className={`flex-1 py-4 text-center font-bold transition-all duration-300 ${
               activeTab === "withdrawals"
-                ? "bg-[#151c2c] text-cyan-400 border-b-2 border-cyan-400"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-white text-[#E8A13F] border-b-2 border-[#F4B860]"
+                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
             }`}
           >
             USDT Withdrawal Requests
@@ -274,8 +274,8 @@ export default function WithdrawalHistoryPage() {
             onClick={() => setActiveTab("transfers")}
             className={`flex-1 py-4 text-center font-bold transition-all duration-300 ${
               activeTab === "transfers"
-                ? "bg-[#151c2c] text-cyan-400 border-b-2 border-cyan-400"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-white text-[#E8A13F] border-b-2 border-[#F4B860]"
+                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
             }`}
           >
             P2P Wallet Transfers
@@ -286,11 +286,11 @@ export default function WithdrawalHistoryPage() {
         <div className="p-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <svg className="animate-spin h-10 w-10 text-cyan-400" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-10 w-10 text-[#E8A13F]" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <p className="text-slate-400 text-sm animate-pulse">Loading transaction logs...</p>
+              <p className="text-slate-500 text-sm animate-pulse font-medium">Loading transaction logs...</p>
             </div>
           ) : activeTab === "withdrawals" ? (
             /* WITHDRAWALS HISTORICAL DATA TABLE */
@@ -302,21 +302,21 @@ export default function WithdrawalHistoryPage() {
               />
               
               {wTotalPages > 1 && (
-                <div className="flex justify-between items-center bg-[#111724]/60 p-4 rounded-xl border border-white/5 mt-4">
+                <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-255 mt-4">
                   <button
                     onClick={() => setWPage((p) => Math.max(p - 1, 1))}
                     disabled={wPage === 1}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 disabled:pointer-events-none transition duration-150"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-655 disabled:opacity-30 disabled:pointer-events-none transition duration-150 shadow-xs"
                   >
                     Previous
                   </button>
-                  <span className="text-xs font-medium text-slate-400">
-                    Page <strong className="text-cyan-400">{wPage}</strong> of {wTotalPages}
+                  <span className="text-xs font-medium text-slate-500">
+                    Page <strong className="text-[#E8A13F]">{wPage}</strong> of {wTotalPages}
                   </span>
                   <button
                     onClick={() => setWPage((p) => Math.min(p + 1, wTotalPages))}
                     disabled={wPage === wTotalPages}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 disabled:pointer-events-none transition duration-150"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-655 disabled:opacity-30 disabled:pointer-events-none transition duration-150 shadow-xs"
                   >
                     Next
                   </button>
@@ -333,21 +333,21 @@ export default function WithdrawalHistoryPage() {
               />
               
               {tTotalPages > 1 && (
-                <div className="flex justify-between items-center bg-[#111724]/60 p-4 rounded-xl border border-white/5 mt-4">
+                <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-255 mt-4">
                   <button
                     onClick={() => setTPage((p) => Math.max(p - 1, 1))}
                     disabled={tPage === 1}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 disabled:pointer-events-none transition duration-150"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-655 disabled:opacity-30 disabled:pointer-events-none transition duration-150 shadow-xs"
                   >
                     Previous
                   </button>
-                  <span className="text-xs font-medium text-slate-400">
-                    Page <strong className="text-cyan-400">{tPage}</strong> of {tTotalPages}
+                  <span className="text-xs font-medium text-slate-500">
+                    Page <strong className="text-[#E8A13F]">{tPage}</strong> of {tTotalPages}
                   </span>
                   <button
                     onClick={() => setTPage((p) => Math.min(p + 1, tTotalPages))}
                     disabled={tPage === tTotalPages}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 disabled:pointer-events-none transition duration-150"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-655 disabled:opacity-30 disabled:pointer-events-none transition duration-150 shadow-xs"
                   >
                     Next
                   </button>

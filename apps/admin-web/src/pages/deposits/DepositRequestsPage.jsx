@@ -22,9 +22,9 @@ function formatDate(dateStr) {
 
 function StatusBadge({ status }) {
   const map = {
-    pending: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-    approved: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
-    rejected: "bg-red-400/15 text-red-300 border-red-400/30",
+    pending: "bg-[#FFF4E5] text-[#E8A13F] border-[#F4B860]/40 font-bold",
+    approved: "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold",
+    rejected: "bg-rose-50 text-rose-700 border-rose-200 font-bold",
   };
   return (
     <span
@@ -40,14 +40,14 @@ function StatusBadge({ status }) {
 function RejectModal({ deposit, onConfirm, onCancel, loading }) {
   const [reason, setReason] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1f4a] p-6 shadow-2xl">
-        <h3 className="mb-1 text-base font-semibold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <h3 className="mb-1 text-base font-semibold text-slate-800">
           Reject Deposit
         </h3>
-        <p className="mb-4 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-slate-500">
           Rejecting deposit from{" "}
-          <span className="text-white">
+          <span className="text-slate-800 font-medium">
             {deposit?.userRef?.memberId || "user"}
           </span>{" "}
           — ${deposit?.amount}
@@ -57,19 +57,19 @@ function RejectModal({ deposit, onConfirm, onCancel, loading }) {
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason for rejection (optional)"
           rows={3}
-          className="mb-4 w-full rounded-xl border border-white/10 bg-[#1a2d5a] px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-red-400/40 resize-none"
+          className="mb-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-855 placeholder-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 resize-none"
         />
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition"
+            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm text-slate-600 hover:bg-slate-100 transition"
           >
             Cancel
           </button>
           <button
             onClick={() => onConfirm(reason)}
             disabled={loading}
-            className="flex-1 rounded-xl bg-red-500/80 py-2.5 text-sm font-semibold text-white hover:bg-red-500 transition disabled:opacity-60"
+            className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 transition disabled:opacity-60"
           >
             {loading ? "Rejecting..." : "Confirm Reject"}
           </button>
@@ -82,34 +82,34 @@ function RejectModal({ deposit, onConfirm, onCancel, loading }) {
 // ─── Approve Confirmation Modal ───────────────────────────────────────────────
 function ApproveConfirmModal({ deposit, onConfirm, onCancel, loading }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1f4a] p-6 shadow-2xl">
-        <h3 className="mb-1 text-base font-semibold text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <h3 className="mb-1 text-base font-semibold text-slate-800">
           Approve Deposit
         </h3>
-        <p className="mb-3 text-sm text-slate-400">
+        <p className="mb-3 text-sm text-slate-500">
           Approve deposit from{" "}
-          <span className="text-white font-medium">
+          <span className="text-slate-800 font-medium">
             {deposit?.userRef?.memberId || deposit?.userRef?.fullName || "user"}
           </span>{" "}
           —{" "}
-          <span className="text-emerald-300 font-bold">${deposit?.amount}</span>
+          <span className="text-emerald-600 font-bold">${deposit?.amount}</span>
         </p>
-        <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           ⚠️ This will trigger income distribution: rebirth IDs, sponsor income,
           level income, and fund allocations.
         </div>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition"
+            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm text-slate-600 hover:bg-slate-100 transition"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 rounded-xl bg-emerald-500/80 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition disabled:opacity-60"
+            className="flex-1 rounded-xl bg-[#111827] py-2.5 text-sm font-semibold text-white hover:bg-[#1F2937] transition disabled:opacity-60"
           >
             {loading ? "Approving..." : "Confirm Approve"}
           </button>
@@ -128,37 +128,37 @@ function DistributionSummaryModal({ summary, onClose }) {
     {
       label: "RB1 Wallet Credit",
       value: dist?.rebirths?.rb1?.walletCredit ?? 20,
-      color: "text-cyan-300",
+      color: "text-cyan-600",
     },
     {
       label: "RB2 Wallet Credit",
       value: dist?.rebirths?.rb2?.walletCredit ?? 20,
-      color: "text-cyan-300",
+      color: "text-cyan-600",
     },
     {
       label: "Sponsor Income",
       value: dist?.sponsorIncome?.amount ?? 5,
-      color: "text-emerald-300",
+      color: "text-emerald-600",
     },
     {
       label: "Company Fund",
       value: dist?.superAdminFunds?.companyFund ?? 5,
-      color: "text-blue-300",
+      color: "text-blue-600",
     },
     {
       label: "Achiever Fund",
       value: dist?.superAdminFunds?.achieverFund ?? 4,
-      color: "text-purple-300",
+      color: "text-purple-600",
     },
     {
       label: "Admin Fund",
       value: dist?.superAdminFunds?.adminFund ?? 5,
-      color: "text-amber-300",
+      color: "text-amber-600",
     },
     {
       label: "Level Income (9 levels)",
       value: 16 - (dist?.levelIncome?.leftover ?? 0),
-      color: "text-teal-300",
+      color: "text-teal-600",
     },
   ];
 
@@ -166,7 +166,7 @@ function DistributionSummaryModal({ summary, onClose }) {
     rows.push({
       label: "Level Leftover → Company",
       value: dist.levelIncome.leftover,
-      color: "text-orange-300",
+      color: "text-orange-600",
     });
   }
 
@@ -174,31 +174,31 @@ function DistributionSummaryModal({ summary, onClose }) {
     rows.push({
       label: "Remainder → Company",
       value: dist.remainder,
-      color: "text-slate-300",
+      color: "text-slate-600",
     });
   }
 
   const total = dist?.totalDistributed ?? 75;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1f4a] p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-white">
+          <h3 className="text-base font-semibold text-slate-800">
             ✅ Distribution Summary
           </h3>
           <button
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/10 hover:text-white"
+            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-800"
           >
             ✕
           </button>
         </div>
 
         {dist?.memberId && (
-          <p className="mb-3 text-sm text-slate-400">
+          <p className="mb-3 text-sm text-slate-500">
             Member:{" "}
-            <span className="font-mono text-cyan-300">{dist.memberId}</span>
+            <span className="font-mono text-cyan-600 font-bold">{dist.memberId}</span>
           </p>
         )}
 
@@ -206,30 +206,30 @@ function DistributionSummaryModal({ summary, onClose }) {
           {rows.map((r, i) => (
             <div
               key={i}
-              className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-4 py-2.5"
+              className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-2.5"
             >
-              <span className="text-sm text-slate-300">{r.label}</span>
+              <span className="text-sm text-slate-600">{r.label}</span>
               <span className={`text-sm font-bold ${r.color}`}>${r.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
-          <span className="text-sm font-semibold text-emerald-200">
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <span className="text-sm font-semibold text-emerald-800">
             Total Distributed
           </span>
-          <span className="text-lg font-bold text-emerald-300">${total}</span>
+          <span className="text-lg font-bold text-emerald-700">${total}</span>
         </div>
 
         {dist?.transactionCount && (
-          <p className="mt-2 text-center text-xs text-slate-500">
+          <p className="mt-2 text-center text-xs text-slate-400">
             {dist.transactionCount} audit log entries created
           </p>
         )}
 
         <button
           onClick={onClose}
-          className="mt-4 w-full rounded-xl bg-[#1e327d] py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8]"
+          className="mt-4 w-full rounded-xl bg-[#111827] py-3 text-sm font-semibold text-white transition hover:bg-[#1F2937]"
         >
           Close
         </button>
@@ -383,8 +383,8 @@ export default function DepositRequestsPage() {
         <div
           className={`fixed right-5 top-5 z-50 rounded-xl border px-4 py-3 text-sm shadow-xl transition-all ${
             toast.type === "error"
-              ? "border-red-400/30 bg-red-400/10 text-red-300"
-              : "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+              ? "border-rose-200 bg-rose-50 text-rose-700 font-medium"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700 font-medium"
           }`}
         >
           {toast.message}
@@ -423,7 +423,7 @@ export default function DepositRequestsPage() {
       />
 
       {/* Search, Filter tabs & Export */}
-      <div className="grid gap-4 rounded-[22px] border border-white/10 bg-[#091a4a]/70 p-4 shadow-lg lg:grid-cols-2 items-center">
+      <div className="grid gap-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-2 items-center">
         <div className="flex flex-wrap gap-2">
           {["all", "pending", "approved", "rejected"].map((tab) => (
             <button
@@ -431,8 +431,8 @@ export default function DepositRequestsPage() {
               onClick={() => setFilter(tab)}
               className={`rounded-xl border px-4 py-2.5 text-sm font-medium capitalize transition ${
                 filter === tab
-                  ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300"
-                  : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
+                  ? "border-[#F4B860]/40 bg-[#FFF4E5] text-[#E8A13F]"
+                  : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
               }`}
             >
               {tab}{" "}
@@ -447,7 +447,7 @@ export default function DepositRequestsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, member ID..."
-            className="w-full sm:max-w-[240px] rounded-xl border border-white/10 bg-[#08173f] px-4 py-2.5 text-sm text-white placeholder:text-blue-200/40 outline-none focus:border-blue-400/40"
+            className="w-full sm:max-w-[240px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition"
           />
           <DownloadReportButton
             data={filtered}
@@ -467,10 +467,10 @@ export default function DepositRequestsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#091a4a]/75 shadow-xl">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left">
-            <thead className="bg-[#112766]/70">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 {[
                   "Member ID",
@@ -484,19 +484,19 @@ export default function DepositRequestsPage() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                    className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
                   <td
                     colSpan={8}
-                    className="px-5 py-12 text-center text-sm text-slate-500"
+                    className="px-5 py-12 text-center text-sm text-slate-400"
                   >
                     Loading deposits...
                   </td>
@@ -505,7 +505,7 @@ export default function DepositRequestsPage() {
                 <tr>
                   <td
                     colSpan={8}
-                    className="px-5 py-12 text-center text-sm text-slate-500"
+                    className="px-5 py-12 text-center text-sm text-slate-400"
                   >
                     No deposits found.
                   </td>
@@ -517,24 +517,24 @@ export default function DepositRequestsPage() {
                   return (
                     <tr
                       key={item._id}
-                      className={`transition hover:bg-white/5 ${
-                        justApproved ? "bg-emerald-500/10" : ""
+                      className={`transition hover:bg-[#FFF4E5]/20 ${
+                        justApproved ? "bg-emerald-50/50" : ""
                       }`}
                     >
-                      <td className="px-5 py-4 text-sm font-mono text-cyan-300">
+                      <td className="px-5 py-4 text-sm font-mono font-bold text-slate-700">
                         {item.userRef?.memberId || "—"}
                       </td>
-                      <td className="px-5 py-4 text-sm text-slate-200">
+                      <td className="px-5 py-4 text-sm text-slate-600 font-medium">
                         {item.userRef?.fullName || "—"}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-white">
+                      <td className="px-5 py-4 text-sm font-bold text-slate-800">
                         ${item.amount}
                       </td>
-                      <td className="px-5 py-4 text-sm text-slate-400">
+                      <td className="px-5 py-4 text-sm text-slate-500 font-medium">
                         {item.walletType || "USDT"}
                       </td>
                       <td
-                        className="px-5 py-4 font-mono text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition"
+                        className="px-5 py-4 font-mono text-xs text-[#E8A13F] font-bold cursor-pointer hover:text-[#E8A13F]/80 transition"
                         title={item.txHash}
                         onClick={() =>
                           navigator.clipboard.writeText(item.txHash || "")
@@ -542,12 +542,12 @@ export default function DepositRequestsPage() {
                       >
                         {shortHash(item.txHash)}
                       </td>
-                      <td className="px-5 py-4 text-xs text-slate-500">
+                      <td className="px-5 py-4 text-xs text-slate-400 font-medium">
                         {formatDate(item.createdAt)}
                       </td>
                       <td className="px-5 py-4">
                         {justApproved ? (
-                          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-200 shadow-inner shadow-emerald-500/10">
+                          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 shadow-inner">
                             Approved successfully
                           </div>
                         ) : (
@@ -560,20 +560,20 @@ export default function DepositRequestsPage() {
                             <button
                               onClick={() => handleApproveClick(item)}
                               disabled={actionLoading === item._id}
-                              className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition disabled:opacity-50"
+                              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-50"
                             >
                               {actionLoading === item._id ? "..." : "Approve"}
                             </button>
                             <button
                               onClick={() => setRejectTarget(item)}
                               disabled={actionLoading === item._id}
-                              className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-400/20 transition disabled:opacity-50"
+                              className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
                             >
                               Reject
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-600 italic">
+                          <span className="text-xs text-slate-400 font-medium italic">
                             {item.status === "approved"
                               ? "Activated ✓"
                               : "Rejected"}

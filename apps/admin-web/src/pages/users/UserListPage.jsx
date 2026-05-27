@@ -51,29 +51,29 @@ function PasswordModal({ user, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0b1a50] p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-white">View Password</h2>
+          <h2 className="text-base font-bold text-slate-900">View Password</h2>
           <button
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/10 hover:text-white"
+            className="rounded-lg px-2.5 py-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
           >
             ✕
           </button>
         </div>
 
-        <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           ⚠️ <strong>Security Warning:</strong> This reveals the user's
           plain-text password stored at registration or last reset. Handle with
           extreme care.
         </div>
 
         <div className="mb-4 space-y-1 text-sm">
-          <p className="text-blue-100/60">
-            User: <span className="font-medium text-white">{user.name}</span>
+          <p className="text-slate-500 font-semibold">
+            User: <span className="font-bold text-slate-800">{user.name}</span>
           </p>
-          <p className="text-blue-100/60">
-            ID: <span className="font-mono text-white">{user.id}</span>
+          <p className="text-slate-500 font-semibold">
+            ID: <span className="font-mono font-bold text-slate-800">{user.id}</span>
           </p>
         </div>
 
@@ -81,19 +81,19 @@ function PasswordModal({ user, onClose }) {
           <button
             onClick={handleReveal}
             disabled={loading}
-            className="w-full rounded-xl bg-[#1e327d] py-3 text-sm font-semibold text-white transition hover:bg-[#2944a8] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-[#111827] py-3 text-sm font-bold text-white transition hover:bg-[#1F2937] disabled:cursor-not-allowed disabled:opacity-60 shadow-md shadow-slate-100"
           >
             {loading ? "Fetching…" : "🔑 Show Password"}
           </button>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#06112e] px-4 py-3">
-              <span className="flex-1 font-mono text-sm text-emerald-300 break-all">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="flex-1 font-mono text-sm text-emerald-600 font-bold break-all">
                 {password}
               </span>
               <button
                 onClick={handleCopy}
-                className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10"
+                className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
               >
                 {copied ? "✓ Copied" : "Copy"}
               </button>
@@ -105,7 +105,7 @@ function PasswordModal({ user, onClose }) {
         )}
 
         {error && (
-          <p className="mt-3 rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 font-semibold">
             {error}
           </p>
         )}
@@ -119,11 +119,11 @@ function EmailVerifiedBadge({ verified }) {
   if (verified === undefined || verified === null)
     return <span className="text-slate-500 text-xs">—</span>;
   return verified ? (
-    <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
       ✓ Verified
     </span>
   ) : (
-    <span className="inline-flex rounded-full border border-red-400/20 bg-red-500/15 px-2.5 py-0.5 text-xs font-semibold text-red-300">
+    <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700">
       ✗ Not Verified
     </span>
   );
@@ -191,7 +191,7 @@ export default function UserListPage() {
         key: "serialNo",
         label: "S.NO",
         render: (_value, _row, index) => (
-          <span className="font-semibold text-slate-300">
+          <span className="font-bold text-slate-500">
             {index + 1}
           </span>
         ),
@@ -200,7 +200,7 @@ export default function UserListPage() {
         key: "memberId",
         label: "USER ID",
         render: (_value, row) => (
-          <span className="font-mono text-xs text-cyan-200">
+          <span className="font-mono text-xs font-bold text-[#E8A13F]">
             {row.memberId || "—"}
           </span>
         ),
@@ -211,15 +211,15 @@ export default function UserListPage() {
         label: "TYPE",
         render: (_value, row) =>
           row.isRebirth ? (
-            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/15 px-2 py-0.5 text-xs font-medium text-cyan-300">
+            <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-700">
               Rebirth
             </span>
           ) : row.isAliasAccount ? (
-            <span className="inline-flex rounded-full border border-violet-400/30 bg-violet-400/15 px-2 py-0.5 text-xs font-medium text-violet-300">
+            <span className="inline-flex rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-bold text-purple-700">
               Alias
             </span>
           ) : (
-            <span className="inline-flex rounded-full border border-slate-400/30 bg-slate-400/15 px-2 py-0.5 text-xs font-medium text-slate-300">
+            <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-bold text-slate-600">
               Main Account
             </span>
           ),
@@ -233,14 +233,14 @@ export default function UserListPage() {
               <span
                 className={
                   row.isRebirth
-                    ? "font-bold text-cyan-300"
-                    : "font-semibold text-white"
+                    ? "font-extrabold text-cyan-700"
+                    : "font-semibold text-slate-800"
                 }
               >
                 {row.displayLabel}
               </span>
               {row.isAliasAccount && (
-                <span className="inline-flex rounded-full bg-violet-500/20 border border-violet-500/30 px-2 py-0.5 text-[10px] font-bold text-violet-300 uppercase tracking-wide">
+                <span className="inline-flex rounded-full bg-purple-50 border border-purple-200 px-2 py-0.5 text-[10px] font-bold text-purple-700 uppercase tracking-wide">
                   Alias
                 </span>
               )}
@@ -258,10 +258,10 @@ export default function UserListPage() {
           if (row.isAliasAccount) {
             return (
               <div className="flex flex-col text-xs">
-                <span className="text-violet-300 font-mono font-medium">
+                <span className="text-purple-700 font-mono font-bold">
                   {row.rootOwnerAccountId || row.aliasOfAccountId || "—"}
                 </span>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-400 font-semibold">
                   Via Round {row.currentCompletedAutopoolRound !== undefined && row.currentCompletedAutopoolRound !== -1 ? row.currentCompletedAutopoolRound : "0"}
                 </span>
               </div>
@@ -274,21 +274,26 @@ export default function UserListPage() {
         key: "currentCompletedAutopoolRound",
         label: "AUTOPOOL ROUND",
         render: (_value, row) => {
-          if (row.isRebirth) return <span className="text-slate-500 text-xs">—</span>;
+          if (row.isRebirth) {
+            return <span className="text-xs text-[#9CA3AF]">—</span>;
+          }
+
           const round = row.currentCompletedAutopoolRound;
+
           if (round === undefined || round === null || round === -1) {
             return (
-              <span className="inline-flex rounded-full border border-slate-700 bg-slate-800/50 px-2 py-0.5 text-xs text-slate-400">
+              <span className="inline-flex rounded-full border border-[#F4B860]/40 bg-[#FFF4E5] px-2.5 py-1 text-xs font-semibold text-[#E8A13F]">
                 Pending Round 0
               </span>
             );
           }
+
           return (
-            <span className="inline-flex rounded-full border border-indigo-500/30 bg-indigo-500/15 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
+            <span className="inline-flex rounded-full border border-green-200 bg-green-100 px-2.5 py-1 text-xs font-semibold text-[#10B981]">
               Round {round} Completed
             </span>
           );
-        }
+        },
       },
       {
         key: "rebirthCount",
@@ -296,7 +301,7 @@ export default function UserListPage() {
         render: (_value, row) => {
           if (row.isRebirth) return <span className="text-slate-500 text-xs">—</span>;
           return (
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-slate-700">
               {row.rebirthCount || 0} rebirths
             </span>
           );
@@ -308,11 +313,11 @@ export default function UserListPage() {
         render: (_value, row) => (
           <div className="flex flex-col gap-1 text-xs">
             {row.isRebirth ? (
-              <span className="text-cyan-300 font-medium">
+              <span className="text-cyan-700 font-bold">
                 RB Wallet: ${row.walletBalance}
               </span>
             ) : (
-              <span className="text-emerald-300 font-medium">
+              <span className="text-emerald-600 font-bold">
                 Withdrawable: ${row.withdrawableFund}
               </span>
             )}
@@ -351,11 +356,10 @@ export default function UserListPage() {
           row.isRebirth ? (
             <span className="text-slate-500">—</span>
           ) : (
-            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium uppercase ${
-              value === "ACTIVE" ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-300" :
-              value === "PENDING_DEPOSIT" ? "border border-amber-400/30 bg-amber-400/15 text-amber-300" :
-              "border border-slate-400/30 bg-slate-400/15 text-slate-300"
-            }`}>
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold uppercase ${value === "ACTIVE" ? "border border-emerald-250 bg-emerald-50 text-emerald-700" :
+                value === "PENDING_DEPOSIT" ? "border border-[#F4B860]/45 bg-[#FFF4E5] text-[#E8A13F]" :
+                  "border border-slate-200 bg-slate-50 text-slate-500"
+              }`}>
               {value ? value.replace("_", " ") : "PENDING"}
             </span>
           ),
@@ -435,36 +439,39 @@ export default function UserListPage() {
           ]}
         />
       </AdminPageHeader>
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-[#091a4a]/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:grid-cols-4">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-4">
         <input
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name, email or member ID..."
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white placeholder:text-blue-200/40 outline-none focus:border-blue-400/40"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
         />
         <select
           value={filters.status}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, status: e.target.value }))
           }
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm font-semibold"
         >
-          <option value="">All Status</option>
-          <option value="approved">Approved</option>
-          <option value="active">Active</option>
-          <option value="blocked">Blocked</option>
-          <option value="pending">Pending</option>
-          <option value="inactive">Inactive</option>
-          <option value="suspended">Suspended</option>
+          <option value="" className="bg-white">All Status</option>
+          <option value="approved" className="bg-white">Approved</option>
+          <option value="active" className="bg-white">Active</option>
+          <option value="blocked" className="bg-white">Blocked</option>
+          <option value="pending" className="bg-white">Pending</option>
+          <option value="inactive" className="bg-white">Inactive</option>
+          <option value="suspended" className="bg-white">Suspended</option>
         </select>
         <select
           value={filters.type}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, type: e.target.value }))
           }
-          className="rounded-xl border border-white/10 bg-[#08173f] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm font-semibold"
         >
+          <option value="all" className="bg-white">All Accounts</option>
+          <option value="main" className="bg-white">Main Users</option>
+          <option value="alias" className="bg-white">Alias Accounts</option>
           <option value="all">All Accounts</option>
           <option value="main">Main Users</option>
           <option value="alias">Alias Accounts</option>
@@ -479,14 +486,14 @@ export default function UserListPage() {
             {!row.isRebirth && (
               <>
                 <button
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-blue-50 hover:bg-white/10"
+                  className="px-3.5 py-1.5 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm"
                   onClick={() => navigate(`/admin/users/${row._id}`)}
                 >
                   View
                 </button>
 
                 <button
-                  className="rounded-lg border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
+                  className="px-3.5 py-1.5 border border-purple-200 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-100 transition shadow-sm"
                   onClick={() => setPasswordModalUser(row)}
                 >
                   🔑 Password
@@ -495,7 +502,7 @@ export default function UserListPage() {
                 {/* Send Verification Link */}
                 {!row.isEmailVerified && (
                   <button
-                    className="rounded-lg border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="px-3.5 py-1.5 border border-sky-200 bg-sky-50 text-sky-700 rounded-lg text-xs font-bold hover:bg-sky-100 transition shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => handleSendVerification(row)}
                     disabled={verifyingId === row._id}
                   >
@@ -504,7 +511,7 @@ export default function UserListPage() {
                 )}
 
                 <button
-                  className="rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="px-3.5 py-1.5 border border-rose-200 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-100 transition shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => handleBanUser(row)}
                   disabled={row.status === "blocked"}
                 >
@@ -512,7 +519,7 @@ export default function UserListPage() {
                 </button>
 
                 <button
-                  className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="px-3.5 py-1.5 border border-[#F4B860]/40 bg-[#FFF4E5] text-[#E8A13F] rounded-lg text-xs font-bold hover:bg-[#FFF4E5]/80 transition shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => handleResetTwoFactor(row)}
                   disabled={!row.twoFactorEnabled}
                 >
@@ -542,7 +549,7 @@ export default function UserListPage() {
         />
       )}
 
-      {loading && <p className="text-sm text-blue-100/70">Loading users…</p>}
+      {loading && <p className="text-sm text-slate-500 font-medium">Loading users…</p>}
     </div>
   );
 }

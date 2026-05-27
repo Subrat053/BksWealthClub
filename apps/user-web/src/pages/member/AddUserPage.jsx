@@ -71,20 +71,20 @@ export default function AddUserPage() {
   };
 
   return (
-    <div className="mx-auto my-6 max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <Card
         title="Add User"
-        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+        className="border border-slate-200 bg-white shadow-xl"
       >
-        <p className="mb-4 text-sm text-slate-300">
+        <p className="mb-4 text-sm text-slate-500">
           This user will be created under your sponsor ID{" "}
-          <span className="font-semibold text-white">{sponsorId || "-"}</span>{" "}
+          <span className="font-semibold text-slate-900">{sponsorId || "-"}</span>{" "}
           and will receive a verification link by email.
         </p>
 
-        {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
+        {error ? <p className="mb-4 text-sm text-rose-600">{error}</p> : null}
         {success ? (
-          <p className="mb-4 text-sm text-emerald-300">{success}</p>
+          <p className="mb-4 text-sm text-emerald-600">{success}</p>
         ) : null}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -93,7 +93,7 @@ export default function AddUserPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter full name"
             />
           </FormField>
@@ -104,7 +104,7 @@ export default function AddUserPage() {
               type="email"
               value={form.email}
               onChange={handleChange}
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter email"
             />
           </FormField>
@@ -114,7 +114,7 @@ export default function AddUserPage() {
               name="mobile"
               value={form.mobile}
               onChange={handleChange}
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Enter mobile number"
             />
           </FormField>
@@ -126,7 +126,7 @@ export default function AddUserPage() {
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Create password"
             />
           </FormField>
@@ -138,7 +138,7 @@ export default function AddUserPage() {
               value={form.confirmPassword}
               onChange={handleChange}
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               placeholder="Confirm password"
             />
           </FormField>

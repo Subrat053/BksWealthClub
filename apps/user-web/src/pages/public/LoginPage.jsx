@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/auth.service";
 import Card from "../../components/common/Card";
@@ -10,6 +10,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const captchaRef = useRef(null);
 
   const { login } = useAuth();
@@ -19,14 +20,21 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
+    // Session expired banner — triggered by 401 auto-logout redirect
+    if (searchParams.get("session") === "expired") {
+      setSessionExpired(true);
+    }
+
     const registeredEmail = location.state?.registeredEmail;
     if (registeredEmail) {
       setForm((prev) => ({ ...prev, username: registeredEmail }));
       setSuccess("Registration successful. Please verify your email, then log in.");
     }
-  }, [location.state]);
+  }, [location.state, searchParams]);
+
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -77,22 +85,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto lg:mx-auto max-w-2xl lg:m-12">
+    <div className="mx-auto lg:mx-auto max-w-3xl lg:m-6">
       <Card
         title="Member Login"
-        className="overflow-hidden bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)] p-0"
+        className="overflow-hidden border border-slate-200 bg-white shadow-xl p-0"
       >
-        <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_1fr] md:p-8">
+        <div className="grid gap-6 p-2 md:grid-cols-[1.1fr_1fr] md:p-4">
           <div>
             {/* <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Secure Access</p> */}
-            <h2 className="mt-3 text-4xl font-bold text-white">Welcome Back</h2>
-            <p className="mt-2 text-md text-slate-300">
+            <h2 className="mt-3 text-4xl font-bold text-slate-900">Welcome Back</h2>
+            <p className="mt-2 text-md text-slate-500">
               Login to access your member dashboard, team, incomes, and
               withdrawal controls.
             </p>
-            {/* <div className="mt-6 rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4 text-xs text-cyan-100">
-              Sponsor and autopool earnings are visible after account activation.
-            </div> */}
           </div>
 
           <form className="space-y-4" onSubmit={onSubmit}>
@@ -102,7 +107,7 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, username: e.target.value }))
                 }
-                className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none ring-0 focus:border-cyan-300/70"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none ring-0 focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
               />
             </FormField>
             <FormField label="Password">
@@ -113,12 +118,12 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, password: e.target.value }))
                   }
-                  className="h-12 w-full rounded-xl border border-white/10 bg-[#1f2c59] px-4 text-white outline-none focus:border-cyan-300/70"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-[#E8A13F] focus:ring-2 focus:ring-[#E8A13F]/20"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="rounded-xl border border-white/20 bg-white/10 px-3 text-sm"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 hover:bg-slate-100"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -134,17 +139,25 @@ export default function LoginPage() {
               />
             </div>
 
-            {error ? <p className="text-sm text-red-400">{error}</p> : null}
+            {sessionExpired && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <span className="mt-0.5">⚠️</span>
+                <span>
+                  <strong>Session expired.</strong> Your session has timed out or is no longer valid. Please log in again to continue.
+                </span>
+              </div>
+            )}
+            {error ? <p className="text-sm text-rose-600">{error}</p> : null}
             {success ? (
-              <p className="text-sm text-green-300">{success}</p>
+              <p className="text-sm text-emerald-600">{success}</p>
             ) : null}
             {/* <div className="rounded-xl border border-slate-300/50 bg-white p-3 text-black">reCAPTCHA placeholder</div> */}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full primary" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-slate-500">
               Need an account?{" "}
-              <Link to="/register" className="text-white underline">
+              <Link to="/register" className="font-semibold text-[#E8A13F] hover:underline">
                 Register here
               </Link>
             </p>

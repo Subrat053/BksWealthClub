@@ -1,27 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap");
+
 @import "tailwindcss";
 
-:root {
-  color-scheme: dark;
+@theme {
+  --color-brand-dark: #111827;
+  --color-brand-sidebar: #1F2937;
+  --color-brand-orange: #F4B860;
+  --color-brand-orangeHover: #E8A13F;
+  --color-brand-softOrange: #FFF4E5;
+  --color-brand-background: #F8FAFC;
+  --color-brand-card: #FFFFFF;
+  --color-brand-border: #E5E7EB;
+  --color-brand-text: #111827;
+  --color-brand-textSecondary: #6B7280;
+  --color-brand-muted: #9CA3AF;
+  
+  --font-sans: "Inter", "Outfit", "Segoe UI", sans-serif;
+  --font-heading: "Outfit", "Inter", "Segoe UI", sans-serif;
 }
+
+:root {
+  color-scheme: light;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
-/* body {
-  font-family: "Inter", sans-serif;
-  background: #f7f9fb;
-} */
-
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Manrope", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(1300px 700px at 10% -10%, rgba(58, 90, 212, 0.45), transparent 60%),
-    radial-gradient(900px 540px at 110% 10%, rgba(51, 192, 215, 0.24), transparent 60%),
-    linear-gradient(180deg, #07122d 0%, #0b1d52 55%, #243f9b 100%);
-  color: #f8fbff;
+  font-family: var(--font-sans);
+  background-color: #F8FAFC;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -30,8 +42,8 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Rajdhani", "Manrope", sans-serif;
-  letter-spacing: 0.02em;
+  font-family: var(--font-heading);
+  letter-spacing: 0.01em;
 }
 
 * {
@@ -42,16 +54,22 @@ h6 {
   min-height: 100vh;
 }
 
+/* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(6, 12, 32, 0.45);
+  background: #F3F4F6;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(76, 114, 238, 0.85), rgba(38, 172, 204, 0.85));
-  border-radius: 10px;
+  background: #F4B860;
+  border-radius: 9999px;
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E8A13F;
+}
+

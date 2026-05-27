@@ -23,6 +23,7 @@ export default function DownloadReportButton({
     }
 
     setLoading(true);
+
     try {
       exportToExcel({
         rows: data,
@@ -38,16 +39,58 @@ export default function DownloadReportButton({
     }
   };
 
-  const isBtnDisabled = disabled || loading || !data || data.length === 0;
+  const isBtnDisabled =
+    disabled || loading || !data || data.length === 0;
 
   return (
     <button
       onClick={handleDownload}
       disabled={isBtnDisabled}
-      className={`inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`
+        inline-flex
+        items-center
+        gap-2
+        rounded-xl
+        border
+        border-[#E5E7EB]
+        bg-white
+        px-4
+        py-2.5
+        text-sm
+        font-semibold
+        text-[#111827]
+        shadow-sm
+        transition-all
+        duration-300
+        hover:-translate-y-0.5
+        hover:border-[#F4B860]/50
+        hover:bg-[#FFF4E5]
+        focus-visible:outline-none
+        focus-visible:ring-4
+        focus-visible:ring-[#F4B860]/20
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+        ${className}
+      `}
     >
-      <Download size={16} />
-      {loading ? "Generating..." : label}
+      <div
+        className="
+          flex
+          h-7
+          w-7
+          items-center
+          justify-center
+          rounded-lg
+          bg-[#FFF4E5]
+          text-[#E8A13F]
+        "
+      >
+        <Download size={16} />
+      </div>
+
+      <span>
+        {loading ? "Generating..." : label}
+      </span>
     </button>
   );
 }

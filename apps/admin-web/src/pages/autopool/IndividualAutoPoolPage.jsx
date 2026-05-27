@@ -28,10 +28,12 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
       {/* Node Card */}
       <div
         className={`group relative p-5 rounded-2xl border transition-all duration-300 hover:scale-105 ${
-          node.status === "COMPLETED"
-            ? "bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-emerald-100"
-            : "bg-white border-slate-200 shadow-slate-100"
-        } shadow-xl min-w-50 text-center z-20 hover:shadow-2xl hover:border-indigo-300`}
+          depth === 0
+            ? "bg-[#FFF4E5] border-[#F4B860] shadow-[#FFF4E5]/40 text-[#111827]"
+            : node.status === "COMPLETED"
+            ? "bg-emerald-50 border-emerald-200 shadow-emerald-50/50 text-[#10B981]"
+            : "bg-white border-[#E5E7EB] shadow-slate-50 text-[#111827]"
+        } shadow-xl min-w-50 text-center z-20 hover:shadow-2xl hover:border-[#F4B860]/40`}
       >
         {/* Connection Dot - Top */}
         {depth > 0 && (
@@ -42,8 +44,8 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
         <div
           className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm ${
             node.parentPoolNodeId
-              ? "bg-indigo-600 text-white"
-              : "bg-amber-500 text-white"
+              ? "bg-[#111827] text-white"
+              : "bg-[#F4B860] text-white"
           }`}
         >
           {node.parentPoolNodeId ? `LEVEL ${node.levelNumber || depth}` : "ROOT NODE"}
@@ -55,7 +57,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
             {node.poolNodeId}
           </h4>
           <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
+            <div className="w-5 h-5 rounded-full bg-[#FFF4E5] flex items-center justify-center text-[10px] text-[#E8A13F] font-bold">
               {node.linkedRebirthNodeId?.ownerUserId?.fullName?.charAt(0) || "U"}
             </div>
             <p className="text-[11px] text-slate-600 font-semibold truncate max-w-27.5">
@@ -63,10 +65,10 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
             </p>
           </div>
           <div className="flex flex-col gap-1.5 mt-1.5 items-center justify-center">
-            <p className="text-[9px] text-indigo-400 font-mono font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded">
+            <p className="text-[9px] text-slate-600 font-mono font-bold bg-slate-100 inline-block px-2 py-0.5 rounded">
               {node.linkedRebirthNodeId?.ownerUserId?.memberId || "N/A"}
             </p>
-            <span className="text-[9px] text-indigo-600 font-mono font-bold bg-indigo-50/80 px-2 py-0.5 rounded-full border border-indigo-100/50">
+            <span className="text-[9px] text-[#E8A13F] font-mono font-bold bg-[#FFF4E5]/80 px-2 py-0.5 rounded-full border border-[#F4B860]/20">
               Q-Serial: {node.queueSerialNo || "N/A"}
             </span>
           </div>
@@ -89,19 +91,19 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
 
         {/* Connection Dot - Bottom */}
         {children.length > 0 && (
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white z-30 group-hover:scale-125 transition-transform" />
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#111827] border-2 border-white z-30 group-hover:scale-125 transition-transform" />
         )}
       </div>
 
       {/* Recursive Children Rendering */}
       {children.length > 0 && (
         <div className="flex flex-col items-center w-full mt-12 relative">
-          <div className="w-0.5 h-12 bg-linear-to-b from-indigo-500 to-slate-300 absolute -top-12" />
+          <div className="w-0.5 h-12 bg-linear-to-b from-[#111827] to-[#E5E7EB] absolute -top-12" />
 
           <div className="flex justify-center gap-16 relative w-full pt-6">
             {children.length > 1 && (
               <div
-                className="absolute top-0 h-0.5 bg-slate-300 rounded-full"
+                className="absolute top-0 h-0.5 bg-[#E5E7EB] rounded-full"
                 style={{
                   left: `${150 / (children.length * 2)}%`,
                   right: `${150 / (children.length * 2)}%`,
@@ -111,7 +113,7 @@ const TreeNode = ({ node, childrenMap, depth = 0 }) => {
 
             {children.map((child) => (
               <div key={child._id} className="relative">
-                <div className="w-0.5 h-6 bg-slate-300 absolute -top-6 left-1/2 -translate-x-1/2" />
+                <div className="w-0.5 h-6 bg-[#E5E7EB] absolute -top-6 left-1/2 -translate-x-1/2" />
                 <TreeNode
                   node={child}
                   childrenMap={childrenMap}
@@ -383,7 +385,7 @@ export default function IndividualAutoPoolPage() {
                   setPage(1);
                 }}
                 placeholder="Search user ID, name, email..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-500 font-semibold outline-none focus:border-indigo-500 focus:bg-white transition shadow-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-500 font-semibold outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition shadow-sm"
               />
             </div>
 
@@ -395,7 +397,7 @@ export default function IndividualAutoPoolPage() {
                   setStatus(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 font-semibold outline-none focus:border-indigo-500 focus:bg-white transition cursor-pointer shadow-sm"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 font-semibold outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm"
               >
                 <option value="" className="text-slate-800 bg-white font-medium">All Statuses</option>
                 <option value="Completed" className="text-slate-800 bg-white font-medium">Completed</option>
@@ -412,7 +414,7 @@ export default function IndividualAutoPoolPage() {
                   setLevel(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 font-semibold outline-none focus:border-indigo-500 focus:bg-white transition cursor-pointer shadow-sm"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 font-semibold outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/20 focus:bg-white transition cursor-pointer shadow-sm"
               >
                 <option value="" className="text-slate-800 bg-white font-medium">All Active Levels</option>
                 {[...Array(10).keys()].map((l) => (
@@ -424,7 +426,7 @@ export default function IndividualAutoPoolPage() {
             </div>
 
             <div className="flex items-center justify-end text-sm text-slate-600 font-bold bg-slate-50/50 px-4 py-2 rounded-xl border border-slate-100 shadow-inner">
-              Total Users: <span className="text-indigo-600 font-extrabold ml-1.5 text-base">{totalUsers}</span>
+              Total Users: <span className="text-[#E8A13F] font-extrabold ml-1.5 text-base">{totalUsers}</span>
             </div>
           </div>
 
@@ -461,7 +463,7 @@ export default function IndividualAutoPoolPage() {
                   ) : (
                     users.map((u) => (
                       <tr key={u.userId} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 text-sm font-bold text-indigo-600">{u.memberId}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-[#E8A13F]">{u.memberId}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-slate-900">{u.fullName}</td>
                         <td className="px-6 py-4 text-sm text-slate-600">
                           <div>{u.email}</div>
@@ -484,7 +486,7 @@ export default function IndividualAutoPoolPage() {
                         <td className="px-6 py-4 text-sm">
                           <button
                             onClick={() => handleSelectUser(u.userId)}
-                            className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-bold transition text-xs"
+                            className="px-4 py-1.5 bg-[#111827] text-white rounded-lg hover:bg-[#1F2937] font-bold transition text-xs shadow-sm"
                           >
                             View Details
                           </button>
@@ -546,7 +548,7 @@ export default function IndividualAutoPoolPage() {
             </div>
             <button
               onClick={handleOpenTree}
-              className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-100"
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#111827] hover:bg-[#1F2937] text-white rounded-xl font-bold transition text-sm flex items-center justify-center gap-2 shadow-md shadow-slate-100"
             >
               <Network size={16} /> View Subtree Visualizer
             </button>
@@ -557,7 +559,7 @@ export default function IndividualAutoPoolPage() {
             {/* User ID */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4E5] flex items-center justify-center text-[#E8A13F]">
                   <User size={20} />
                 </div>
                 <div>
@@ -569,7 +571,7 @@ export default function IndividualAutoPoolPage() {
               </div>
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
                 <span>Sponsor:</span>
-                <span className="text-indigo-600 font-bold">{selectedUser.userSummary.sponsorId}</span>
+                <span className="text-[#E8A13F] font-bold">{selectedUser.userSummary.sponsorId}</span>
               </div>
             </div>
 
@@ -613,7 +615,7 @@ export default function IndividualAutoPoolPage() {
             {/* Isolated Pool Fund */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4E5] flex items-center justify-center text-[#E8A13F]">
                   <Award size={20} />
                 </div>
                 <div>
@@ -629,7 +631,7 @@ export default function IndividualAutoPoolPage() {
             {/* Isolated Reinvestment Fund */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4E5] flex items-center justify-center text-[#E8A13F]">
                   <Award size={20} />
                 </div>
                 <div>
@@ -643,9 +645,9 @@ export default function IndividualAutoPoolPage() {
             </div>
 
             {/* Upgrade/Alias IDs */}
-            <div className="bg-white p-5 rounded-2xl border border-indigo-200/50 shadow-sm flex flex-col justify-between h-full">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-10 h-10 rounded-xl bg-[#FFF4E5] flex items-center justify-center text-[#E8A13F]">
                   <Network size={20} />
                 </div>
                 <div>
@@ -657,7 +659,7 @@ export default function IndividualAutoPoolPage() {
               </div>
               <button
                 onClick={handleOpenUpgradeIds}
-                className="mt-4 w-full px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-bold transition text-[10px] text-center"
+                className="mt-4 w-full px-3 py-1.5 bg-slate-100 text-[#111827] rounded-lg hover:bg-slate-200 font-bold transition text-[10px] text-center"
               >
                 List Alias IDs
               </button>
@@ -680,7 +682,7 @@ export default function IndividualAutoPoolPage() {
             </div>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
               <p className="text-xs text-slate-400 font-medium">Total Generated Rebirths</p>
-              <p className="text-xl font-bold text-indigo-600 mt-1">{selectedUser.userSummary.totalRebirthsCreated}</p>
+              <p className="text-xl font-bold text-[#E8A13F] mt-1">{selectedUser.userSummary.totalRebirthsCreated}</p>
             </div>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
               <p className="text-xs text-slate-400 font-medium">Completed Rebirths</p>
@@ -696,7 +698,7 @@ export default function IndividualAutoPoolPage() {
             {/* Level-wise Autopool Status Accordion */}
             <div className="lg:col-span-1 space-y-4">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Layers size={18} className="text-indigo-600" /> Level-wise Status
+                <Layers size={18} className="text-[#F4B860]" /> Level-wise Status
               </h3>
               
               <div className="space-y-3">
@@ -708,7 +710,7 @@ export default function IndividualAutoPoolPage() {
                     <div
                       key={idx}
                       className={`bg-white rounded-xl border transition ${
-                        isExpanded ? "border-indigo-200 shadow-sm" : "border-slate-200 hover:border-slate-300"
+                        isExpanded ? "border-[#F4B860] shadow-sm" : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
                       {/* Level Header */}
@@ -747,7 +749,7 @@ export default function IndividualAutoPoolPage() {
                                   className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex flex-col gap-1.5"
                                 >
                                   <div className="flex justify-between items-center">
-                                    <span className="text-xs font-mono font-bold text-indigo-600">
+                                    <span className="text-xs font-mono font-bold text-[#E8A13F]">
                                       {node.rebirthCode}
                                     </span>
                                     <span
@@ -755,7 +757,7 @@ export default function IndividualAutoPoolPage() {
                                         node.status === "Completed"
                                           ? "bg-emerald-100 text-emerald-700"
                                           : node.status === "Active"
-                                          ? "bg-indigo-100 text-indigo-700"
+                                          ? "bg-slate-100 text-slate-700 border border-slate-200"
                                           : "bg-amber-100 text-amber-700"
                                       }`}
                                     >
@@ -794,7 +796,7 @@ export default function IndividualAutoPoolPage() {
             {/* Flat Rebirth Details Table */}
             <div className="lg:col-span-2 space-y-4">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Network size={18} className="text-indigo-600" /> Rebirth Details Table
+                <Network size={18} className="text-[#F4B860]" /> Rebirth Details Table
               </h3>
 
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -813,7 +815,7 @@ export default function IndividualAutoPoolPage() {
                     <tbody className="divide-y divide-slate-200 text-xs">
                       {selectedUser.rebirthDetails.map((node) => (
                         <tr key={node._id} className="hover:bg-slate-50 transition">
-                          <td className="px-4 py-3.5 font-bold font-mono text-indigo-600">{node.rebirthCode}</td>
+                          <td className="px-4 py-3.5 font-bold font-mono text-[#E8A13F]">{node.rebirthCode}</td>
                           <td className="px-4 py-3.5 font-semibold text-slate-700">Level {node.level}</td>
                           <td className="px-4 py-3.5 font-mono text-slate-500">{node.parentCode}</td>
                           <td className="px-4 py-3.5">
@@ -833,7 +835,7 @@ export default function IndividualAutoPoolPage() {
                                 node.status === "Completed"
                                   ? "bg-emerald-100 text-emerald-700"
                                   : node.status === "Active"
-                                  ? "bg-indigo-100 text-indigo-700"
+                                  ? "bg-slate-100 text-slate-700 border border-slate-200"
                                   : "bg-amber-100 text-amber-700"
                               }`}
                             >
@@ -857,16 +859,16 @@ export default function IndividualAutoPoolPage() {
       {/* Visual Subtree Modal Panel */}
       {showTreeModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-[#020d2e] w-full max-w-6xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
+          <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
             
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Network size={20} className="text-indigo-400" /> 
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Network size={20} className="text-[#F4B860]" /> 
                   Subtree Visualizer: {selectedUser?.userSummary.fullName} ({selectedUser?.userSummary.memberId})
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Drag to pan, scroll to view their isolated matrix branches. Showing only this user's rebirth nodes.
                 </p>
               </div>
@@ -875,14 +877,14 @@ export default function IndividualAutoPoolPage() {
                   setShowTreeModal(false);
                   setTreeNodes([]);
                 }}
-                className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition"
+                className="p-2 text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 shadow-sm transition"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Tree Canvas Container */}
-            <div className="flex-1 relative overflow-hidden bg-[#010924]">
+            <div className="flex-1 relative overflow-hidden bg-[#F8FAFC]">
               {treeLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-medium">
                   Loading individual subtree map...
@@ -903,8 +905,8 @@ export default function IndividualAutoPoolPage() {
                 >
                   <div className="flex flex-col gap-24 items-center">
                     {roots.map((rootNode) => (
-                      <div key={rootNode._id} className="border border-indigo-900/30 bg-indigo-950/20 p-8 rounded-3xl relative">
-                        <div className="absolute -top-3 left-6 px-3 py-0.5 rounded bg-indigo-900 border border-indigo-700/50 text-[9px] text-indigo-300 font-bold uppercase tracking-wider">
+                      <div key={rootNode._id} className="border border-[#E5E7EB] bg-white p-8 rounded-3xl relative shadow-sm">
+                        <div className="absolute -top-3 left-6 px-3 py-0.5 rounded bg-[#FFF4E5] border border-[#F4B860]/40 text-[9px] text-[#E8A13F] font-bold uppercase tracking-wider">
                           Subtree Root
                         </div>
                         <TreeNode
@@ -920,8 +922,8 @@ export default function IndividualAutoPoolPage() {
             </div>
             
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-white/10 bg-[#020b29] flex justify-between items-center text-xs text-slate-400 font-medium">
-              <span>Total Rebirth Nodes Rendered: <strong className="text-white">{treeNodes.length}</strong></span>
+            <div className="px-6 py-4 border-t border-[#E5E7EB] bg-slate-50 flex justify-between items-center text-xs text-slate-500 font-medium">
+              <span>Total Rebirth Nodes Rendered: <strong className="text-slate-900">{treeNodes.length}</strong></span>
               <span>Click drag to navigate canvas</span>
             </div>
           </div>
@@ -989,7 +991,7 @@ export default function IndividualAutoPoolPage() {
                           <td className="px-4 py-3 text-sm font-black text-amber-600">
                             ${txn.amount.toFixed(2)}
                           </td>
-                          <td className="px-4 py-3 text-xs font-mono text-indigo-600 font-bold">
+                          <td className="px-4 py-3 text-xs font-mono text-[#E8A13F] font-bold">
                             {txn.completedRebirthId?.nodeCode || "—"}
                           </td>
                           <td className="px-4 py-3 text-xs text-slate-700 font-bold">
@@ -1070,10 +1072,10 @@ export default function IndividualAutoPoolPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                              txn.type === "POOL_FUND_CREDIT" ? "bg-blue-100 text-blue-700 border-blue-200" :
-                              txn.type === "REINVESTMENT_FUND_CREDIT" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                              txn.type === "WITHDRAWABLE_AUTOPOOL_CREDIT" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                              "bg-rose-100 text-rose-700 border-rose-200"
+                              txn.type === "POOL_FUND_CREDIT" ? "bg-blue-50 text-blue-600 border-blue-200" :
+                              txn.type === "REINVESTMENT_FUND_CREDIT" ? "bg-amber-50 text-[#F59E0B] border-amber-200" :
+                              txn.type === "WITHDRAWABLE_AUTOPOOL_CREDIT" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                              "bg-rose-50 text-rose-600 border-rose-200"
                             }`}>
                               {txn.type.replace(/_/g, " ")}
                             </span>
@@ -1158,7 +1160,7 @@ export default function IndividualAutoPoolPage() {
                           <td className="px-4 py-3 text-slate-500">
                             {formatDate(item.createdAt)}
                           </td>
-                          <td className="px-4 py-3 font-mono font-bold text-indigo-600">
+                          <td className="px-4 py-3 font-mono font-bold text-[#E8A13F]">
                             {item.aliasId}
                           </td>
                           <td className="px-4 py-3 text-center text-slate-700 font-bold">

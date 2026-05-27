@@ -48,13 +48,13 @@ const AutoPoolFundPage = () => {
 
   const getTypeBadgeColor = (type) => {
     switch (type) {
-      case "REBIRTH_AUTOPOOL_COMPLETED": return "bg-blue-100 text-blue-700";
-      case "LEVEL_AUTOPOOL_COMPLETED": return "bg-purple-100 text-purple-700";
-      case "USER_WITHDRAWAL_CREDIT": return "bg-green-100 text-green-700";
-      case "REINVEST_TO_POOL_FUND": return "bg-amber-100 text-amber-700";
-      case "SPONSOR_DEDUCTION": return "bg-indigo-100 text-indigo-700";
-      case "COMPANY_FUND_DEDUCTION": return "bg-rose-100 text-rose-700";
-      default: return "bg-slate-100 text-slate-700";
+      case "REBIRTH_AUTOPOOL_COMPLETED": return "bg-[#FFF4E5] text-[#E8A13F] border border-[#F4B860]/20";
+      case "LEVEL_AUTOPOOL_COMPLETED": return "bg-emerald-50 text-[#10B981] border border-emerald-500/20";
+      case "USER_WITHDRAWAL_CREDIT": return "bg-green-50 text-green-700 border border-green-200/40";
+      case "REINVEST_TO_POOL_FUND": return "bg-amber-50 text-amber-700 border border-amber-200/40";
+      case "SPONSOR_DEDUCTION": return "bg-purple-50 text-purple-700 border border-purple-200/40";
+      case "COMPANY_FUND_DEDUCTION": return "bg-rose-50 text-rose-700 border border-rose-200/40";
+      default: return "bg-[#F8FAFC] text-[#6B7280] border border-[#E5E7EB]";
     }
   };
 
@@ -68,12 +68,12 @@ const AutoPoolFundPage = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Total Reinvest", value: summary?.totalReinvest, color: "text-amber-600" },
-          { label: "Withdrawals Sent", value: summary?.totalWithdrawal, color: "text-green-600" },
-          { label: "Sponsor Income", value: summary?.totalSponsor, color: "text-indigo-600" },
+          { label: "Total Reinvest", value: summary?.totalReinvest, color: "text-[#E8A13F]" },
+          { label: "Withdrawals Sent", value: summary?.totalWithdrawal, color: "text-[#10B981]" },
+          { label: "Sponsor Income", value: summary?.totalSponsor, color: "text-[#F4B860]" },
           { label: "Company Fund", value: summary?.totalCompany, color: "text-rose-600" },
-          { label: "Completed Rebirths", value: summary?.completedRebirths, color: "text-blue-600", noCurrency: true },
-          { label: "Completed Levels", value: summary?.completedLevels, color: "text-purple-600", noCurrency: true },
+          { label: "Completed Rebirths", value: summary?.completedRebirths, color: "text-[#111827]", noCurrency: true },
+          { label: "Completed Levels", value: summary?.completedLevels, color: "text-[#111827]", noCurrency: true },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
@@ -92,7 +92,7 @@ const AutoPoolFundPage = () => {
             name="type" 
             value={filters.type} 
             onChange={handleFilterChange}
-            className="block w-full bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+            className="block w-full bg-[#F8FAFC] border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#F4B860]/20"
           >
             <option value="">All Types</option>
             <option value="REBIRTH_AUTOPOOL_COMPLETED">Rebirth Completed</option>
@@ -112,7 +112,7 @@ const AutoPoolFundPage = () => {
             placeholder="Search User..." 
             value={filters.userId} 
             onChange={handleFilterChange}
-            className="block bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+            className="block bg-[#F8FAFC] border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#F4B860]/20"
           />
         </div>
 
@@ -122,7 +122,7 @@ const AutoPoolFundPage = () => {
             name="level" 
             value={filters.level} 
             onChange={handleFilterChange}
-            className="block bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+            className="block bg-[#F8FAFC] border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#F4B860]/20"
           >
             <option value="">All Levels</option>
             {[0,1,2,3,4,5,6,7,8,9].map(l => (
@@ -133,7 +133,7 @@ const AutoPoolFundPage = () => {
 
         <button 
           onClick={fetchData}
-          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all ml-auto"
+          className="px-6 py-2.5 bg-[#111827] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#1F2937] transition-all ml-auto cursor-pointer"
         >
           Apply Filters
         </button>
@@ -144,7 +144,7 @@ const AutoPoolFundPage = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
+              <tr className="bg-[#F8FAFC] border-b border-slate-100">
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User / Sponsor</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type</th>
@@ -163,7 +163,7 @@ const AutoPoolFundPage = () => {
                 </tr>
               ) : (
                 ledgerData.ledger.map((item) => (
-                  <tr key={item._id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={item._id} className="hover:bg-[#FFF4E5]/40 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-xs font-bold text-slate-900">{new Date(item.createdAt).toLocaleDateString()}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.createdAt).toLocaleTimeString()}</p>
@@ -175,18 +175,18 @@ const AutoPoolFundPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${getTypeBadgeColor(item.type)}`}>
+                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border ${getTypeBadgeColor(item.type)}`}>
                         {item.type.replace(/_/g, ' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-indigo-600">{item.completedRebirthId?.nodeCode || "-"}</span>
+                        <span className="text-xs font-bold text-[#E8A13F]">{item.completedRebirthId?.nodeCode || "-"}</span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Level {item.level}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className={`text-sm font-black ${item.type.includes('CREDIT') || item.type.includes('COMPLETED') ? 'text-emerald-600' : 'text-slate-900'}`}>
+                      <span className={`text-sm font-black ${item.type.includes('CREDIT') || item.type.includes('COMPLETED') ? 'text-[#10B981]' : 'text-slate-900'}`}>
                         {formatCurrency(item.amount)}
                       </span>
                     </td>

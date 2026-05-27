@@ -75,25 +75,48 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[linear-gradient(100deg,#021139_0%,#052c55_55%,#0d476f_100%)] p-4 text-white">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#03071f] p-6 shadow-2xl">
-        <h1 className="text-3xl font-bold">Admin Login</h1>
-        <p className="mt-2 text-sm text-slate-300">
-          Login with your admin email or admin ID.
-        </p>
+    <div className="grid min-h-screen place-items-center bg-[#F8FAFC] p-4">
+      <div className="w-full max-w-md rounded-3xl border border-[#E5E7EB] bg-white p-7 shadow-2xl">
+        <div className="mb-6">
+          <div className="mb-3 h-1.5 w-20 rounded-full bg-gradient-to-r from-[#F4B860] to-[#E8A13F]" />
+
+          <h1 className="text-3xl font-bold tracking-tight text-[#111827]">
+            Admin Login
+          </h1>
+
+          <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
+            Login with your admin email or admin ID.
+          </p>
+        </div>
 
         {error && (
-          <div className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-[#EF4444]">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             name="identifier"
             value={formData.identifier}
             onChange={handleChange}
-            className="h-11 w-full rounded-lg bg-[#2e3440] px-4 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-400"
+            className="
+              h-12
+              w-full
+              rounded-xl
+              border
+              border-[#E5E7EB]
+              bg-white
+              px-4
+              text-[#111827]
+              outline-none
+              transition-all
+              duration-300
+              placeholder:text-[#9CA3AF]
+              focus:border-[#F4B860]
+              focus:ring-4
+              focus:ring-[#F4B860]/20
+            "
             placeholder="Admin ID or Email"
             autoComplete="username"
           />
@@ -104,7 +127,23 @@ export default function AdminLoginPage() {
               value={formData.password}
               onChange={handleChange}
               type={showPassword ? "text" : "password"}
-              className="h-11 w-full rounded-lg bg-[#2e3440] px-4 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-400"
+              className="
+                h-12
+                w-full
+                rounded-xl
+                border
+                border-[#E5E7EB]
+                bg-white
+                px-4
+                text-[#111827]
+                outline-none
+                transition-all
+                duration-300
+                placeholder:text-[#9CA3AF]
+                focus:border-[#F4B860]
+                focus:ring-4
+                focus:ring-[#F4B860]/20
+              "
               placeholder="Password"
               autoComplete="current-password"
             />
@@ -112,7 +151,20 @@ export default function AdminLoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="rounded-lg bg-white/10 px-3 text-sm hover:bg-white/15"
+              className="
+                rounded-xl
+                border
+                border-[#E5E7EB]
+                bg-white
+                px-4
+                text-sm
+                font-semibold
+                text-[#374151]
+                transition-all
+                duration-300
+                hover:bg-[#FFF4E5]
+                hover:text-[#111827]
+              "
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -121,7 +173,23 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-11 w-full rounded-lg bg-linear-to-r from-[#3f63db] to-[#33c0d7] font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+            className="
+              h-12
+              w-full
+              rounded-xl
+              bg-[#F4B860]
+              font-semibold
+              text-[#111827]
+              shadow-sm
+              transition-all
+              duration-300
+              hover:bg-[#E8A13F]
+              focus-visible:outline-none
+              focus-visible:ring-4
+              focus-visible:ring-[#F4B860]/20
+              disabled:cursor-not-allowed
+              disabled:opacity-60
+            "
           >
             {loading ? "Logging in..." : "Login"}
           </button>

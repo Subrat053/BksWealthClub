@@ -12,11 +12,11 @@ const links = [
 
 export default function PublicNavbar() {
     return (
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#03071f]/88 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-sm">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-6">
                 <div>
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-amber-200">Autopool Network</p>
-                    <Link to="/" className="text-2xl font-bold text-white">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-[#E8A13F] font-bold">Autopool Network</p>
+                    <Link to="/" className="text-2xl font-extrabold text-slate-855">
                         BksWealthClub
                     </Link>
                 </div>
@@ -26,7 +26,7 @@ export default function PublicNavbar() {
                             key={link.to}
                             to={link.to}
                             className={({ isActive }) =>
-                                `rounded-md px-3 py-2 text-sm ${isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"}`
+                                `rounded-lg px-3 py-2 text-sm font-medium transition ${isActive ? "bg-[#FFF4E5] text-[#E8A13F] border border-[#F4B860]/30 font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-850"}`
                             }
                         >
                             {link.label}
@@ -36,19 +36,19 @@ export default function PublicNavbar() {
                 <div className="hidden items-center gap-2 md:flex">
                     <Link
                         to="/login"
-                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-blue-500 hover:text-white"
+                        className="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:border-slate-300"
                     >
                         Login
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-slate-900 group-hover:text-white">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition group-hover:bg-slate-200">
                             <ChevronRight size={14} />
                         </span>
                     </Link>
                     <Link
                         to="/register"
-                        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-blue-500 hover:text-white"
+                        className="group inline-flex items-center gap-2 rounded-full bg-[#111827] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1F2937] active:scale-[0.98]"
                     >
                         Register
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-slate-900 group-hover:text-white">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-white transition group-hover:bg-white/30">
                             <ChevronRight size={14} />
                         </span>
                     </Link>

@@ -150,7 +150,7 @@ export default function WithdrawalRequestsPage() {
       <div className="grid gap-4 md:flex md:items-center md:justify-between">
         
         {/* Status Filter Tabs */}
-        <div className="flex rounded-xl border border-white/10 bg-[#071337] p-1 overflow-x-auto shrink-0">
+        <div className="flex rounded-xl border border-slate-200 bg-slate-100 p-1 overflow-x-auto shrink-0">
           {[
             { label: "Pending Approval", value: "PENDING_ADMIN_APPROVAL" },
             { label: "Approved Payouts", value: "APPROVED" },
@@ -163,10 +163,10 @@ export default function WithdrawalRequestsPage() {
                 setPage(1);
                 setStatusFilter(tab.value);
               }}
-              className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+              className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
                 statusFilter === tab.value
-                  ? "bg-[#162457] text-white"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-slate-800 shadow-xs border border-slate-200/50"
+                  : "text-slate-500 hover:text-slate-855"
               }`}
             >
               {tab.label}
@@ -179,66 +179,66 @@ export default function WithdrawalRequestsPage() {
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-10 w-full rounded-xl border border-white/10 bg-[#071337] pl-10 pr-4 text-xs text-white outline-none focus:border-cyan-400/80 transition"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition"
             placeholder="Search Member ID, Name, or Wallet Address..."
           />
-          <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
           <button type="submit" className="hidden" />
         </form>
       </div>
 
       {/* REQUESTS LIST TABLE */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 border border-white/10 rounded-[24px] bg-[#091a4a]/75">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-          <p className="mt-3 text-xs text-slate-400">Loading payout records...</p>
+        <div className="flex flex-col items-center justify-center py-20 border border-slate-200 rounded-[24px] bg-white shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-[#E8A13F]" />
+          <p className="mt-3 text-xs text-slate-500">Loading payout records...</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#091a4a]/75 shadow-2xl">
+        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full text-left">
-              <thead className="bg-[#112766]/70">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">REQUEST TIME</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">USER</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">REQ AMOUNT</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">ADMIN FEE (5%)</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">TOTAL DEBIT</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">WALLET ADDRESS</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300">STATUS</th>
-                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-300 text-center">ACTIONS</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">REQUEST TIME</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">USER</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">REQ AMOUNT</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ADMIN FEE (5%)</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">TOTAL DEBIT</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">WALLET ADDRESS</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">STATUS</th>
+                  <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">ACTIONS</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-100 text-sm">
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-5 py-16 text-center text-xs text-slate-500">
+                    <td colSpan="8" className="px-5 py-16 text-center text-xs text-slate-400">
                       No withdrawal requests in this filter category.
                     </td>
                   </tr>
                 ) : (
                   requests.map((item) => (
-                    <tr key={item._id} className="transition hover:bg-white/5">
-                      <td className="px-5 py-4 text-xs text-slate-400 whitespace-nowrap">
+                    <tr key={item._id} className="transition hover:bg-[#FFF4E5]/20">
+                      <td className="px-5 py-4 text-xs text-slate-400 font-medium whitespace-nowrap">
                         {formatDate(item.requestedAt)}
                       </td>
                       <td className="px-5 py-4">
-                        <div className="font-semibold text-white">{item.userId?.fullName || "Deleted User"}</div>
-                        <div className="text-xs font-mono text-cyan-200">ID: {item.userId?.memberId || "—"}</div>
+                        <div className="font-bold text-slate-800">{item.userId?.fullName || "Deleted User"}</div>
+                        <div className="text-xs font-mono font-bold text-[#E8A13F]">ID: {item.userId?.memberId || "—"}</div>
                       </td>
-                      <td className="px-5 py-4 font-bold text-white">
+                      <td className="px-5 py-4 font-bold text-slate-800">
                         ${item.requestedAmount.toFixed(2)}
                       </td>
-                      <td className="px-5 py-4 text-slate-400">
+                      <td className="px-5 py-4 text-slate-500 font-medium">
                         ${item.adminChargeAmount.toFixed(2)}
                       </td>
-                      <td className="px-5 py-4 font-bold text-cyan-300">
+                      <td className="px-5 py-4 font-extrabold text-slate-900">
                         ${item.totalDebit.toFixed(2)}
                       </td>
                       <td className="px-5 py-4">
-                        <div className="text-xs font-mono text-cyan-200">{item.network}</div>
-                        <div className="text-xs text-slate-400 truncate max-w-[150px]" title={item.walletAddress}>
+                        <div className="text-xs font-mono font-semibold text-slate-655">{item.network}</div>
+                        <div className="text-xs text-slate-500 truncate max-w-[150px]" title={item.walletAddress}>
                           {item.walletAddress}
                         </div>
                       </td>
@@ -250,7 +250,7 @@ export default function WithdrawalRequestsPage() {
                           <div className="flex gap-2 justify-center">
                             <button
                               onClick={() => handleApprove(item._id)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition"
                             >
                               <ShieldCheck size={13} />
                               Approve
@@ -260,7 +260,7 @@ export default function WithdrawalRequestsPage() {
                                 setSelectedRequest(item);
                                 setShowRejectModal(true);
                               }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-500/20"
+                              className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
                             >
                               <Ban size={13} />
                               Reject
@@ -274,7 +274,7 @@ export default function WithdrawalRequestsPage() {
                                 setSelectedRequest(item);
                                 setShowPaidModal(true);
                               }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20"
+                              className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 transition"
                             >
                               <CreditCard size={13} />
                               Mark Paid
@@ -284,7 +284,7 @@ export default function WithdrawalRequestsPage() {
                                 setSelectedRequest(item);
                                 setShowRejectModal(true);
                               }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-500/20"
+                              className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
                             >
                               <Ban size={13} />
                               Reject
@@ -292,12 +292,12 @@ export default function WithdrawalRequestsPage() {
                           </div>
                         )}
                         {item.status === "PAID" && (
-                          <div className="text-xs text-slate-400 font-mono" title={item.txHash}>
+                          <div className="text-xs text-slate-400 font-mono font-medium" title={item.txHash}>
                             Tx: {item.txHash?.substring(0, 10)}...
                           </div>
                         )}
                         {item.status === "REJECTED" && (
-                          <div className="text-xs text-rose-400 italic max-w-[120px] truncate" title={item.rejectionReason}>
+                          <div className="text-xs text-rose-600 font-bold italic max-w-[120px] truncate" title={item.rejectionReason}>
                             {item.rejectionReason}
                           </div>
                         )}
@@ -311,19 +311,19 @@ export default function WithdrawalRequestsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-white/5 bg-[#071337]/50 px-6 py-4">
+            <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-4">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 shadow-xs"
               >
                 ← Previous
               </button>
-              <span className="text-xs text-slate-400">Page {page} of {totalPages}</span>
+              <span className="text-xs text-slate-500 font-medium">Page {page} of {totalPages}</span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 shadow-xs"
               >
                 Next →
               </button>
@@ -334,13 +334,13 @@ export default function WithdrawalRequestsPage() {
 
       {/* MODAL: REJECT REQUEST */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#07102e] p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <XCircle className="text-rose-400" size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <XCircle className="text-rose-500" size={18} />
               Reject Withdrawal Request
             </h3>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-slate-500 leading-relaxed">
               Please enter the rejection reason. This will release the locked balance ($
               {selectedRequest?.totalDebit.toFixed(2)}) back to the user's available balance instantly.
             </p>
@@ -350,12 +350,12 @@ export default function WithdrawalRequestsPage() {
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#050f2f] p-3 text-xs text-white outline-none focus:border-cyan-400 transition min-h-[80px]"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition min-h-[80px]"
                   placeholder="E.g., Invalid wallet address provided, or KYC verification failed."
                   required
                 />
               </div>
-              {actionError && <p className="text-xs text-rose-400 font-semibold">{actionError}</p>}
+              {actionError && <p className="text-xs text-rose-600 font-semibold">{actionError}</p>}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -364,14 +364,14 @@ export default function WithdrawalRequestsPage() {
                     setRejectReason("");
                     setSelectedRequest(null);
                   }}
-                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/10"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-655 hover:bg-slate-100"
                   disabled={actionLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-50"
                   disabled={actionLoading}
                 >
                   {actionLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban size={14} />}
@@ -385,16 +385,16 @@ export default function WithdrawalRequestsPage() {
 
       {/* MODAL: MARK AS PAID */}
       {showPaidModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#07102e] p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <CreditCard className="text-cyan-400" size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <CreditCard className="text-[#E8A13F]" size={18} />
               Confirm Manual Payout (PAID)
             </h3>
-            <p className="mt-2 text-xs text-slate-400">
-              Ensure you have sent the USDT amount (payable: ${selectedRequest?.requestedAmount.toFixed(2)}) on
-              the network <b>{selectedRequest?.network}</b> to: <br />
-              <span className="font-mono text-cyan-300 select-all">{selectedRequest?.walletAddress}</span>
+            <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+              Ensure you have sent the USDT amount (payable: <b className="text-slate-800">${selectedRequest?.requestedAmount.toFixed(2)}</b>) on
+              the network <b className="text-slate-800">{selectedRequest?.network}</b> to: <br />
+              <span className="font-mono text-[#E8A13F] font-bold select-all bg-slate-50 px-2 py-1 rounded border border-slate-100 block mt-1 break-all">{selectedRequest?.walletAddress}</span>
             </p>
             <form onSubmit={handlePaidSubmit} className="mt-4 space-y-4">
               <div>
@@ -403,7 +403,7 @@ export default function WithdrawalRequestsPage() {
                   type="text"
                   value={txHash}
                   onChange={(e) => setTxHash(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/15 bg-[#050f2f] px-3 text-xs text-white outline-none focus:border-cyan-400 transition"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition"
                   placeholder="Paste blockchain transaction hash"
                   required
                 />
@@ -414,11 +414,11 @@ export default function WithdrawalRequestsPage() {
                   type="text"
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/15 bg-[#050f2f] px-3 text-xs text-white outline-none focus:border-cyan-400 transition"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-800 outline-none focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10 transition"
                   placeholder="E.g., Dispatched from Binance vault"
                 />
               </div>
-              {actionError && <p className="text-xs text-rose-400 font-semibold">{actionError}</p>}
+              {actionError && <p className="text-xs text-rose-600 font-semibold">{actionError}</p>}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -428,14 +428,14 @@ export default function WithdrawalRequestsPage() {
                     setAdminNote("");
                     setSelectedRequest(null);
                   }}
-                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/10"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-655 hover:bg-slate-100"
                   disabled={actionLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#111827] px-4 py-2 text-xs font-bold text-white hover:bg-[#1F2937] disabled:opacity-50"
                   disabled={actionLoading}
                 >
                   {actionLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck size={14} />}

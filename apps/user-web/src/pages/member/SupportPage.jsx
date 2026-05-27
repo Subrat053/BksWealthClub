@@ -113,8 +113,8 @@ export default function SupportPage() {
 
       {/* <div className="min-h-screen bg-[#07122d] p-6 text-white"> */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Support Center</h1>
-          <p className="text-slate-300">
+          <h1 className="text-3xl font-bold text-[#111827]">Support Center</h1>
+          <p className="text-[#6B7280] mt-1 text-sm">
             Raise your query and track support replies.
           </p>
         </div>
@@ -122,117 +122,151 @@ export default function SupportPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <form
             onSubmit={createTicket}
-            className="rounded-2xl border border-white/10 bg-[#03071f] p-5"
+            className="rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300"
           >
-            <h2 className="mb-4 text-xl font-semibold">Create Ticket</h2>
+            <h2 className="mb-4 text-lg font-bold text-[#111827]">Create Ticket</h2>
 
-            <input
-              className="mb-3 w-full rounded-xl bg-[#07122d] p-3 outline-none"
-              placeholder="Subject"
-              value={form.subject}
-              onChange={(e) => setForm({ ...form, subject: e.target.value })}
-            />
-            <label className="mb-2 block text-sm font-medium text-slate-300">
-              Category
-            </label>
+            <div className="space-y-4">
+              <div>
+                <input
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl h-11 text-sm text-[#111827] placeholder:text-[#9CA3AF] transition-all duration-300 outline-none px-4 focus:border-[#F4B860] focus:ring-4 focus:ring-[#F4B860]/20"
+                  placeholder="Subject"
+                  value={form.subject}
+                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                />
+              </div>
 
-            <select
-              className="mb-3 w-full rounded-xl bg-[#07122d] p-3 outline-none"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            >
-              <option>Account</option>
-              <option>Payment</option>
-              <option>Referral</option>
-              <option>Income</option>
-              <option>Withdrawal</option>
-              <option>Technical</option>
-              <option>Other</option>
-            </select>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#6B7280]">
+                  Category
+                </label>
+                <select
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl h-11 text-sm text-[#111827] transition-all duration-300 outline-none px-4 focus:border-[#F4B860] focus:ring-4 focus:ring-[#F4B860]/20"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                >
+                  <option>Account</option>
+                  <option>Payment</option>
+                  <option>Referral</option>
+                  <option>Income</option>
+                  <option>Withdrawal</option>
+                  <option>Technical</option>
+                  <option>Other</option>
+                </select>
+              </div>
 
-            <label className="mb-2 block text-sm font-medium text-slate-300">
-              Priority Level
-            </label>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#6B7280]">
+                  Priority Level
+                </label>
+                <select
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl h-11 text-sm text-[#111827] transition-all duration-300 outline-none px-4 focus:border-[#F4B860] focus:ring-4 focus:ring-[#F4B860]/20"
+                  value={form.priority}
+                  onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                >
+                  <option>Low</option>
+                  <option>Medium</option>
+                  <option>High</option>
+                  <option>Urgent</option>
+                </select>
+              </div>
 
-            <select
-              className="mb-3 w-full rounded-xl bg-[#07122d] p-3 outline-none"
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-            >
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Urgent</option>
-            </select>
+              <div>
+                <textarea
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl p-3 text-sm text-[#111827] placeholder:text-[#9CA3AF] transition-all duration-300 outline-none focus:border-[#F4B860] focus:ring-4 focus:ring-[#F4B860]/20"
+                  rows="4"
+                  placeholder="Describe your issue..."
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                />
+              </div>
 
-            <textarea
-              className="mb-3 w-full rounded-xl bg-[#07122d] p-3 outline-none"
-              rows="5"
-              placeholder="Describe your issue"
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-            />
-
-            <button className="w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-[#03071f]">
-              Submit Ticket
-            </button>
+              <button className="w-full rounded-xl bg-[#111827] text-white hover:bg-[#1F2937] py-3 text-sm font-semibold transition-all duration-300 active:scale-[0.98] shadow-sm hover:scale-[1.01]">
+                Submit Ticket
+              </button>
+            </div>
           </form>
 
-          <div className="rounded-2xl border border-white/10 bg-[#03071f] p-5">
-            <h2 className="mb-4 text-xl font-semibold">My Tickets</h2>
+          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300">
+            <h2 className="mb-4 text-lg font-bold text-[#111827]">My Tickets</h2>
 
-            <div className="space-y-3">
-              {tickets.map((ticket) => (
-                <button
-                  key={ticket._id}
-                  onClick={() => setSelectedTicket(ticket)}
-                  className="w-full rounded-xl border border-white/10 bg-[#07122d] p-4 text-left hover:border-cyan-300"
-                >
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">{ticket.subject}</h3>
-                    <span className="text-xs text-cyan-300">
-                      {ticket.status}
-                    </span>
-                  </div>
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              {tickets.length === 0 ? (
+                <p className="text-sm text-[#9CA3AF] py-4 text-center">No tickets found.</p>
+              ) : (
+                tickets.map((ticket) => {
+                  const isSelected = selectedTicket?._id === ticket._id;
+                  return (
+                    <button
+                      key={ticket._id}
+                      onClick={() => setSelectedTicket(ticket)}
+                      className={`w-full rounded-xl border p-4 text-left transition-all duration-300 ${
+                        isSelected
+                          ? "border-[#F4B860] bg-[#FFF4E5]"
+                          : "border-[#E5E7EB] bg-white hover:border-[#F4B860]/50 hover:bg-[#FFF4E5]/30"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-semibold text-sm text-[#111827] truncate">{ticket.subject}</h3>
+                        <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${
+                          ticket.status?.toLowerCase() === "open"
+                            ? "bg-emerald-50 text-[#10B981] border border-[#10B981]/20"
+                            : "bg-gray-50 text-[#6B7280] border border-[#E5E7EB]"
+                        }`}>
+                          {ticket.status}
+                        </span>
+                      </div>
 
-                  <p className="mt-1 text-sm text-slate-400">
-                    {ticket.ticketId} • {ticket.category} • {ticket.priority}
-                  </p>
-                </button>
-              ))}
+                      <p className="mt-2 text-xs text-[#6B7280]">
+                        ID: <span className="font-mono text-[#111827] font-semibold">{ticket.ticketId}</span> • {ticket.category} • <span className="font-medium text-[#F59E0B]">{ticket.priority}</span>
+                      </p>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#03071f] p-5">
-            <h2 className="mb-4 text-xl font-semibold">Conversation</h2>
+          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300">
+            <h2 className="mb-4 text-lg font-bold text-[#111827]">Conversation</h2>
 
             {!selectedTicket ? (
-              <p className="text-slate-400">Select a ticket to view replies.</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm text-[#9CA3AF]">Select a ticket to view replies and start messaging.</p>
+              </div>
             ) : (
-              <>
-                <h3 className="mb-3 font-bold">{selectedTicket.subject}</h3>
+              <div className="flex flex-col h-[500px]">
+                <div className="border-b border-[#E5E7EB] pb-3 mb-4 shrink-0">
+                  <h3 className="font-bold text-sm text-[#111827] truncate">{selectedTicket.subject}</h3>
+                  <p className="text-xs text-[#6B7280] mt-0.5">Ticket ID: {selectedTicket.ticketId}</p>
+                </div>
 
-                <div className="mb-4 max-h-[400px] space-y-3 overflow-y-auto">
-                  {selectedTicket.replies.map((item) => (
-                    <div
-                      key={item._id}
-                      className={`rounded-xl p-3 ${item.senderType === "user"
-                        ? "bg-cyan-400 text-[#03071f]"
-                        : "bg-[#07122d] text-white"
+                <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
+                  {selectedTicket.replies?.length === 0 ? (
+                    <p className="text-xs text-[#9CA3AF] text-center py-4">No replies yet.</p>
+                  ) : (
+                    selectedTicket.replies?.map((item) => (
+                      <div
+                        key={item._id}
+                        className={`rounded-xl p-3 border max-w-[85%] ${
+                          item.senderType === "user"
+                            ? "bg-[#FFF4E5] border-[#F4B860]/20 text-[#111827] ml-auto"
+                            : "bg-[#F8FAFC] border-[#E5E7EB] text-[#111827]"
                         }`}
-                    >
-                      <p className="text-sm font-bold">
-                        {item.senderType === "user" ? "You" : "Admin"}
-                      </p>
-                      <p>{item.message}</p>
-                    </div>
-                  ))}
+                      >
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] mb-0.5">
+                          {item.senderType === "user" ? "You" : "Admin"}
+                        </p>
+                        <p className="text-sm leading-relaxed text-[#374151] whitespace-pre-wrap">{item.message}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
 
                 {selectedTicket.status !== "Closed" && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 border-t border-[#E5E7EB] pt-4 shrink-0">
                     <input
-                      className="flex-1 rounded-xl bg-[#07122d] p-3 outline-none"
+                      className="flex-1 bg-white border border-[#E5E7EB] rounded-xl h-11 text-sm text-[#111827] placeholder:text-[#9CA3AF] transition-all duration-300 outline-none px-4 focus:border-[#F4B860] focus:ring-4 focus:ring-[#F4B860]/20"
                       placeholder="Type reply..."
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
@@ -240,13 +274,13 @@ export default function SupportPage() {
 
                     <button
                       onClick={sendReply}
-                      className="rounded-xl bg-cyan-400 px-5 font-bold text-[#03071f]"
+                      className="rounded-xl bg-[#111827] text-white hover:bg-[#1F2937] px-5 font-semibold text-sm transition-all duration-300 active:scale-[0.98] shadow-sm hover:scale-[1.02]"
                     >
                       Send
                     </button>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>

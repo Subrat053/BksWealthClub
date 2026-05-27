@@ -23,12 +23,17 @@ export default function TwoFactorOtpModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#03081ccc] p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[linear-gradient(170deg,rgba(5,18,58,0.98)_0%,rgba(12,33,94,0.98)_100%)] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
-        <h2 className="text-xl font-bold text-white">{title}</h2>
-        <p className="mt-1 text-sm text-cyan-100/80">{description}</p>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl border border-[#E5E7EB] bg-white p-6 shadow-2xl">
+        <h2 className="text-xl font-bold text-[#111827]">
+          {title}
+        </h2>
 
-        <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+        <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
+          {description}
+        </p>
+
+        <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           <input
             value={otp}
             onChange={(event) =>
@@ -37,18 +42,45 @@ export default function TwoFactorOtpModal({
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder="123456"
-            className="h-12 w-full rounded-xl border border-pink-400/35 bg-[#1d2b61] px-4 text-center text-lg tracking-[0.25em] text-white outline-none focus:border-cyan-300/70"
+            className="
+              h-12
+              w-full
+              rounded-xl
+              border
+              border-[#E5E7EB]
+              bg-white
+              px-4
+              text-center
+              text-lg
+              font-semibold
+              tracking-[0.25em]
+              text-[#111827]
+              placeholder:text-[#9CA3AF]
+              outline-none
+              transition-all
+              duration-300
+              focus:border-[#F4B860]
+              focus:ring-4
+              focus:ring-[#F4B860]/20
+            "
           />
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Button
               type="submit"
+              variant="secondary"
               className="w-full"
               disabled={loading || otp.length !== 6}
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </Button>
-            <Button type="button" variant="muted" onClick={onClose}>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={onClose}
+            >
               Cancel
             </Button>
           </div>

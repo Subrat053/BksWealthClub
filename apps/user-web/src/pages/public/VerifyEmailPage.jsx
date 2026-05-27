@@ -32,21 +32,55 @@ export default function VerifyEmailPage() {
     verify();
   }, [token]);
 
+  const statusStyles = {
+    loading: "bg-[#FFF4E5] text-[#E8A13F] border-[#F4B860]/40",
+    success: "bg-green-50 text-[#10B981] border-green-200",
+    error: "bg-red-50 text-[#EF4444] border-red-200",
+  };
+
   return (
     <div className="mx-auto my-10 max-w-xl px-4">
       <Card
         title="Verify Email"
-        className="bg-[linear-gradient(160deg,#040a27_0%,#08133a_55%,#102567_100%)]"
+        className="border border-[#E5E7EB] bg-white shadow-sm"
       >
-        <p
-          className={`text-sm ${status === "success" ? "text-emerald-300" : status === "error" ? "text-red-300" : "text-slate-300"}`}
+        <div
+          className={`
+            rounded-2xl
+            border
+            p-5
+            text-sm
+            font-medium
+            leading-relaxed
+            ${statusStyles[status]}
+          `}
         >
           {message}
-        </p>
+        </div>
+
         <div className="mt-6 flex gap-3">
           <Link
             to="/login"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-linear-to-r from-[#3f63db] via-[#3e7cec] to-[#33c0d7] px-5 text-sm font-semibold text-white"
+            className="
+              inline-flex
+              h-12
+              items-center
+              justify-center
+              rounded-xl
+              bg-[#F4B860]
+              px-5
+              text-sm
+              font-semibold
+              text-[#111827]
+              shadow-sm
+              transition-all
+              duration-300
+              hover:-translate-y-0.5
+              hover:bg-[#E8A13F]
+              focus-visible:outline-none
+              focus-visible:ring-4
+              focus-visible:ring-[#F4B860]/20
+            "
           >
             Go to Login
           </Link>

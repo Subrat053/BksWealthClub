@@ -47,9 +47,9 @@ export default function SponsorIncomePage() {
     <div className="space-y-6">
       <SectionTitle title="Sponsor Income" subtitle="Direct referral-based earning records" />
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><p className="text-xs uppercase tracking-[0.14em] text-slate-300">Today</p><p className="mt-2 text-2xl font-bold">$ {stats.today}</p></Card>
-        <Card><p className="text-xs uppercase tracking-[0.14em] text-slate-300">This Week</p><p className="mt-2 text-2xl font-bold">$ {stats.thisWeek}</p></Card>
-        <Card><p className="text-xs uppercase tracking-[0.14em] text-slate-300">All Time</p><p className="mt-2 text-2xl font-bold">$ {stats.allTime}</p></Card>
+        <Card><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Today</p><p className="mt-2 text-2xl font-black text-slate-900 tracking-tight">$ {stats.today}</p></Card>
+        <Card><p className="text-xs font-bold uppercase tracking-wider text-slate-400">This Week</p><p className="mt-2 text-2xl font-black text-slate-900 tracking-tight">$ {stats.thisWeek}</p></Card>
+        <Card><p className="text-xs font-bold uppercase tracking-wider text-slate-400">All Time</p><p className="mt-2 text-2xl font-black text-slate-900 tracking-tight">$ {stats.allTime}</p></Card>
       </div>
       <Card>
         <DataTable columns={incomeColumns} rows={logs} emptyText="No sponsor income records" />

@@ -6,15 +6,43 @@ export default function Button({
   ...props
 }) {
   const variants = {
-    primary: "bg-gradient-to-r from-[#3f63db] via-[#3e7cec] to-[#33c0d7] text-white shadow-[0_10px_30px_rgba(51,192,215,0.35)]",
-    danger: "bg-gradient-to-r from-[#d4144e] to-[#ff2a5f] text-white shadow-[0_10px_30px_rgba(255,42,95,0.3)]",
-    muted: "border border-white/20 bg-white/10 text-white",
+    primary:
+      "bg-[#111827] text-white hover:bg-[#1F2937] shadow-sm",
+
+    secondary:
+      "bg-[#F4B860] text-[#111827] hover:bg-[#E8A13F] shadow-sm",
+
+    outline:
+      "border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#FFF4E5]",
+
+    danger:
+      "bg-[#EF4444] text-white hover:bg-red-600 shadow-sm",
+
+    muted:
+      "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]",
   };
 
   return (
     <button
       type={type}
-      className={`h-12 rounded-xl px-5 text-sm font-semibold tracking-wide transition duration-200 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 ${variants[variant]} ${className}`}
+      className={`
+        h-12
+        rounded-xl
+        px-5
+        text-sm
+        font-semibold
+        tracking-wide
+        transition-all
+        duration-300
+        hover:-translate-y-0.5
+        focus-visible:outline-none
+        focus-visible:ring-4
+        focus-visible:ring-[#F4B860]/20
+        disabled:cursor-not-allowed
+        disabled:opacity-60
+        ${variants[variant]}
+        ${className}
+      `}
       {...props}
     >
       {children}
