@@ -178,7 +178,7 @@ export default function HomePage() {
               animate="visible"
               className="relative mx-auto flex items-center justify-center"
             >
-              <div className="relative h-[360px] w-[360px] sm:h-[430px] sm:w-[430px]">
+              <div className="relative h-[340px] w-[340px] sm:h-[430px] sm:w-[430px]">
                 <div className="absolute inset-0 animate-[spin_18s_linear_infinite] rounded-full border-[18px] border-transparent border-t-[#E8A13F] border-r-amber-300 border-b-orange-400 border-l-slate-300 opacity-90" />
                 <div className="absolute inset-[38px] rounded-full border border-slate-200 bg-white/80 backdrop-blur-md" />
                 <div className="absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 rounded-full bg-[#E8A13F] shadow-[0_0_25px_rgba(232,161,63,0.5)]" />
@@ -188,7 +188,13 @@ export default function HomePage() {
                 <div className="absolute bottom-12 left-5 h-10 w-10 rounded-full bg-slate-400 shadow-[0_0_25px_rgba(148,163,184,0.5)]" />
                 <div className="absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-slate-500 shadow-[0_0_25px_rgba(100,116,139,0.5)]" />
                 <div className="absolute left-10 top-20 h-10 w-10 rounded-full bg-amber-200 shadow-[0_0_25px_rgba(253,230,138,0.5)]" />
-                <div className="absolute inset-[100px] rounded-full border border-slate-200 bg-[#FFF9F5] backdrop-blur-xl" />
+                <div className="absolute inset-[100px] rounded-full border border-slate-200 bg-[#FFF9F5] backdrop-blur-xl flex items-center justify-center overflow-hidden shadow-inner p-2 group">
+                  <img 
+                    src="/bks_logo.png" 
+                    alt="BKS Logo" 
+                    className="w-[85%] h-[85%] object-contain scale-150 transition-transform duration-500 ease-out group-hover:scale-125"
+                  />
+                </div>
               </div>
             </motion.div>
           </div>

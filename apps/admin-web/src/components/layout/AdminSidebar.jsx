@@ -19,12 +19,12 @@ export default function AdminSidebar({ adminSession, mobileOpen, onClose }) {
 
   const sidebar = (
     <>
-      <div className="px-5 py-6 flex items-center justify-center border-b border-[#1F2937] mb-4">
+      <div className="px-5 py-6 flex items-center justify-center border-b border-[#1F2937] mb-4 sticky top-0 bg-[#111827]">
         {/* <p className="text-[11px] uppercase tracking-[0.2em] text-[#F4B860]">
           Control Center
         </p>
         <p className="text-xl font-bold text-white">BksWealthClub Admin</p> */}
-        <img src="/bks_logo.png" alt="logo" className="h-10 object-contain" />
+        <img src="/bks_logo.png" alt="logo" className="h-14 object-contain scale-200" />
       </div>
       {adminSession?.sponsorId && (
         <div className="px-5 pb-4">
