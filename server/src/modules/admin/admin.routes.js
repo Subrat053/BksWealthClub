@@ -22,6 +22,12 @@ import {
   markPaidAdminWithdrawalController,
   getAdminWalletTransfersController,
 } from "../wallet/wallet.controller.js";
+import {
+  getDepositCredentialsController,
+  createDepositCredentialController,
+  updateDepositCredentialController,
+  activateDepositCredentialController,
+} from "../deposit/depositCredential.controller.js";
 
 import { Router } from "express";
 import { protect, adminOnly } from "../../middleware/auth.middleware.js";
@@ -57,3 +63,9 @@ adminRouter.patch("/withdrawals/:id/reject", rejectAdminWithdrawalController);
 adminRouter.patch("/withdrawals/:id/mark-paid", markPaidAdminWithdrawalController);
 adminRouter.patch("/mark-paid", markPaidAdminWithdrawalController);
 adminRouter.get("/wallet-transfers", getAdminWalletTransfersController);
+
+// Admin Deposit Credentials routes
+adminRouter.get("/deposit-credentials", getDepositCredentialsController);
+adminRouter.post("/deposit-credentials", createDepositCredentialController);
+adminRouter.put("/deposit-credentials/:id", updateDepositCredentialController);
+adminRouter.patch("/deposit-credentials/:id/activate", activateDepositCredentialController);

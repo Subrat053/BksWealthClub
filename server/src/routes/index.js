@@ -18,7 +18,8 @@ import { dashboardRouter } from "../modules/dashboard/dashboard.routes.js";
 import { adminRouter } from "../modules/admin/admin.routes.js";
 import { settingsRouter } from "../modules/settings/settings.routes.js";
 import { twoFactorRouter } from "../modules/twofactor/twofactor.routes.js";
-// import { uploadsRouter } from "../modules/uploads/uploads.routes.js";
+import { uploadsRouter } from "../modules/uploads/uploads.routes.js";
+import { getActiveDepositCredentialController } from "../modules/deposit/depositCredential.controller.js";
 
 export const apiRouter = Router();
 
@@ -69,5 +70,5 @@ apiRouter.use("/dashboard", dashboardRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/2fa", twoFactorRouter);
-
-// apiRouter.use("/uploads", uploadsRouter);
+apiRouter.use("/uploads", uploadsRouter);
+apiRouter.get("/deposit-credentials/active", getActiveDepositCredentialController);

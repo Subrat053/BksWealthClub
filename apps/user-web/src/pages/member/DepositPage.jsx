@@ -4,11 +4,12 @@ import SectionTitle from "../../components/common/SectionTitle";
 import { apiClient } from "../../services/apiClient";
 import { ACTIVATION_AMOUNT_USD } from "../../utils/constants";
 
-// ─── Company wallet config (update when backend settings API is ready) ────────
-const COMPANY_WALLET = {
-  address: "0xca79683c3cF78A5bb991d1C8b19005F5D9ADBDf1",
-  network: "BEP20 (BSC)",
-  currency: "USDT",
+// ─── Dynamic active credential fetching ────────────────────────────────────────
+const FALLBACK_CREDENTIAL = {
+  network: "USDT BEP20",
+  walletAddress: "0x2783ca72018AF778c0C89bcd78db33B5CF40DC88",
+  instructions: "Pay me via Trust Wallet: https://link.trustwallet.com/send?coin=20000714&address=0x2783ca72018AF778c0C89bcd78db33B5CF40DC88&token_id=0x55d398326f99059fF775485246999027B3197955",
+  qrCodeUrl: ""
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,10 +66,26 @@ export default function DepositPage() {
   const [success, setSuccess] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // fetch deposit history on mount
+  const [activeCredential, setActiveCredential] = useState(null);
+  const [activeLoading, setActiveLoading] = useState(true);
+
+  // fetch active credential and deposit history on mount
   useEffect(() => {
+    fetchActiveCredential();
     fetchHistory();
   }, []);
+
+  const fetchActiveCredential = async () => {
+    setActiveLoading(true);
+    try {
+      const res = await apiClient("/deposit-credentials/active");
+      setActiveCredential(res?.data || FALLBACK_CREDENTIAL);
+    } catch {
+      setActiveCredential(FALLBACK_CREDENTIAL);
+    } finally {
+      setActiveLoading(false);
+    }
+  };
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -93,13 +110,19 @@ export default function DepositPage() {
       setError(`Minimum activation amount is $${ACTIVATION_AMOUNT_USD}.`);
       return;
     }
+    if (!activeCredential) {
+      setError("Deposit credentials are not currently configured by the administrator. Please try again later or contact support.");
+      return;
+    }
     setStep("qr");
   };
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(COMPANY_WALLET.address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (activeCredential?.walletAddress) {
+      navigator.clipboard.writeText(activeCredential.walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleSubmitProof = async () => {
@@ -129,9 +152,6 @@ export default function DepositPage() {
       setSubmitLoading(false);
     }
   };
-
-  // ── QR data ──────────────────────────────────────────────────────────────
-  const qrValue = COMPANY_WALLET.address;
 
   const handleCloseModal = () => {
     setStep("form");
@@ -187,16 +207,17 @@ export default function DepositPage() {
 
             <button
               onClick={handlePayNow}
-              className="h-12 w-full rounded-xl bg-[#111827] hover:bg-[#1F2937] font-bold text-white shadow-xs active:scale-[0.98] transition"
+              disabled={activeLoading}
+              className="h-12 w-full rounded-xl bg-[#111827] hover:bg-[#1F2937] font-bold text-white shadow-xs active:scale-[0.98] transition disabled:opacity-50"
             >
-              Pay Now
+              {activeLoading ? "Loading details..." : "Pay Now"}
             </button>
           </div>
         </div>
       )}
 
       {/* ── Step 2: QR + wallet address + txHash ── */}
-      {step === "qr" && (
+      {step === "qr" && activeCredential && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/60 p-4 backdrop-blur-xs">
           <div className="relative w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
             <button
@@ -218,20 +239,28 @@ export default function DepositPage() {
                   </p>
                 </div>
 
-                {/* QR Code */}
+                {/* QR Code (Premium custom design border and box) */}
                 <div className="mb-6 flex flex-col items-center">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <QRCodeSVG
-                      value={qrValue}
-                      size={180}
-                      bgColor="#ffffff"
-                      fgColor="#0a0f1e"
-                      level="M"
-                    />
+                  <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
+                    {activeCredential.qrCodeUrl ? (
+                      <img
+                        src={activeCredential.qrCodeUrl}
+                        alt="QR Code"
+                        className="h-[180px] w-[180px] object-contain"
+                      />
+                    ) : (
+                      <QRCodeSVG
+                        value={activeCredential.instructions.includes("https://") ? activeCredential.instructions.split("https://")[1] ? "https://" + activeCredential.instructions.split("https://")[1] : activeCredential.walletAddress : activeCredential.walletAddress}
+                        size={180}
+                        bgColor="#ffffff"
+                        fgColor="#0a0f1e"
+                        level="M"
+                      />
+                    )}
                   </div>
                   <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#F4B860]/30 bg-[#FFF4E5] px-4 py-2">
                     <span className="rounded bg-[#E8A13F] px-2 py-0.5 text-xs font-bold text-white uppercase">
-                      {COMPANY_WALLET.network.split(' ')[0]}
+                      {activeCredential.network.split(' ')[0]}
                     </span>
                     <span className="text-base font-bold text-[#E8A13F]">
                       {Number(amount).toFixed(2)} USDT
@@ -241,55 +270,62 @@ export default function DepositPage() {
               </div>
 
               <div className="w-full md:max-w-sm">
-              {/* Wallet address */}
-              <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="mb-1 text-xs text-slate-400 font-bold">
-                  Address ({COMPANY_WALLET.network})
-                </p>
-                <div className="flex items-center gap-2">
-                  <p className="flex-1 break-all font-mono text-xs text-slate-600 font-medium">
-                    {COMPANY_WALLET.address}
+                {/* Wallet address box (Matching the exact custom theme requested) */}
+                <div className="mb-5 rounded-xl border border-[#F4B860]/40 bg-[#FFF4E5] p-3 text-[#111827]">
+                  <p className="mb-1 text-xs text-slate-500 font-bold">
+                    Address ({activeCredential.network})
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleCopyAddress}
-                    className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 font-bold transition hover:bg-slate-50"
-                  >
-                    {copied ? "✓ Copied" : "Copy"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <p className="flex-1 break-all font-mono text-xs font-bold">
+                      {activeCredential.walletAddress}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      className="shrink-0 rounded-lg bg-[#111827] text-white hover:bg-[#1F2937] px-2.5 py-1.5 text-xs font-bold transition"
+                    >
+                      {copied ? "✓ Copied" : "Copy"}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Instructions */}
-              <div className="mb-5 space-y-1 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800/90 leading-relaxed">
-                <p>
-                  1. Send exactly{" "}
-                  <strong className="text-blue-955 font-bold">
-                    ${Number(amount).toFixed(2)} USDT
-                  </strong>{" "}
-                  to the address above.
-                </p>
-                <p>2. Copy the transaction hash from your wallet app.</p>
-                <p>
-                  3. Paste it below and click{" "}
-                  <strong className="text-blue-955 font-bold">Confirm Payment</strong>.
-                </p>
-              </div>
+                {/* Instructions */}
+                {activeCredential.instructions ? (
+                  <div className="mb-5 rounded-xl border border-[#F4B860]/20 bg-[#FFF4E5] px-4 py-3 text-xs text-[#111827] leading-relaxed break-all">
+                    <p className="font-bold text-slate-700 mb-1">Instructions:</p>
+                    <p className="whitespace-pre-line font-medium break-all">{activeCredential.instructions}</p>
+                  </div>
+                ) : (
+                  <div className="mb-5 space-y-1 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800/90 leading-relaxed">
+                    <p>
+                      1. Send exactly{" "}
+                      <strong className="text-blue-955 font-bold">
+                        {Number(amount).toFixed(2)} USDT
+                      </strong>{" "}
+                      to the address above.
+                    </p>
+                    <p>2. Copy the transaction hash from your wallet app.</p>
+                    <p>
+                      3. Paste it below and click{" "}
+                      <strong className="text-blue-955 font-bold">Confirm Payment</strong>.
+                    </p>
+                  </div>
+                )}
 
-              {/* txHash input */}
-              {error && (
-                <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 font-medium">
-                  {error}
-                </div>
-              )}
-              <input
-                type="text"
-                value={txHash}
-                onChange={(e) => setTxHash(e.target.value)}
-                placeholder="Paste transaction hash (0x...)"
-                className="mb-4 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
-              />
-            </div>
+                {/* txHash input */}
+                {error && (
+                  <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 font-medium">
+                    {error}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={txHash}
+                  onChange={(e) => setTxHash(e.target.value)}
+                  placeholder="Paste transaction hash (0x...)"
+                  className="mb-4 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#F4B860] focus:ring-2 focus:ring-[#F4B860]/10"
+                />
+              </div>
             </div>
             <div className="flex gap-3">
               <button

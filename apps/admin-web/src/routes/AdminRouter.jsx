@@ -26,6 +26,7 @@ import ContactInfoPage from "../pages/cms/ContactInfoPage";
 import GeneralSettingsPage from "../pages/settings/GeneralSettingsPage";
 import PaymentWalletSettingsPage from "../pages/settings/PaymentWalletSettingsPage";
 import SecuritySettingsPage from "../pages/settings/SecuritySettingsPage";
+import DepositSettingsPage from "../pages/settings/DepositSettingsPage";
 
 export const adminRouter = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -61,6 +62,7 @@ export const adminRouter = createBrowserRouter([
           { path: "cms/contact", element: <ContactInfoPage /> },
           { path: "settings/general", element: <GeneralSettingsPage /> },
           { path: "settings/wallet", element: <PaymentWalletSettingsPage /> },
+          { path: "settings/deposit", element: <DepositSettingsPage /> },
           { path: "settings/security", element: <SecuritySettingsPage /> },
         ],
       },
